@@ -6,9 +6,8 @@ import Link from "next/link";
 import { plots } from "@/data/mock";
 
 /* ── helpers ── */
-function today() {
-  const d = new Date();
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+function formatDate() {
+  return new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
 }
 
 function getSelectedPlot() {
@@ -34,22 +33,35 @@ function SignaturePad({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
+  const hasStrokes = useRef(false);
+
+  const setupCtx = useCallback((ctx: CanvasRenderingContext2D) => {
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#003D2E";
+  }, []);
 
   const resize = useCallback(() => {
     const c = canvasRef.current;
     if (!c) return;
-    const rect = c.getBoundingClientRect();
-    c.width = rect.width * 2;
-    c.height = rect.height * 2;
     const ctx = c.getContext("2d");
-    if (ctx) {
-      ctx.scale(2, 2);
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#003D2E";
+    if (!ctx) return;
+    let savedImg: ImageData | null = null;
+    if (hasStrokes.current) {
+      savedImg = ctx.getImageData(0, 0, c.width, c.height);
     }
-  }, []);
+    const rect = c.getBoundingClientRect();
+    const newW = rect.width * 2;
+    const newH = rect.height * 2;
+    c.width = newW;
+    c.height = newH;
+    ctx.scale(2, 2);
+    setupCtx(ctx);
+    if (savedImg) {
+      ctx.putImageData(savedImg, 0, 0);
+    }
+  }, [setupCtx]);
 
   useEffect(() => {
     resize();
@@ -62,6 +74,7 @@ function SignaturePad({
     if (!c) return;
     const ctx = c.getContext("2d");
     if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+    hasStrokes.current = false;
     resize();
     onEnd("");
   };
@@ -69,7 +82,7 @@ function SignaturePad({
   function getPos(e: React.MouseEvent | React.TouchEvent) {
     const c = canvasRef.current!;
     const rect = c.getBoundingClientRect();
-    if ("touches" in e) {
+    if ("touches" in e && e.touches.length > 0) {
       return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
     }
     return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
@@ -77,6 +90,7 @@ function SignaturePad({
 
   function start(e: React.MouseEvent | React.TouchEvent) {
     drawing.current = true;
+    hasStrokes.current = true;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     const { x, y } = getPos(e);
@@ -95,7 +109,7 @@ function SignaturePad({
 
   function end() {
     drawing.current = false;
-    if (canvasRef.current) onEnd(canvasRef.current.toDataURL());
+    if (canvasRef.current) onEnd(canvasRef.current.toDataURL("image/png"));
   }
 
   return (
@@ -116,7 +130,11 @@ function SignaturePad({
 /* ── Main Page ── */
 export default function PropertyIntroductionPage() {
   const [plot, setPlot] = useState<ReturnType<typeof getSelectedPlot>>(null);
-  useEffect(() => { setPlot(getSelectedPlot()); }, []);
+  const [dateStr, setDateStr] = useState("");
+  useEffect(() => {
+    setPlot(getSelectedPlot());
+    setDateStr(formatDate());
+  }, []);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -140,7 +158,7 @@ export default function PropertyIntroductionPage() {
     const errs: Record<string, boolean> = {};
     if (!form.fullName.trim()) errs.fullName = true;
     if (!form.mobile.trim()) errs.mobile = true;
-    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) errs.email = true;
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) errs.email = true;
     if (!form.passportId.trim()) errs.passportId = true;
     if (!form.city.trim()) errs.city = true;
     if (!form.country.trim()) errs.country = true;
@@ -172,16 +190,16 @@ export default function PropertyIntroductionPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 animate-fade-in">
+    <div className="flex flex-col flex-1 animate-fade-in overflow-y-auto">
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 gap-6 max-w-3xl mx-auto w-full px-4 py-6 md:px-0">
 
         {/* Header */}
-        <div className="bg-forest rounded-2xl px-8 py-6 flex items-center gap-5">
-          <Image src="/logo.png" alt="Namou" width={140} height={46} className="object-contain h-10 w-auto brightness-0 invert" />
-          <div className="w-px h-10 bg-white/20" />
+        <div className="bg-forest rounded-2xl px-5 sm:px-8 py-6 flex items-center gap-4 sm:gap-5">
+          <Image src="/logo.png" alt="Namou" width={140} height={46} className="object-contain h-8 sm:h-10 w-auto brightness-0 invert" />
+          <div className="w-px h-8 sm:h-10 bg-white/20" />
           <div>
-            <h1 className="text-lg font-bold text-white">Property Introduction Form</h1>
-            <p className="text-sm text-white/70" dir="rtl">نموذج تعريف العقار</p>
+            <h1 className="text-base sm:text-lg font-bold text-white">Property Introduction Form</h1>
+            <p className="text-xs sm:text-sm text-white/70" dir="rtl">نموذج تعريف العقار</p>
           </div>
         </div>
 
@@ -214,22 +232,22 @@ export default function PropertyIntroductionPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Full Name" required error={errors.fullName}>
-              <input type="text" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} className={inputCls(errors.fullName)} placeholder="John Doe" />
+              <input type="text" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} maxLength={100} className={inputCls(errors.fullName)} placeholder="John Doe" />
             </Field>
             <Field label="Mobile Number" required error={errors.mobile}>
-              <input type="tel" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} className={inputCls(errors.mobile)} placeholder="+971 50 000 0000" />
+              <input type="tel" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} maxLength={20} className={inputCls(errors.mobile)} placeholder="+971 50 000 0000" />
             </Field>
             <Field label="Email" required error={errors.email}>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls(errors.email)} placeholder="investor@email.com" />
+              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="investor@email.com" />
             </Field>
             <Field label="Passport No / ID" required error={errors.passportId}>
-              <input type="text" value={form.passportId} onChange={(e) => set("passportId", e.target.value)} className={inputCls(errors.passportId)} placeholder="A12345678" />
+              <input type="text" value={form.passportId} onChange={(e) => set("passportId", e.target.value)} maxLength={30} className={inputCls(errors.passportId)} placeholder="A12345678" />
             </Field>
             <Field label="City" required error={errors.city}>
-              <input type="text" value={form.city} onChange={(e) => set("city", e.target.value)} className={inputCls(errors.city)} placeholder="Dubai" />
+              <input type="text" value={form.city} onChange={(e) => set("city", e.target.value)} maxLength={80} className={inputCls(errors.city)} placeholder="Dubai" />
             </Field>
             <Field label="Country" required error={errors.country}>
-              <input type="text" value={form.country} onChange={(e) => set("country", e.target.value)} className={inputCls(errors.country)} placeholder="UAE" />
+              <input type="text" value={form.country} onChange={(e) => set("country", e.target.value)} maxLength={80} className={inputCls(errors.country)} placeholder="UAE" />
             </Field>
           </div>
         </div>
@@ -249,7 +267,7 @@ export default function PropertyIntroductionPage() {
 
           <div className="mt-4">
             <p className="text-xs text-muted mb-1">Date</p>
-            <p className="text-sm font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-xl px-4 py-2.5 w-fit">{today()}</p>
+            <p className="text-sm font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-xl px-4 py-2.5 w-fit">{dateStr || "\u00A0"}</p>
           </div>
         </div>
 

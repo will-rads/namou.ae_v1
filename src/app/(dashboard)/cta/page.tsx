@@ -233,19 +233,19 @@ export default function CTAPage() {
           <div className="absolute inset-0 bg-deep-forest/60 backdrop-blur-sm" onClick={closeCalendar} />
 
           {/* Modal */}
-          <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden w-[75vw] h-[75vh] flex flex-col">
+          <div className="relative bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden w-full h-full md:w-[75vw] md:h-[75vh] flex flex-col">
             {/* Header */}
-            <div className="bg-forest px-8 py-5 flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="bg-forest px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                 <Image
                   src="/logo.png"
                   alt="Namou"
                   width={120}
                   height={40}
-                  className="object-contain h-8 w-auto brightness-0 invert"
+                  className="object-contain h-6 sm:h-8 w-auto brightness-0 invert shrink-0"
                 />
-                <div className="w-px h-8 bg-white/20" />
-                <p className="text-sm font-medium text-white/90">{calendarAction}</p>
+                <div className="w-px h-6 sm:h-8 bg-white/20 shrink-0" />
+                <p className="text-xs sm:text-sm font-medium text-white/90 truncate">{calendarAction}</p>
               </div>
               <button onClick={closeCalendar} className="text-white/60 hover:text-white transition-colors">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
@@ -276,33 +276,33 @@ export default function CTAPage() {
               </div>
             ) : (
               /* Calendar + Time picker */
-              <div className="flex flex-1 min-h-0">
+              <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
                 {/* Calendar */}
-                <div className="flex-1 px-10 py-8 flex flex-col">
+                <div className="flex-1 px-4 sm:px-10 py-4 sm:py-8 flex flex-col min-h-0">
                   {/* Month navigation */}
-                  <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center justify-between mb-3 sm:mb-5">
                     <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-mint-bg transition-colors text-muted hover:text-forest">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6" /></svg>
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6" /></svg>
                     </button>
-                    <h3 className="text-xl font-bold text-deep-forest">
+                    <h3 className="text-base sm:text-xl font-bold text-deep-forest">
                       {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
                     </h3>
                     <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-mint-bg transition-colors text-muted hover:text-forest">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
                     </button>
                   </div>
 
                   {/* Day headers */}
-                  <div className="grid grid-cols-7 gap-3">
+                  <div className="grid grid-cols-7 gap-1 sm:gap-3">
                     {DAYS.map(d => (
-                      <div key={d} className="text-center text-sm font-semibold text-muted uppercase tracking-wider py-2">
+                      <div key={d} className="text-center text-xs sm:text-sm font-semibold text-muted uppercase tracking-wider py-1 sm:py-2">
                         {d}
                       </div>
                     ))}
                   </div>
 
                   {/* Day cells */}
-                  <div className="grid grid-cols-7 gap-3 flex-1" style={{ gridAutoRows: "1fr" }}>
+                  <div className="grid grid-cols-7 gap-1 sm:gap-3 flex-1" style={{ gridAutoRows: "1fr" }}>
                     {calendarDays.map((day, i) => {
                       if (day === null) return <div key={`e-${i}`} />;
                       const past = isPast(day);
@@ -314,7 +314,7 @@ export default function CTAPage() {
                           onClick={() => selectDay(day)}
                           disabled={past}
                           className={`
-                            w-full rounded-xl text-lg font-medium transition-colors flex items-center justify-center
+                            w-full rounded-lg sm:rounded-xl text-sm sm:text-lg font-medium transition-colors flex items-center justify-center
                             ${sel
                               ? "bg-forest text-white"
                               : tod
@@ -333,21 +333,21 @@ export default function CTAPage() {
                 </div>
 
                 {/* Time slots — visible when a date is selected */}
-                <div className={`w-72 border-l border-mint-light/40 flex flex-col transition-all ${selectedDate ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
-                  <div className="px-6 py-6 border-b border-mint-light/40">
-                    <p className="text-sm uppercase tracking-widest text-muted font-semibold">
+                <div className={`w-full md:w-72 border-t md:border-t-0 md:border-l border-mint-light/40 flex flex-col transition-all ${selectedDate ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
+                  <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-mint-light/40">
+                    <p className="text-xs sm:text-sm uppercase tracking-widest text-muted font-semibold">
                       {selectedDate
                         ? `${MONTHS[selectedDate.getMonth()].slice(0, 3)} ${selectedDate.getDate()}`
                         : "Select a date"}
                     </p>
-                    <p className="text-base text-muted mt-1">Pick a time</p>
+                    <p className="text-sm sm:text-base text-muted mt-1">Pick a time</p>
                   </div>
-                  <div className="flex-1 overflow-y-auto px-5 py-5 space-y-2.5">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3 sm:py-5 grid grid-cols-3 md:grid-cols-1 gap-2 md:gap-0 md:space-y-2.5 md:block">
                     {TIME_SLOTS.map(time => (
                       <button
                         key={time}
                         onClick={() => setSelectedTime(time)}
-                        className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors text-center ${
+                        className={`w-full px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-xs sm:text-base font-medium transition-colors text-center ${
                           selectedTime === time
                             ? "bg-forest text-white"
                             : "border border-mint-light text-deep-forest hover:border-forest/30 hover:bg-mint-bg"
@@ -358,11 +358,11 @@ export default function CTAPage() {
                     ))}
                   </div>
                   {/* Confirm */}
-                  <div className="px-5 py-5 border-t border-mint-light/40">
+                  <div className="px-4 sm:px-5 py-4 sm:py-5 border-t border-mint-light/40">
                     <button
                       onClick={handleConfirm}
                       disabled={!selectedDate || !selectedTime}
-                      className={`w-full py-3 rounded-xl text-base font-semibold transition-colors ${
+                      className={`w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-colors ${
                         selectedDate && selectedTime
                           ? "bg-forest text-white hover:bg-deep-forest"
                           : "bg-mint-light/50 text-muted cursor-not-allowed"

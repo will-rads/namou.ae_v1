@@ -53,19 +53,19 @@ export default function LandingPage() {
         </div>
 
         {/* Frosted content card — selector only */}
-        <div className="w-full max-w-4xl bg-white/8 backdrop-blur-sm border border-white/15 rounded-3xl px-10 py-8 shadow-2xl flex flex-col items-center gap-6">
+        <div className="w-full max-w-4xl bg-white/8 backdrop-blur-sm border border-white/15 rounded-3xl px-4 sm:px-10 py-6 sm:py-8 shadow-2xl flex flex-col items-center gap-6">
 
           {/* Selector */}
           <div className="w-full">
             {selectedType === null ? (
               <>
                 <p className="text-xs uppercase tracking-[0.3em] text-white/50 mb-4 text-center">Browse by land type</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {landCategories.map((cat) => (
                     <button
                       key={cat.slug}
                       onClick={() => setSelectedType(cat.slug)}
-                      className="py-6 px-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-base font-semibold text-white hover:bg-white/30 hover:border-white/50 transition-all text-center"
+                      className="py-4 sm:py-6 px-4 sm:px-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-sm sm:text-base font-semibold text-white hover:bg-white/30 hover:border-white/50 transition-all text-center"
                     >
                       {cat.label}
                     </button>
@@ -83,12 +83,12 @@ export default function LandingPage() {
                     ← Back
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {availableAreas.map((area) => (
                     <Link
                       key={area}
-                      href={`/master-plan?type=${selectedType}&area=${areaSlug(area)}`}
-                      className="py-6 px-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-base font-semibold text-white hover:bg-white/30 hover:border-white/50 transition-all text-center"
+                      href={`/master-plan?type=${encodeURIComponent(selectedType)}&area=${encodeURIComponent(areaSlug(area))}`}
+                      className="py-4 sm:py-6 px-4 sm:px-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-sm sm:text-base font-semibold text-white hover:bg-white/30 hover:border-white/50 transition-all text-center"
                     >
                       {area}
                     </Link>

@@ -8,8 +8,8 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-gradient-to-br from-mint-white via-mint-bg to-mint-light/20 overflow-hidden">
       {/* Decorative background blobs */}
-      <div className="fixed top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-mint-light/15 blur-3xl pointer-events-none" />
-      <div className="fixed bottom-[-10%] left-[10%] w-[400px] h-[400px] rounded-full bg-mint/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-mint-light/15 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[10%] w-[400px] h-[400px] rounded-full bg-mint/10 blur-3xl pointer-events-none" />
 
       <Sidebar />
 

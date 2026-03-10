@@ -6,9 +6,8 @@ import Link from "next/link";
 import { plots } from "@/data/mock";
 
 /* ── helpers ── */
-function today() {
-  const d = new Date();
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+function formatDate() {
+  return new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
 }
 
 function getSelectedPlots() {
@@ -34,22 +33,35 @@ function SignaturePad({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
+  const hasStrokes = useRef(false);
+
+  const setupCtx = useCallback((ctx: CanvasRenderingContext2D) => {
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#003D2E";
+  }, []);
 
   const resize = useCallback(() => {
     const c = canvasRef.current;
     if (!c) return;
-    const rect = c.getBoundingClientRect();
-    c.width = rect.width * 2;
-    c.height = rect.height * 2;
     const ctx = c.getContext("2d");
-    if (ctx) {
-      ctx.scale(2, 2);
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#003D2E";
+    if (!ctx) return;
+    let savedImg: ImageData | null = null;
+    if (hasStrokes.current) {
+      savedImg = ctx.getImageData(0, 0, c.width, c.height);
     }
-  }, []);
+    const rect = c.getBoundingClientRect();
+    const newW = rect.width * 2;
+    const newH = rect.height * 2;
+    c.width = newW;
+    c.height = newH;
+    ctx.scale(2, 2);
+    setupCtx(ctx);
+    if (savedImg) {
+      ctx.putImageData(savedImg, 0, 0);
+    }
+  }, [setupCtx]);
 
   useEffect(() => {
     resize();
@@ -62,6 +74,7 @@ function SignaturePad({
     if (!c) return;
     const ctx = c.getContext("2d");
     if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+    hasStrokes.current = false;
     resize();
     onEnd("");
   };
@@ -69,7 +82,7 @@ function SignaturePad({
   function getPos(e: React.MouseEvent | React.TouchEvent) {
     const c = canvasRef.current!;
     const rect = c.getBoundingClientRect();
-    if ("touches" in e) {
+    if ("touches" in e && e.touches.length > 0) {
       return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
     }
     return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
@@ -77,6 +90,7 @@ function SignaturePad({
 
   function start(e: React.MouseEvent | React.TouchEvent) {
     drawing.current = true;
+    hasStrokes.current = true;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     const { x, y } = getPos(e);
@@ -95,7 +109,7 @@ function SignaturePad({
 
   function end() {
     drawing.current = false;
-    if (canvasRef.current) onEnd(canvasRef.current.toDataURL());
+    if (canvasRef.current) onEnd(canvasRef.current.toDataURL("image/png"));
   }
 
   return (
@@ -116,7 +130,11 @@ function SignaturePad({
 /* ── Main Page ── */
 export default function A2APage() {
   const [sharedPlots, setSharedPlots] = useState<typeof plots>([]);
-  useEffect(() => { setSharedPlots(getSelectedPlots()); }, []);
+  const [dateStr, setDateStr] = useState("");
+  useEffect(() => {
+    setSharedPlots(getSelectedPlots());
+    setDateStr(formatDate());
+  }, []);
 
   const [form, setForm] = useState({
     companyName: "",
@@ -146,10 +164,10 @@ export default function A2APage() {
     if (!form.tradeLicense.trim()) errs.tradeLicense = true;
     if (!form.contactPerson.trim()) errs.contactPerson = true;
     if (!form.phone.trim()) errs.phone = true;
-    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) errs.email = true;
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) errs.email = true;
     if (!form.investorName.trim()) errs.investorName = true;
     if (!form.investorPhone.trim()) errs.investorPhone = true;
-    if (!form.investorEmail.trim() || !/\S+@\S+\.\S+/.test(form.investorEmail)) errs.investorEmail = true;
+    if (!form.investorEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.investorEmail)) errs.investorEmail = true;
     if (!signature) errs.signature = true;
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -178,16 +196,16 @@ export default function A2APage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 animate-fade-in">
+    <div className="flex flex-col flex-1 animate-fade-in overflow-y-auto">
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 gap-6 max-w-3xl mx-auto w-full px-4 py-6 md:px-0">
 
         {/* Header */}
-        <div className="bg-forest rounded-2xl px-8 py-6 flex items-center gap-5">
-          <Image src="/logo.png" alt="Namou" width={140} height={46} className="object-contain h-10 w-auto brightness-0 invert" />
-          <div className="w-px h-10 bg-white/20" />
+        <div className="bg-forest rounded-2xl px-5 sm:px-8 py-6 flex items-center gap-4 sm:gap-5">
+          <Image src="/logo.png" alt="Namou" width={140} height={46} className="object-contain h-8 sm:h-10 w-auto brightness-0 invert" />
+          <div className="w-px h-8 sm:h-10 bg-white/20" />
           <div>
-            <h1 className="text-lg font-bold text-white">A2A Agreement</h1>
-            <p className="text-sm text-white/70" dir="rtl">اتفاقية وسيط إلى وسيط</p>
+            <h1 className="text-base sm:text-lg font-bold text-white">A2A Agreement</h1>
+            <p className="text-xs sm:text-sm text-white/70" dir="rtl">اتفاقية وسيط إلى وسيط</p>
           </div>
         </div>
 
@@ -243,25 +261,25 @@ export default function A2APage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Company Name" required error={errors.companyName}>
-              <input type="text" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} className={inputCls(errors.companyName)} placeholder="ABC Real Estate" />
+              <input type="text" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} maxLength={100} className={inputCls(errors.companyName)} placeholder="ABC Real Estate" />
             </Field>
             <Field label="Trade License No." required error={errors.tradeLicense}>
-              <input type="text" value={form.tradeLicense} onChange={(e) => set("tradeLicense", e.target.value)} className={inputCls(errors.tradeLicense)} placeholder="DXB-0000-0000" />
+              <input type="text" value={form.tradeLicense} onChange={(e) => set("tradeLicense", e.target.value)} maxLength={30} className={inputCls(errors.tradeLicense)} placeholder="DXB-0000-0000" />
             </Field>
             <div className="sm:col-span-2">
               <Field label="Address" required error={errors.address}>
-                <input type="text" value={form.address} onChange={(e) => set("address", e.target.value)} className={inputCls(errors.address)} placeholder="Business Bay, Dubai, UAE" />
+                <input type="text" value={form.address} onChange={(e) => set("address", e.target.value)} maxLength={200} className={inputCls(errors.address)} placeholder="Business Bay, Dubai, UAE" />
               </Field>
             </div>
             <Field label="Contact Person / Full Name" required error={errors.contactPerson}>
-              <input type="text" value={form.contactPerson} onChange={(e) => set("contactPerson", e.target.value)} className={inputCls(errors.contactPerson)} placeholder="Jane Smith" />
+              <input type="text" value={form.contactPerson} onChange={(e) => set("contactPerson", e.target.value)} maxLength={100} className={inputCls(errors.contactPerson)} placeholder="Jane Smith" />
             </Field>
             <Field label="Phone" required error={errors.phone}>
-              <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} className={inputCls(errors.phone)} placeholder="+971 50 000 0000" />
+              <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} maxLength={20} className={inputCls(errors.phone)} placeholder="+971 50 000 0000" />
             </Field>
             <div className="sm:col-span-2">
               <Field label="Email" required error={errors.email}>
-                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls(errors.email)} placeholder="agent@company.com" />
+                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="agent@company.com" />
               </Field>
             </div>
           </div>
@@ -274,14 +292,14 @@ export default function A2APage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <Field label="Investor Full Name" required error={errors.investorName}>
-                <input type="text" value={form.investorName} onChange={(e) => set("investorName", e.target.value)} className={inputCls(errors.investorName)} placeholder="John Doe" />
+                <input type="text" value={form.investorName} onChange={(e) => set("investorName", e.target.value)} maxLength={100} className={inputCls(errors.investorName)} placeholder="John Doe" />
               </Field>
             </div>
             <Field label="Investor Phone" required error={errors.investorPhone}>
-              <input type="tel" value={form.investorPhone} onChange={(e) => set("investorPhone", e.target.value)} className={inputCls(errors.investorPhone)} placeholder="+971 55 000 0000" />
+              <input type="tel" value={form.investorPhone} onChange={(e) => set("investorPhone", e.target.value)} maxLength={20} className={inputCls(errors.investorPhone)} placeholder="+971 55 000 0000" />
             </Field>
             <Field label="Investor Email" required error={errors.investorEmail}>
-              <input type="email" value={form.investorEmail} onChange={(e) => set("investorEmail", e.target.value)} className={inputCls(errors.investorEmail)} placeholder="investor@email.com" />
+              <input type="email" value={form.investorEmail} onChange={(e) => set("investorEmail", e.target.value)} maxLength={254} className={inputCls(errors.investorEmail)} placeholder="investor@email.com" />
             </Field>
           </div>
         </div>
@@ -301,7 +319,7 @@ export default function A2APage() {
 
           <div className="mt-4">
             <p className="text-xs text-muted mb-1">Date</p>
-            <p className="text-sm font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-xl px-4 py-2.5 w-fit">{today()}</p>
+            <p className="text-sm font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-xl px-4 py-2.5 w-fit">{dateStr || "\u00A0"}</p>
           </div>
         </div>
 

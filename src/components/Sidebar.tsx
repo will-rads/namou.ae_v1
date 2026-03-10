@@ -41,10 +41,10 @@ function ContextLinks({ pathname }: { pathname: string }) {
   }, [urlType, urlArea]);
 
   const otherAreasHref = ctxType
-    ? `/other-areas?type=${ctxType}${ctxArea ? `&area=${ctxArea}` : ""}`
+    ? `/other-areas?type=${encodeURIComponent(ctxType)}${ctxArea ? `&area=${encodeURIComponent(ctxArea)}` : ""}`
     : "/other-areas";
   const otherTypesHref = ctxType
-    ? `/other-types?type=${ctxType}${ctxArea ? `&area=${ctxArea}` : ""}`
+    ? `/other-types?type=${encodeURIComponent(ctxType)}${ctxArea ? `&area=${encodeURIComponent(ctxArea)}` : ""}`
     : "/other-types";
 
   const activeOtherAreas = pathname === "/other-areas";
@@ -74,7 +74,7 @@ export default function Sidebar() {
 
   const navItems = mainNavItems.map((item) => {
     if (item.baseHref === "/master-plan" && pathCtxType && pathCtxArea) {
-      return { ...item, href: `/master-plan?type=${pathCtxType}&area=${pathCtxArea}` };
+      return { ...item, href: `/master-plan?type=${encodeURIComponent(pathCtxType)}&area=${encodeURIComponent(pathCtxArea)}` };
     }
     return item;
   });
