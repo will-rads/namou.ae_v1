@@ -393,11 +393,12 @@ export default function ROIPage() {
             </div>
           </ContentCard>
           ) : (
-          <ContentCard className="flex-1 flex flex-col overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-x-6 gap-y-2 flex-1">
-              <Section title="Land">
-                <NumInput label="Plot Size" value={inputs.plotSize} unit="sqft" suffix onChange={v => update("plotSize", v)} />
-                <div className="flex items-center justify-between py-2.5">
+          <ContentCard className="flex-1 flex flex-col">
+            <div className="flex flex-col flex-1 divide-y divide-mint-light/40">
+              {/* Land Acquisition */}
+              <div className="flex-1 flex flex-col justify-evenly py-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Land Acquisition</p>
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-muted">Pricing Method</span>
                   <TogglePair
                     optA={{ key: "per-plot", label: "/ Plot sqft" }}
@@ -410,25 +411,26 @@ export default function ROIPage() {
                   ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v)} />
                   : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
                 }
-                <ComputedRow label="Total Land Cost" value={fmtAED(results.landCost)} />
-              </Section>
+              </div>
 
-              <Section title="Development">
-                <NumInput label="GFA Ratio (FAR)" value={inputs.gfaRatio} unit="×" suffix onChange={v => update("gfaRatio", v)} />
-                <ComputedRow label="GFA" value={`${formatNumber(Math.round(results.gfa))} sqft`} />
-                <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
-                <ComputedRow label="NSA" value={`${formatNumber(Math.round(results.nsa))} sqft`} />
-              </Section>
+              {/* Design */}
+              <div className="flex-1 flex flex-col justify-evenly py-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Design</p>
+                <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
+              </div>
 
-              <Section title="Construction">
+              {/* Construction */}
+              <div className="flex-1 flex flex-col justify-evenly py-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Construction</p>
                 <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
                 <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
-                <ComputedRow label="Total Construction" value={fmtAED(results.constructionCost)} />
-              </Section>
+              </div>
 
-              <Section title="Sales">
+              {/* Sales */}
+              <div className="flex-1 flex flex-col justify-evenly py-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Sales</p>
                 <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
-                <div className="py-1.5">
+                <div>
                   <div className="flex justify-between text-xs text-muted mb-1">
                     <span>AED {formatNumber(SLIDER_MIN)}</span>
                     <span className="font-medium text-forest">AED {formatNumber(sliderVal)}</span>
@@ -441,8 +443,7 @@ export default function ROIPage() {
                     className="w-full accent-forest cursor-pointer"
                   />
                 </div>
-                <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
-              </Section>
+              </div>
             </div>
           </ContentCard>
           )}
