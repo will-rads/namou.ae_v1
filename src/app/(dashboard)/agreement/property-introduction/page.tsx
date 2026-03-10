@@ -1,0 +1,287 @@
+"use client";
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { plots } from "@/data/mock";
+
+/* ── helpers ── */
+function today() {
+  const d = new Date();
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function getSelectedPlot() {
+  try {
+    const raw = sessionStorage.getItem("selectedPlots");
+    if (raw) {
+      const arr = JSON.parse(raw) as string[];
+      if (arr.length > 0) return plots.find((p) => p.id === arr[0]) ?? null;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+/* ── Signature Pad ── */
+function SignaturePad({
+  onEnd,
+  clearRef,
+}: {
+  onEnd: (dataUrl: string) => void;
+  clearRef: React.MutableRefObject<(() => void) | null>;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
+
+  const resize = useCallback(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const rect = c.getBoundingClientRect();
+    c.width = rect.width * 2;
+    c.height = rect.height * 2;
+    const ctx = c.getContext("2d");
+    if (ctx) {
+      ctx.scale(2, 2);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#003D2E";
+    }
+  }, []);
+
+  useEffect(() => {
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, [resize]);
+
+  clearRef.current = () => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+    resize();
+    onEnd("");
+  };
+
+  function getPos(e: React.MouseEvent | React.TouchEvent) {
+    const c = canvasRef.current!;
+    const rect = c.getBoundingClientRect();
+    if ("touches" in e) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  }
+
+  function start(e: React.MouseEvent | React.TouchEvent) {
+    drawing.current = true;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  }
+
+  function move(e: React.MouseEvent | React.TouchEvent) {
+    if (!drawing.current) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getPos(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+
+  function end() {
+    drawing.current = false;
+    if (canvasRef.current) onEnd(canvasRef.current.toDataURL());
+  }
+
+  return (
+    <canvas
+      ref={canvasRef}
+      onMouseDown={start}
+      onMouseMove={move}
+      onMouseUp={end}
+      onMouseLeave={end}
+      onTouchStart={start}
+      onTouchMove={move}
+      onTouchEnd={end}
+      className="w-full h-full cursor-crosshair touch-none"
+    />
+  );
+}
+
+/* ── Main Page ── */
+export default function PropertyIntroductionPage() {
+  const [plot, setPlot] = useState<ReturnType<typeof getSelectedPlot>>(null);
+  useEffect(() => { setPlot(getSelectedPlot()); }, []);
+
+  const [form, setForm] = useState({
+    fullName: "",
+    mobile: "",
+    email: "",
+    passportId: "",
+    city: "",
+    country: "",
+  });
+  const [signature, setSignature] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const clearSig = useRef<(() => void) | null>(null);
+
+  function set(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: false }));
+  }
+
+  function validate() {
+    const errs: Record<string, boolean> = {};
+    if (!form.fullName.trim()) errs.fullName = true;
+    if (!form.mobile.trim()) errs.mobile = true;
+    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) errs.email = true;
+    if (!form.passportId.trim()) errs.passportId = true;
+    if (!form.city.trim()) errs.city = true;
+    if (!form.country.trim()) errs.country = true;
+    if (!signature) errs.signature = true;
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (validate()) setSubmitted(true);
+  }
+
+  if (submitted) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center animate-fade-in text-center px-4">
+        <div className="w-20 h-20 rounded-full bg-forest/10 flex items-center justify-center mb-6">
+          <svg className="w-10 h-10 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20 6 9 17 4 12" /></svg>
+        </div>
+        <h2 className="text-2xl font-bold text-forest font-heading mb-2">Submission Received</h2>
+        <p className="text-sm text-muted max-w-md">
+          Your Property Introduction Form has been submitted successfully. A Namou specialist will be in touch shortly.
+        </p>
+        <Link href="/agreement" className="mt-8 px-8 py-3 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors">
+          Back to Agreements
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col flex-1 animate-fade-in">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 gap-6 max-w-3xl mx-auto w-full px-4 py-6 md:px-0">
+
+        {/* Header */}
+        <div className="bg-forest rounded-2xl px-8 py-6 flex items-center gap-5">
+          <Image src="/logo.png" alt="Namou" width={140} height={46} className="object-contain h-10 w-auto brightness-0 invert" />
+          <div className="w-px h-10 bg-white/20" />
+          <div>
+            <h1 className="text-lg font-bold text-white">Property Introduction Form</h1>
+            <p className="text-sm text-white/70" dir="rtl">نموذج تعريف العقار</p>
+          </div>
+        </div>
+
+        {/* Property Summary */}
+        <div className="bg-mint-bg/50 border border-mint-light/60 rounded-2xl px-6 py-5">
+          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-3">Property Being Introduced</p>
+          {plot ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-muted">Property</p>
+                <p className="text-sm font-semibold text-deep-forest">{plot.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted">Size</p>
+                <p className="text-sm font-semibold text-deep-forest">{plot.plotArea.toLocaleString()} sqft</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted">Commission</p>
+                <p className="text-sm font-semibold text-deep-forest">2%</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted italic">No property selected. Please select a plot from the Master Plan first.</p>
+          )}
+        </div>
+
+        {/* Investor Details (Second Party) */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 p-6">
+          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-5">Investor Details (Second Party)</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Full Name" required error={errors.fullName}>
+              <input type="text" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} className={inputCls(errors.fullName)} placeholder="John Doe" />
+            </Field>
+            <Field label="Mobile Number" required error={errors.mobile}>
+              <input type="tel" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} className={inputCls(errors.mobile)} placeholder="+971 50 000 0000" />
+            </Field>
+            <Field label="Email" required error={errors.email}>
+              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls(errors.email)} placeholder="investor@email.com" />
+            </Field>
+            <Field label="Passport No / ID" required error={errors.passportId}>
+              <input type="text" value={form.passportId} onChange={(e) => set("passportId", e.target.value)} className={inputCls(errors.passportId)} placeholder="A12345678" />
+            </Field>
+            <Field label="City" required error={errors.city}>
+              <input type="text" value={form.city} onChange={(e) => set("city", e.target.value)} className={inputCls(errors.city)} placeholder="Dubai" />
+            </Field>
+            <Field label="Country" required error={errors.country}>
+              <input type="text" value={form.country} onChange={(e) => set("country", e.target.value)} className={inputCls(errors.country)} placeholder="UAE" />
+            </Field>
+          </div>
+        </div>
+
+        {/* Signature & Date */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Signature</p>
+            <button type="button" onClick={() => clearSig.current?.()} className="text-xs text-forest hover:text-deep-forest transition-colors font-medium">
+              Clear
+            </button>
+          </div>
+          <div className={`w-full h-36 border-2 border-dashed rounded-xl overflow-hidden ${errors.signature ? "border-red-400 bg-red-50/30" : "border-mint-light bg-white"}`}>
+            <SignaturePad onEnd={setSignature} clearRef={clearSig} />
+          </div>
+          {errors.signature && <p className="text-xs text-red-500 mt-1">Signature is required</p>}
+
+          <div className="mt-4">
+            <p className="text-xs text-muted mb-1">Date</p>
+            <p className="text-sm font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-xl px-4 py-2.5 w-fit">{today()}</p>
+          </div>
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          className="w-full py-3.5 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors"
+        >
+          Submit Property Introduction Form
+        </button>
+      </form>
+    </div>
+  );
+}
+
+/* ── Shared UI ── */
+function Field({ label, required, error, children }: { label: string; required?: boolean; error?: boolean; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-deep-forest">
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      </span>
+      {children}
+      {error && <span className="text-[11px] text-red-500">This field is required</span>}
+    </label>
+  );
+}
+
+function inputCls(error?: boolean) {
+  return `w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${
+    error
+      ? "border-red-400 bg-red-50/30 focus:border-red-500"
+      : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"
+  }`;
+}
