@@ -6,7 +6,7 @@ export default function CategoriesPage() {
   return (
     <div className="flex flex-col flex-1 gap-5 animate-fade-in min-h-0 overflow-hidden">
       <div className="shrink-0">
-        <h1 className="text-3xl font-bold text-forest font-heading">Land Categories</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Land Categories</h1>
         <p className="text-sm text-muted mt-1">
           Browse available plots by type for easier comparison and ROI analysis.
         </p>

@@ -89,11 +89,11 @@ function MasterPlanContent() {
   const showCompare = compareMode && comparePlots.length > 0;
 
   return (
-    <div className="flex flex-col flex-1 gap-3 animate-fade-in min-h-0 overflow-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-hidden">
       {/* Header row */}
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-3xl font-bold text-forest font-heading">Master Plan Overview</h1>
+          <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Master Plan Overview</h1>
           <p className="text-sm text-muted mt-0.5">
             Zoning, access, and land distribution within Al Marjan.
           </p>

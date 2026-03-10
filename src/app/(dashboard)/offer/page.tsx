@@ -101,9 +101,9 @@ export default function FinalOfferPage() {
     : offerSummary.scenario === "optimistic" ? "Optimistic" : "Base Case";
 
   return (
-    <div className="flex flex-col flex-1 gap-5 animate-fade-in min-h-0 overflow-hidden">
+    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-hidden">
       <div className="shrink-0">
-        <h1 className="text-3xl font-bold text-forest font-heading">Final Offer</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Final Offer</h1>
         <p className="text-sm text-muted mt-1">
           {hasROI
             ? "Your offer is based on the ROI model you configured. Review and submit."

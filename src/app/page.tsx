@@ -34,7 +34,7 @@ export default function LandingPage() {
       </header>
 
       {/* Center content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-start px-8 pt-6 pb-10">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pt-4 sm:pt-6 pb-6 sm:pb-10">
 
         {/* Logo — outside the card, over the background */}
         <div className="flex flex-col items-center text-center mb-6">
@@ -43,7 +43,7 @@ export default function LandingPage() {
             alt="Namou Properties"
             width={520}
             height={160}
-            className="object-contain w-auto h-[30vh] md:h-[34vh] lg:h-[38vh]"
+            className="object-contain w-auto h-[20vh] sm:h-[28vh] lg:h-[34vh]"
             priority
           />
           <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto leading-relaxed mt-3">

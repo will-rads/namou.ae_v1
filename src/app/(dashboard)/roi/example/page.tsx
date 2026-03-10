@@ -11,7 +11,7 @@ export default function ExampleDealPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-forest font-heading">Example Deal: RAK Central</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Example Deal: RAK Central</h1>
         <p className="text-sm text-muted mt-1">
           A real-world walkthrough using a high-end tower in RAK Central.
         </p>

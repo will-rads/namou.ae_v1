@@ -13,10 +13,10 @@ export default function RakLandscapePage() {
   const selectedLandmark = landmarks.find((l) => l.id === activeLandmark);
 
   return (
-    <div className="flex flex-col flex-1 gap-5 animate-fade-in min-h-0 overflow-hidden">
+    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-hidden">
       {/* Page header */}
       <div className="shrink-0">
-        <h1 className="text-3xl font-bold text-forest font-heading">Getting to Know RAK</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Getting to Know RAK</h1>
         <p className="text-sm text-muted mt-1">
           Explore the landscape of Al Marjan beach district
         </p>

@@ -4,9 +4,9 @@ import { landCategories } from "@/data/mock";
 
 export default function OverviewPage() {
   return (
-    <div className="flex flex-col flex-1 gap-5 animate-fade-in min-h-0 overflow-hidden">
+    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-hidden">
       <div className="shrink-0">
-        <h1 className="text-3xl font-bold text-forest font-heading">Namou Land Investment</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Namou Land Investment</h1>
         <p className="text-sm text-muted mt-1">
           Strategic land opportunities across Ras Al Khaimah — positioned for long-term value.
         </p>

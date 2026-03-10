@@ -39,7 +39,7 @@ export default async function AreaPlotsPage({ params }: { params: Promise<{ type
           <span>/</span>
           <span>{areaName}</span>
         </div>
-        <h1 className="text-3xl font-bold text-forest font-heading">{areaName}</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">{areaName}</h1>
         <p className="text-sm text-muted mt-1">{category.label} plots in this area.</p>
       </div>
 

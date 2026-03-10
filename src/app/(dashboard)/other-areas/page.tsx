@@ -30,7 +30,7 @@ function OtherAreasContent() {
   return (
     <div className="flex flex-col flex-1 gap-6 min-h-0 overflow-hidden">
       <div>
-        <h1 className="text-3xl font-bold text-forest font-heading">Other Areas</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Other Areas</h1>
         <p className="text-sm text-muted mt-1">
           {category?.label} plots available in other areas{currentAreaName ? ` beyond ${currentAreaName}` : ""}.
         </p>

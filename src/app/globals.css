@@ -42,6 +42,14 @@ aside:not(:hover) .nav-link:hover .nav-tooltip {
   pointer-events: auto;
 }
 
+/* Responsive base font scaling for smaller screens */
+html {
+  font-size: clamp(12px, 1.1vw, 16px);
+}
+@media (min-width: 1440px) {
+  html { font-size: 16px; }
+}
+
 /* Page fade-in animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }

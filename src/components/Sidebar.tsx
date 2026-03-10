@@ -80,9 +80,9 @@ export default function Sidebar() {
   });
 
   return (
-    <aside className="group flex flex-col w-[52px] hover:w-[200px] min-h-screen bg-forest text-white py-8 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out">
+    <aside className="group flex flex-col w-[42px] lg:w-[52px] hover:w-[200px] min-h-screen bg-forest text-white py-4 lg:py-8 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out">
       {/* Logo */}
-      <Link href="/" className="mb-10 px-2 flex items-center">
+      <Link href="/" className="mb-4 lg:mb-10 px-2 flex items-center">
         {/* Collapsed: small square crop; expanded: full logo */}
         <div className="w-[36px] group-hover:w-[168px] transition-[width] duration-200 ease-in-out overflow-hidden shrink-0">
           <Image
@@ -198,7 +198,7 @@ function NavLink({ href, label, active, children }: { href: string; label: strin
   return (
     <Link
       href={href}
-      className={`nav-link relative flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm transition-colors ${
+      className={`nav-link relative flex items-center gap-3 px-2 py-1.5 lg:py-2.5 rounded-lg text-sm transition-colors ${
         active
           ? "bg-white/15 text-white font-medium"
           : "text-white/70 hover:bg-white/10 hover:text-white"

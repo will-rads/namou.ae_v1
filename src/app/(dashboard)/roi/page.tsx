@@ -210,10 +210,10 @@ export default function ROIPage() {
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden animate-fade-in">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between shrink-0 mb-3">
+      <div className="flex items-center justify-between shrink-0 mb-2 lg:mb-3">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-forest font-heading">ROI Simulator</h1>
+            <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">ROI Simulator</h1>
             {isCompareMode ? (
               <>
                 {comparePlots.map((cp, ci) => (
@@ -281,10 +281,10 @@ export default function ROIPage() {
       </div>
 
       {/* ── Split screen: left = simulator, right = results ── */}
-      <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
+      <div className="flex-1 min-h-0 flex gap-2 lg:gap-4 overflow-hidden">
 
         {/* ═══════════ LEFT: Variables ═══════════ */}
-        <div className="w-1/2 flex flex-col gap-3 min-h-0 overflow-y-auto pr-1">
+        <div className="w-1/2 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-y-auto pr-1">
 
           {/* Active scenario info */}
           <div className="bg-mint-bg/50 rounded-xl px-4 py-2.5 border border-mint-light/40 shrink-0">
@@ -408,13 +408,13 @@ export default function ROIPage() {
         </div>
 
         {/* ═══════════ RIGHT: Results ═══════════ */}
-        <div className="w-1/2 flex flex-col gap-3 min-h-0 overflow-hidden pl-1">
+        <div className="w-1/2 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-hidden pl-1">
 
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
-            <div className="flex flex-col gap-3 h-full">
+            <div className="flex flex-col gap-2 lg:gap-3 h-full">
               {/* KPI Row */}
-              <div className="grid grid-cols-2 gap-3 shrink-0">
+              <div className="grid grid-cols-2 gap-2 lg:gap-3 shrink-0">
                 <KPICard
                   label="Total Revenue (GDV)"
                   value={fmtAED(results.revenue)}

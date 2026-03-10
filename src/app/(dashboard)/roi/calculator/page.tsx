@@ -25,7 +25,7 @@ export default function ROICalculatorPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-forest font-heading">Interactive ROI Tool</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Interactive ROI Tool</h1>
         <p className="text-sm text-muted mt-1">
           Adjust variables live to reverse-engineer the land price you&apos;re willing to offer.
         </p>

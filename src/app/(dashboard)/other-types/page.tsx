@@ -20,7 +20,7 @@ function OtherTypesContent() {
   return (
     <div className="flex flex-col flex-1 gap-6 min-h-0 overflow-hidden">
       <div>
-        <h1 className="text-3xl font-bold text-forest font-heading">Other Land Types</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Other Land Types</h1>
         <p className="text-sm text-muted mt-1">
           Explore different land use categories across Al Marjan Island.
         </p>

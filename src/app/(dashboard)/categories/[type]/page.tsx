@@ -29,7 +29,7 @@ export default async function CategoryDetailPage({ params }: { params: Promise<{
           <span>/</span>
           <span>{category.label}</span>
         </div>
-        <h1 className="text-3xl font-bold text-forest font-heading">{category.label}</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">{category.label}</h1>
         <p className="text-sm text-muted mt-1">Select an area to browse available plots.</p>
       </div>
 

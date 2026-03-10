@@ -25,7 +25,7 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-forest font-heading">{plot.name}</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">{plot.name}</h1>
         <p className="text-sm text-muted mt-1">{plot.location}</p>
       </div>
 
