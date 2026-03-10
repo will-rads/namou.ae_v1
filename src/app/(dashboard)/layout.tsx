@@ -6,7 +6,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-mint-white via-mint-bg to-mint-light/20 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen w-screen bg-gradient-to-br from-mint-white via-mint-bg to-mint-light/20 overflow-hidden">
       {/* Decorative background blobs */}
       <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-mint-light/15 blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[10%] w-[400px] h-[400px] rounded-full bg-mint/10 blur-3xl pointer-events-none" />
