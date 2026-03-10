@@ -43,7 +43,7 @@ export default function RakLandscapePage() {
         {/* Map area — static satellite image placeholder */}
         <div className="relative w-full flex-1 min-h-[280px] bg-mint-bg rounded-xl overflow-hidden">
           {/* Placeholder satellite map */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#3a6b5a] via-[#5a8b7a] to-[#7aab9a] opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4A5A3C] via-[#6B7B5A] to-[#8B9E7E] opacity-30" />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center text-deep-forest/50">
               <svg className="w-16 h-16 mx-auto mb-3 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>

@@ -232,13 +232,13 @@ export default function FinalOfferPage() {
             <div className="flex gap-3 shrink-0">
               <button
                 onClick={() => { setDealRef(`NAMOU-${selectedPlot.name}-${Date.now().toString(36).toUpperCase()}`); setSubmitted(true); }}
-                className="px-8 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+                className="px-8 py-3 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors"
               >
                 Submit Offer
               </button>
               <Link
                 href="/cta"
-                className="px-6 py-3 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-white transition-colors"
+                className="px-6 py-3 bg-white border border-mint-light text-deep-forest rounded-full font-medium text-sm hover:bg-mint-white transition-colors"
               >
                 Next Steps
               </Link>

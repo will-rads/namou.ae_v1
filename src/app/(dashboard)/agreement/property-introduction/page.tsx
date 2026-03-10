@@ -182,7 +182,7 @@ export default function PropertyIntroductionPage() {
         <p className="text-sm text-muted max-w-md">
           Your Property Introduction Form has been submitted successfully. A Namou specialist will be in touch shortly.
         </p>
-        <Link href="/agreement" className="mt-8 px-8 py-3 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors">
+        <Link href="/agreement" className="mt-8 px-8 py-3 bg-forest text-white rounded-full text-sm font-semibold hover:bg-deep-forest transition-colors">
           Back to Agreements
         </Link>
       </div>
@@ -274,7 +274,7 @@ export default function PropertyIntroductionPage() {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full py-3.5 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors"
+          className="w-full py-3.5 bg-forest text-white rounded-full text-sm font-semibold hover:bg-deep-forest transition-colors"
         >
           Submit Property Introduction Form
         </button>

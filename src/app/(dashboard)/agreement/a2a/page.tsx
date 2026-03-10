@@ -188,7 +188,7 @@ export default function A2APage() {
         <p className="text-sm text-muted max-w-md">
           Your A2A Agreement has been submitted successfully. A Namou representative will review and countersign shortly.
         </p>
-        <Link href="/agreement" className="mt-8 px-8 py-3 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors">
+        <Link href="/agreement" className="mt-8 px-8 py-3 bg-forest text-white rounded-full text-sm font-semibold hover:bg-deep-forest transition-colors">
           Back to Agreements
         </Link>
       </div>
@@ -326,7 +326,7 @@ export default function A2APage() {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full py-3.5 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors"
+          className="w-full py-3.5 bg-forest text-white rounded-full text-sm font-semibold hover:bg-deep-forest transition-colors"
         >
           Submit A2A Agreement
         </button>

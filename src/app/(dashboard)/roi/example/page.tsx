@@ -56,13 +56,13 @@ export default function ExampleDealPage() {
           <div className="flex gap-3">
             <Link
               href="/roi"
-              className="flex-1 text-center px-6 py-3 bg-white border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-white transition-colors"
+              className="flex-1 text-center px-6 py-3 bg-white border border-forest text-forest rounded-full font-semibold text-sm hover:bg-mint-white transition-colors"
             >
               Adjust Variables
             </Link>
             <Link
               href="/offer"
-              className="flex-1 text-center px-6 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+              className="flex-1 text-center px-6 py-3 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors"
             >
               Submit Offer
             </Link>

@@ -129,7 +129,7 @@ function MasterPlanContent() {
                   setSelectedPlot(null);
                   setCompareMode(true);
                 }}
-                className="px-4 py-2 rounded-xl text-sm font-semibold border border-forest/30 text-forest bg-white hover:border-forest hover:bg-mint-bg transition-colors"
+                className="px-4 py-2 rounded-full text-sm font-semibold border border-forest/30 text-forest bg-white hover:border-forest hover:bg-mint-bg transition-colors"
               >
                 Compare Plots
               </button>
@@ -163,7 +163,7 @@ function MasterPlanContent() {
             <svg className="w-full h-full">
               <defs>
                 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#003D2E" strokeWidth="0.5" />
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2B3A2E" strokeWidth="0.5" />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill="url(#grid)" />
@@ -364,7 +364,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
         <div className="mt-4 pt-4 border-t border-mint-light/60 shrink-0">
           <button
             onClick={handleCompareROI}
-            className="w-full px-4 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
             Compare ROI for Both Plots
@@ -479,13 +479,13 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
         <div className="mt-4 pt-4 border-t border-mint-light/60 flex gap-2 shrink-0">
           <Link
             href="/roi"
-            className="flex-1 text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
+            className="flex-1 text-center px-4 py-2.5 border border-forest text-forest rounded-full font-semibold text-sm hover:bg-mint-bg transition-colors"
           >
             Analyze ROI
           </Link>
           <a
             href="/offer"
-            className="flex-1 text-center px-4 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+            className="flex-1 text-center px-4 py-2.5 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors"
           >
             Submit Offer
           </a>

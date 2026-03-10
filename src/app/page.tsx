@@ -17,18 +17,11 @@ export default function LandingPage() {
     : [];
 
   return (
-    <div className="relative flex flex-col min-h-screen overflow-x-hidden">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/rak-bg.jpg')" }}
-      />
-      {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-deep-forest/40" />
+    <div className="relative flex flex-col min-h-screen overflow-x-hidden bg-[#F5F2EC]">
 
       {/* Top bar */}
       <header className="relative z-10 flex items-center justify-center px-4 sm:px-12 py-4 sm:py-6">
-        <span className="text-xs tracking-[0.35em] uppercase text-white/60 font-heading">
+        <span className="text-xs tracking-[0.35em] uppercase text-muted font-heading">
           Real Estate Done Right
         </span>
       </header>
@@ -36,7 +29,7 @@ export default function LandingPage() {
       {/* Center content */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pt-4 sm:pt-6 pb-6 sm:pb-10">
 
-        {/* Logo — outside the card, over the background */}
+        {/* Logo */}
         <div className="flex flex-col items-center text-center mb-4 sm:mb-6">
           <Image
             src="/logo.png"
@@ -46,26 +39,26 @@ export default function LandingPage() {
             className="object-contain w-auto h-[15vh] sm:h-[28vh] lg:h-[34vh]"
             priority
           />
-          <p className="text-sm sm:text-base md:text-lg text-white/80 max-w-xl mx-auto leading-relaxed mt-2 sm:mt-3 px-2">
+          <p className="text-sm sm:text-base md:text-lg text-muted max-w-xl mx-auto leading-relaxed mt-2 sm:mt-3 px-2 font-body">
             Strategic land investment opportunities across Ras Al Khaimah.
             Curated plots, transparent ROI, and a clear path to ownership.
           </p>
         </div>
 
-        {/* Frosted content card — selector only */}
-        <div className="w-full max-w-4xl bg-white/8 backdrop-blur-sm border border-white/15 rounded-3xl px-4 sm:px-10 py-6 sm:py-8 shadow-2xl flex flex-col items-center gap-6">
+        {/* Selector card */}
+        <div className="w-full max-w-4xl bg-[#E8EDDF]/60 backdrop-blur-sm border border-[#B5C4A8]/40 rounded-3xl px-4 sm:px-10 py-6 sm:py-8 shadow-sm flex flex-col items-center gap-6">
 
           {/* Selector */}
           <div className="w-full">
             {selectedType === null ? (
               <>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/50 mb-4 text-center">Browse by land type</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted mb-4 text-center font-body">Browse by land type</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {landCategories.map((cat) => (
                     <button
                       key={cat.slug}
                       onClick={() => setSelectedType(cat.slug)}
-                      className="py-4 sm:py-6 px-4 sm:px-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-sm sm:text-base font-semibold text-white hover:bg-white/30 hover:border-white/50 transition-all text-center"
+                      className="py-4 sm:py-6 px-4 sm:px-6 bg-[#FAF9F6] border border-[#B5C4A8]/50 rounded-2xl text-sm sm:text-base font-semibold text-forest hover:bg-forest hover:text-white hover:border-forest transition-all text-center font-heading"
                     >
                       {cat.label}
                     </button>
@@ -75,10 +68,10 @@ export default function LandingPage() {
             ) : (
               <>
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">Browse by area</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted font-body">Browse by area</p>
                   <button
                     onClick={() => setSelectedType(null)}
-                    className="text-sm text-white/60 hover:text-white transition-colors"
+                    className="text-sm text-muted hover:text-forest transition-colors font-body"
                   >
                     ← Back
                   </button>
@@ -88,7 +81,7 @@ export default function LandingPage() {
                     <Link
                       key={area}
                       href={`/master-plan?type=${encodeURIComponent(selectedType)}&area=${encodeURIComponent(areaSlug(area))}`}
-                      className="py-4 sm:py-6 px-4 sm:px-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-sm sm:text-base font-semibold text-white hover:bg-white/30 hover:border-white/50 transition-all text-center"
+                      className="py-4 sm:py-6 px-4 sm:px-6 bg-[#FAF9F6] border border-[#B5C4A8]/50 rounded-2xl text-sm sm:text-base font-semibold text-forest hover:bg-forest hover:text-white hover:border-forest transition-all text-center font-heading"
                     >
                       {area}
                     </Link>

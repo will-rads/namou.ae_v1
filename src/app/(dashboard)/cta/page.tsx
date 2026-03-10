@@ -340,7 +340,7 @@ export default function CTAPage() {
                 <p className="text-xs text-muted mt-3">Your Namou specialist will send a confirmation shortly.</p>
                 <button
                   onClick={closeCalendar}
-                  className="mt-6 px-8 py-2.5 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors"
+                  className="mt-6 px-8 py-2.5 bg-forest text-white rounded-full text-sm font-semibold hover:bg-deep-forest transition-colors"
                 >
                   Done
                 </button>
@@ -433,7 +433,7 @@ export default function CTAPage() {
                     <button
                       onClick={handleConfirm}
                       disabled={!selectedDate || !selectedTime}
-                      className={`w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-colors ${
+                      className={`w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-semibold transition-colors ${
                         selectedDate && selectedTime
                           ? "bg-forest text-white hover:bg-deep-forest"
                           : "bg-mint-light/50 text-muted cursor-not-allowed"
@@ -476,7 +476,7 @@ export default function CTAPage() {
                 <p className="text-sm text-muted">
                   We&apos;ll send your brochures and ROI calculations to <strong className="text-deep-forest">{brochureForm.email}</strong> shortly.
                 </p>
-                <button onClick={closeBrochure} className="mt-6 px-8 py-2.5 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors">
+                <button onClick={closeBrochure} className="mt-6 px-8 py-2.5 bg-forest text-white rounded-full text-sm font-semibold hover:bg-deep-forest transition-colors">
                   Done
                 </button>
               </div>
@@ -509,7 +509,7 @@ export default function CTAPage() {
                   {brochureErrors.phone && <span className="text-[10px] text-red-500">Required</span>}
                 </label>
 
-                <button type="submit" className="w-full py-3 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors mt-2">
+                <button type="submit" className="w-full py-3 bg-forest text-white rounded-full text-sm font-semibold hover:bg-deep-forest transition-colors mt-2">
                   Send Me the Brochures
                 </button>
               </form>

@@ -115,7 +115,7 @@ export default function ROICalculatorPage() {
 
           <a
             href="/offer"
-            className="block w-full text-center px-6 py-3 bg-mint text-forest rounded-xl font-semibold text-sm hover:bg-mint-light transition-colors"
+            className="block w-full text-center px-6 py-3 bg-mint text-forest rounded-full font-semibold text-sm hover:bg-mint-light transition-colors"
           >
             Proceed to Final Offer
           </a>

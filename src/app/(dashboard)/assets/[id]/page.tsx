@@ -98,7 +98,7 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
           {/* CTA */}
           <Link
             href="/roi/calculator"
-            className="block w-full text-center px-6 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+            className="block w-full text-center px-6 py-3 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors"
           >
             Calculate ROI for this plot
           </Link>

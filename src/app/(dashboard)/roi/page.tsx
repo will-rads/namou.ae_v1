@@ -523,7 +523,7 @@ export default function ROIPage() {
                   <div className="relative">
                     <button
                       onClick={() => setShowPlotPicker(v => !v)}
-                      className="flex items-center gap-2 px-4 py-2.5 border border-forest/30 text-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 border border-forest/30 text-forest rounded-full font-medium text-sm hover:bg-mint-bg transition-colors"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
                       Compare Plots
@@ -559,7 +559,7 @@ export default function ROIPage() {
                       sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
                       router.push("/offer");
                     }}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors"
                   >
                     Offer Simulator
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
@@ -644,7 +644,7 @@ export default function ROIPage() {
                       sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
                       router.push("/offer");
                     }}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors"
                   >
                     Offer Simulator
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>

@@ -86,7 +86,7 @@ export default function SiteVisitPage() {
 
         {/* Confirm CTA */}
         <div className="mt-6 shrink-0">
-          <button className="px-8 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors">
+          <button className="px-8 py-3 bg-forest text-white rounded-full font-semibold text-sm hover:bg-deep-forest transition-colors">
             Confirm
           </button>
         </div>
