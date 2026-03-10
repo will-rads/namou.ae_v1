@@ -62,6 +62,37 @@ const actions = [
     prep: "Complete the ROI Simulator first for best results",
     details: "Your offer is reviewed within 2 business hours. A dedicated closing manager handles all documentation.",
   },
+  {
+    title: "Sign Agreement",
+    description: "Formalise your investment with a Property Introduction Form or A2A Agreement.",
+    href: "/agreement",
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+    timeline: "Digital signature in minutes",
+    prep: "Select a plot from Master Plan first",
+    details: "Choose between a Property Introduction Form or an Agent-to-Agent Agreement, sign digitally, and submit.",
+  },
+  {
+    title: "Receive Brochures & ROI Calculations",
+    description: "Get detailed property brochures and personalised ROI reports sent to your inbox.",
+    href: "#",
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+        <polyline points="22 6 12 13 2 6" />
+      </svg>
+    ),
+    timeline: "Delivered within 1 hour",
+    prep: "No preparation needed",
+    details: "Receive a curated package with project brochures, plot specifications, and your customised ROI breakdown.",
+    hasBrochureForm: true,
+  },
 ];
 
 const TIME_SLOTS = [
@@ -84,6 +115,34 @@ export default function CTAPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+
+  /* Brochure form state */
+  const [brochureOpen, setBrochureOpen] = useState(false);
+  const [brochureForm, setBrochureForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [brochureErrors, setBrochureErrors] = useState<Record<string, boolean>>({});
+  const [brochureSubmitted, setBrochureSubmitted] = useState(false);
+
+  function openBrochure() {
+    setBrochureForm({ firstName: "", lastName: "", email: "", phone: "" });
+    setBrochureErrors({});
+    setBrochureSubmitted(false);
+    setBrochureOpen(true);
+  }
+  function closeBrochure() { setBrochureOpen(false); }
+  function setBF(field: string, value: string) {
+    setBrochureForm((prev) => ({ ...prev, [field]: value }));
+    if (brochureErrors[field]) setBrochureErrors((prev) => ({ ...prev, [field]: false }));
+  }
+  function submitBrochure(e: React.FormEvent) {
+    e.preventDefault();
+    const errs: Record<string, boolean> = {};
+    if (!brochureForm.firstName.trim()) errs.firstName = true;
+    if (!brochureForm.lastName.trim()) errs.lastName = true;
+    if (!brochureForm.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(brochureForm.email)) errs.email = true;
+    if (!brochureForm.phone.trim()) errs.phone = true;
+    setBrochureErrors(errs);
+    if (Object.keys(errs).length === 0) setBrochureSubmitted(true);
+  }
 
   const today = useMemo(() => {
     const d = new Date();
@@ -211,6 +270,18 @@ export default function CTAPage() {
               <button
                 key={action.title}
                 onClick={() => openCalendar(action.title)}
+                className="group flex text-left"
+              >
+                {inner}
+              </button>
+            );
+          }
+
+          if ((action as typeof action & { hasBrochureForm?: boolean }).hasBrochureForm) {
+            return (
+              <button
+                key={action.title}
+                onClick={openBrochure}
                 className="group flex text-left"
               >
                 {inner}
@@ -373,6 +444,75 @@ export default function CTAPage() {
                   </div>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Brochure Form Modal */}
+      {brochureOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-deep-forest/60 backdrop-blur-sm" onClick={closeBrochure} />
+
+          <div className="relative bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden w-full max-w-md mx-4 flex flex-col">
+            {/* Header */}
+            <div className="bg-forest px-6 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Image src="/logo.png" alt="Namou" width={120} height={40} className="object-contain h-7 w-auto brightness-0 invert" />
+                <div className="w-px h-7 bg-white/20" />
+                <p className="text-sm font-medium text-white/90">Receive Brochures</p>
+              </div>
+              <button onClick={closeBrochure} className="text-white/60 hover:text-white transition-colors">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+
+            {brochureSubmitted ? (
+              <div className="flex flex-col items-center justify-center px-8 py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-forest/10 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+                <h3 className="text-xl font-bold text-forest mb-2">Request Received</h3>
+                <p className="text-sm text-muted">
+                  We&apos;ll send your brochures and ROI calculations to <strong className="text-deep-forest">{brochureForm.email}</strong> shortly.
+                </p>
+                <button onClick={closeBrochure} className="mt-6 px-8 py-2.5 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors">
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={submitBrochure} className="px-6 py-6 flex flex-col gap-4">
+                <p className="text-xs text-muted leading-relaxed">Enter your details below and we&apos;ll send you detailed property brochures and personalised ROI calculations.</p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-deep-forest">First Name<span className="text-red-400 ml-0.5">*</span></span>
+                    <input type="text" value={brochureForm.firstName} onChange={(e) => setBF("firstName", e.target.value)} maxLength={80} placeholder="John" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.firstName ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
+                    {brochureErrors.firstName && <span className="text-[10px] text-red-500">Required</span>}
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-deep-forest">Last Name<span className="text-red-400 ml-0.5">*</span></span>
+                    <input type="text" value={brochureForm.lastName} onChange={(e) => setBF("lastName", e.target.value)} maxLength={80} placeholder="Doe" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.lastName ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
+                    {brochureErrors.lastName && <span className="text-[10px] text-red-500">Required</span>}
+                  </label>
+                </div>
+
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-deep-forest">Email<span className="text-red-400 ml-0.5">*</span></span>
+                  <input type="email" value={brochureForm.email} onChange={(e) => setBF("email", e.target.value)} maxLength={254} placeholder="john@email.com" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.email ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
+                  {brochureErrors.email && <span className="text-[10px] text-red-500">Valid email required</span>}
+                </label>
+
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-deep-forest">Phone Number<span className="text-red-400 ml-0.5">*</span></span>
+                  <input type="tel" value={brochureForm.phone} onChange={(e) => setBF("phone", e.target.value)} maxLength={20} placeholder="+971 50 000 0000" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.phone ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
+                  {brochureErrors.phone && <span className="text-[10px] text-red-500">Required</span>}
+                </label>
+
+                <button type="submit" className="w-full py-3 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors mt-2">
+                  Send Me the Brochures
+                </button>
+              </form>
             )}
           </div>
         </div>
