@@ -38,7 +38,7 @@ const iconMap: Record<string, (props: { className?: string }) => React.JSX.Eleme
 
 export default function SiteVisitPage() {
   return (
-    <div className="flex flex-col flex-1 gap-5 animate-fade-in">
+    <div className="flex flex-col flex-1 gap-5 animate-fade-in min-h-0 overflow-hidden">
       <div className="shrink-0 flex items-center gap-3">
         <h1 className="text-3xl font-bold text-forest font-heading">Visit Itinerary</h1>
         <span className="px-3 py-1 rounded-full bg-mint text-forest text-xs font-semibold uppercase tracking-wide">

@@ -442,7 +442,7 @@ function A2AForm() {
    ══════════════════════════════════════════════════════ */
 export default function AgreementPage() {
   return (
-    <div className="flex flex-col flex-1 gap-4 animate-fade-in min-h-0">
+    <div className="flex flex-col flex-1 gap-4 animate-fade-in min-h-0 overflow-hidden">
       <div className="shrink-0">
         <h1 className="text-3xl font-bold text-forest font-heading">Agreement</h1>
         <p className="text-sm text-muted mt-1">Fill in the relevant form below.</p>

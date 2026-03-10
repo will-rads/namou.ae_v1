@@ -224,7 +224,7 @@ export default function ROIPage() {
   const sliderVal = Math.min(Math.max(inputs.sellingPricePerNSA, SLIDER_MIN), SLIDER_MAX);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-88px)] overflow-hidden animate-fade-in">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden animate-fade-in">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between shrink-0 mb-3">
