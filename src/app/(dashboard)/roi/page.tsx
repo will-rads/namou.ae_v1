@@ -315,8 +315,8 @@ export default function ROIPage() {
           </div>
 
           {/* Input variables — 2-column grid */}
-          <ContentCard className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <ContentCard className="flex-1 flex flex-col overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-x-6 gap-y-2 flex-1">
               <Section title="Land">
                 <NumInput label="Plot Size" value={inputs.plotSize} unit="sqft" suffix onChange={v => update("plotSize", v)} />
                 <div className="flex items-center justify-between py-2.5">
@@ -690,9 +690,9 @@ function KPICard({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">{title}</p>
-      <div className="divide-y divide-mint-light/60">{children}</div>
+      <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">{children}</div>
     </div>
   );
 }
