@@ -233,7 +233,7 @@ export default function CTAPage() {
           <div className="absolute inset-0 bg-deep-forest/60 backdrop-blur-sm" onClick={closeCalendar} />
 
           {/* Modal */}
-          <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-2xl mx-4">
+          <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden w-[75vw] h-[75vh] flex flex-col">
             {/* Header */}
             <div className="bg-forest px-8 py-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -254,7 +254,7 @@ export default function CTAPage() {
 
             {confirmed ? (
               /* Confirmation */
-              <div className="px-8 py-12 text-center">
+              <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center">
                 <div className="w-16 h-16 rounded-full bg-forest/10 flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
@@ -276,9 +276,9 @@ export default function CTAPage() {
               </div>
             ) : (
               /* Calendar + Time picker */
-              <div className="flex">
+              <div className="flex flex-1 min-h-0">
                 {/* Calendar */}
-                <div className="flex-1 px-8 py-6">
+                <div className="flex-1 px-8 py-6 flex flex-col">
                   {/* Month navigation */}
                   <div className="flex items-center justify-between mb-4">
                     <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-mint-bg transition-colors text-muted hover:text-forest">
@@ -293,16 +293,16 @@ export default function CTAPage() {
                   </div>
 
                   {/* Day headers */}
-                  <div className="grid grid-cols-7 gap-1 mb-1">
+                  <div className="grid grid-cols-7 gap-2">
                     {DAYS.map(d => (
-                      <div key={d} className="text-center text-[10px] font-semibold text-muted uppercase tracking-wider py-1">
+                      <div key={d} className="text-center text-xs font-semibold text-muted uppercase tracking-wider py-2">
                         {d}
                       </div>
                     ))}
                   </div>
 
                   {/* Day cells */}
-                  <div className="grid grid-cols-7 gap-1">
+                  <div className="grid grid-cols-7 gap-2 flex-1 auto-rows-fr">
                     {calendarDays.map((day, i) => {
                       if (day === null) return <div key={`e-${i}`} />;
                       const past = isPast(day);
@@ -314,7 +314,7 @@ export default function CTAPage() {
                           onClick={() => selectDay(day)}
                           disabled={past}
                           className={`
-                            w-full aspect-square rounded-lg text-sm font-medium transition-colors flex items-center justify-center
+                            w-full rounded-xl text-base font-medium transition-colors flex items-center justify-center
                             ${sel
                               ? "bg-forest text-white"
                               : tod
@@ -333,21 +333,21 @@ export default function CTAPage() {
                 </div>
 
                 {/* Time slots — visible when a date is selected */}
-                <div className={`w-48 border-l border-mint-light/40 flex flex-col transition-all ${selectedDate ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
-                  <div className="px-4 py-4 border-b border-mint-light/40">
-                    <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">
+                <div className={`w-56 border-l border-mint-light/40 flex flex-col transition-all ${selectedDate ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
+                  <div className="px-5 py-5 border-b border-mint-light/40">
+                    <p className="text-xs uppercase tracking-widest text-muted font-semibold">
                       {selectedDate
                         ? `${MONTHS[selectedDate.getMonth()].slice(0, 3)} ${selectedDate.getDate()}`
                         : "Select a date"}
                     </p>
-                    <p className="text-xs text-muted mt-0.5">Pick a time</p>
+                    <p className="text-sm text-muted mt-0.5">Pick a time</p>
                   </div>
-                  <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 max-h-[320px]">
+                  <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
                     {TIME_SLOTS.map(time => (
                       <button
                         key={time}
                         onClick={() => setSelectedTime(time)}
-                        className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-center ${
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-colors text-center ${
                           selectedTime === time
                             ? "bg-forest text-white"
                             : "border border-mint-light text-deep-forest hover:border-forest/30 hover:bg-mint-bg"
@@ -358,7 +358,7 @@ export default function CTAPage() {
                     ))}
                   </div>
                   {/* Confirm */}
-                  <div className="px-3 py-3 border-t border-mint-light/40">
+                  <div className="px-4 py-4 border-t border-mint-light/40">
                     <button
                       onClick={handleConfirm}
                       disabled={!selectedDate || !selectedTime}
