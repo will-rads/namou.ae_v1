@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 
 const mainNavItems = [
   { href: "/master-plan", baseHref: "/master-plan", label: "Master Plan", icon: PlanIcon },
@@ -16,7 +16,7 @@ const resourceNavItems = [
   { href: "/agreement", baseHref: "/agreement", label: "Agreement", icon: AgreementIcon },
 ];
 
-function ContextLinks({ pathname }: { pathname: string }) {
+function ContextLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const searchParams = useSearchParams();
   const urlType = searchParams.get("type");
   const urlArea = searchParams.get("area");
@@ -53,18 +53,68 @@ function ContextLinks({ pathname }: { pathname: string }) {
   return (
     <>
       <div className="mx-2 my-2 border-t border-white/10" />
-      <NavLink href={otherAreasHref} label="Other Areas" active={activeOtherAreas}>
+      <NavLink href={otherAreasHref} label="Other Areas" active={activeOtherAreas} onNavigate={onNavigate}>
         <MapPinIcon className="w-4 h-4 shrink-0" />
       </NavLink>
-      <NavLink href={otherTypesHref} label="Other Land Types" active={activeOtherTypes}>
+      <NavLink href={otherTypesHref} label="Other Land Types" active={activeOtherTypes} onNavigate={onNavigate}>
         <LayersIcon className="w-4 h-4 shrink-0" />
       </NavLink>
     </>
   );
 }
 
+function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navItems: typeof mainNavItems; onNavigate?: () => void }) {
+  return (
+    <nav className="flex flex-col gap-1 px-2 flex-1">
+      {navItems.map((item) => {
+        const active =
+          item.baseHref === "/roi"
+            ? pathname === "/roi" || pathname === "/roi/calculator"
+            : pathname.startsWith(item.baseHref);
+        return (
+          <NavLink key={item.baseHref} href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
+            <item.icon className="w-4 h-4 shrink-0" />
+          </NavLink>
+        );
+      })}
+
+      {/* Resources separator */}
+      <div className="mx-2 my-2 border-t border-white/10" />
+      <p className="px-2 text-[10px] uppercase tracking-widest text-white/30 mb-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">Resources</p>
+      {resourceNavItems.map((item) => {
+        const active = pathname.startsWith(item.baseHref);
+        return (
+          <NavLink key={item.baseHref} href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
+            <item.icon className="w-4 h-4 shrink-0" />
+          </NavLink>
+        );
+      })}
+
+      {/* Context-sensitive bottom links */}
+      <Suspense fallback={null}>
+        <ContextLinks pathname={pathname} onNavigate={onNavigate} />
+      </Suspense>
+    </nav>
+  );
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Close on escape key
+  const handleEsc = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") setMobileOpen(false);
+  }, []);
+  useEffect(() => {
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [handleEsc]);
 
   // Build master plan href with context if present in current URL path
   const parts = pathname.split("/").filter(Boolean);
@@ -80,54 +130,72 @@ export default function Sidebar() {
   });
 
   return (
-    <aside className="group flex flex-col w-[42px] lg:w-[52px] hover:w-[200px] min-h-screen bg-forest text-white py-4 lg:py-8 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out">
-      {/* Logo */}
-      <Link href="/" className="mb-4 lg:mb-10 px-2 flex items-center">
-        {/* Collapsed: small square crop; expanded: full logo */}
-        <div className="w-[36px] group-hover:w-[168px] transition-[width] duration-200 ease-in-out overflow-hidden shrink-0">
+    <>
+      {/* Mobile top bar */}
+      <div className="md:hidden flex items-center justify-between bg-forest text-white px-4 py-3 shrink-0">
+        <Link href="/" className="flex items-center">
           <Image
             src="/logo-sidebar.png"
             alt="Namou"
-            width={168}
-            height={56}
-            className="object-contain object-left h-10 w-auto min-w-[168px]"
+            width={120}
+            height={40}
+            className="object-contain object-left h-8 w-auto"
             priority
           />
+        </Link>
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? (
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          ) : (
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile menu overlay */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-deep-forest/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="relative w-64 bg-forest text-white py-6 flex flex-col animate-fade-in">
+            <Link href="/" className="mb-6 px-4 flex items-center" onClick={() => setMobileOpen(false)}>
+              <Image
+                src="/logo-sidebar.png"
+                alt="Namou"
+                width={168}
+                height={56}
+                className="object-contain object-left h-10 w-auto"
+                priority
+              />
+            </Link>
+            <SidebarNav pathname={pathname} navItems={navItems} onNavigate={() => setMobileOpen(false)} />
+          </div>
         </div>
-      </Link>
+      )}
 
-      {/* Nav */}
-      <nav className="flex flex-col gap-1 px-2 flex-1">
-        {navItems.map((item) => {
-          const active =
-            item.baseHref === "/roi"
-              ? pathname === "/roi" || pathname === "/roi/calculator"
-              : pathname.startsWith(item.baseHref);
-          return (
-            <NavLink key={item.baseHref} href={item.href} label={item.label} active={active}>
-              <item.icon className="w-4 h-4 shrink-0" />
-            </NavLink>
-          );
-        })}
+      {/* Desktop sidebar */}
+      <aside className="group hidden md:flex flex-col w-[42px] lg:w-[52px] hover:w-[200px] min-h-screen bg-forest text-white py-4 lg:py-8 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out">
+        {/* Logo */}
+        <Link href="/" className="mb-4 lg:mb-10 px-2 flex items-center">
+          {/* Collapsed: small square crop; expanded: full logo */}
+          <div className="w-[36px] group-hover:w-[168px] transition-[width] duration-200 ease-in-out overflow-hidden shrink-0">
+            <Image
+              src="/logo-sidebar.png"
+              alt="Namou"
+              width={168}
+              height={56}
+              className="object-contain object-left h-10 w-auto min-w-[168px]"
+              priority
+            />
+          </div>
+        </Link>
 
-        {/* Resources separator */}
-        <div className="mx-2 my-2 border-t border-white/10" />
-        <p className="px-2 text-[10px] uppercase tracking-widest text-white/30 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">Resources</p>
-        {resourceNavItems.map((item) => {
-          const active = pathname.startsWith(item.baseHref);
-          return (
-            <NavLink key={item.baseHref} href={item.href} label={item.label} active={active}>
-              <item.icon className="w-4 h-4 shrink-0" />
-            </NavLink>
-          );
-        })}
-
-        {/* Context-sensitive bottom links */}
-        <Suspense fallback={null}>
-          <ContextLinks pathname={pathname} />
-        </Suspense>
-      </nav>
-    </aside>
+        <SidebarNav pathname={pathname} navItems={navItems} />
+      </aside>
+    </>
   );
 }
 
@@ -194,22 +262,23 @@ function RocketIcon({ className }: { className?: string }) {
   );
 }
 
-function NavLink({ href, label, active, children }: { href: string; label: string; active: boolean; children: React.ReactNode }) {
+function NavLink({ href, label, active, children, onNavigate }: { href: string; label: string; active: boolean; children: React.ReactNode; onNavigate?: () => void }) {
   return (
     <Link
       href={href}
-      className={`nav-link relative flex items-center gap-3 px-2 py-1.5 lg:py-2.5 rounded-lg text-sm transition-colors ${
+      onClick={onNavigate}
+      className={`nav-link relative flex items-center gap-3 px-2 py-2 md:py-1.5 lg:py-2.5 rounded-lg text-sm transition-colors ${
         active
           ? "bg-white/15 text-white font-medium"
           : "text-white/70 hover:bg-white/10 hover:text-white"
       }`}
     >
       {children}
-      <span className="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+      <span className="whitespace-nowrap md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">
         {label}
       </span>
       {/* Tooltip — visible when collapsed, hidden when expanded */}
-      <span className="nav-tooltip absolute left-full ml-3 px-2.5 py-1.5 rounded-md bg-deep-forest text-white text-xs font-medium whitespace-nowrap shadow-lg z-50 opacity-0 pointer-events-none transition-opacity">
+      <span className="nav-tooltip hidden md:block absolute left-full ml-3 px-2.5 py-1.5 rounded-md bg-deep-forest text-white text-xs font-medium whitespace-nowrap shadow-lg z-50 opacity-0 pointer-events-none transition-opacity">
         {label}
       </span>
     </Link>

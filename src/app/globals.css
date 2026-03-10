@@ -42,9 +42,12 @@ aside:not(:hover) .nav-link:hover .nav-tooltip {
   pointer-events: auto;
 }
 
-/* Responsive base font scaling for smaller screens */
+/* Responsive base font scaling */
 html {
-  font-size: clamp(12px, 1.1vw, 16px);
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  html { font-size: clamp(12px, 1.1vw, 16px); }
 }
 @media (min-width: 1440px) {
   html { font-size: 16px; }

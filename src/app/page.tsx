@@ -17,7 +17,7 @@ export default function LandingPage() {
     : [];
 
   return (
-    <div className="relative flex flex-col min-h-screen overflow-hidden">
+    <div className="relative flex flex-col min-h-screen overflow-x-hidden">
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -27,7 +27,7 @@ export default function LandingPage() {
       <div className="absolute inset-0 bg-deep-forest/40" />
 
       {/* Top bar */}
-      <header className="relative z-10 flex items-center justify-center px-12 py-6">
+      <header className="relative z-10 flex items-center justify-center px-4 sm:px-12 py-4 sm:py-6">
         <span className="text-xs tracking-[0.35em] uppercase text-white/60 font-heading">
           Real Estate Done Right
         </span>
@@ -37,16 +37,16 @@ export default function LandingPage() {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pt-4 sm:pt-6 pb-6 sm:pb-10">
 
         {/* Logo — outside the card, over the background */}
-        <div className="flex flex-col items-center text-center mb-6">
+        <div className="flex flex-col items-center text-center mb-4 sm:mb-6">
           <Image
             src="/logo.png"
             alt="Namou Properties"
             width={520}
             height={160}
-            className="object-contain w-auto h-[20vh] sm:h-[28vh] lg:h-[34vh]"
+            className="object-contain w-auto h-[15vh] sm:h-[28vh] lg:h-[34vh]"
             priority
           />
-          <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto leading-relaxed mt-3">
+          <p className="text-sm sm:text-base md:text-lg text-white/80 max-w-xl mx-auto leading-relaxed mt-2 sm:mt-3 px-2">
             Strategic land investment opportunities across Ras Al Khaimah.
             Curated plots, transparent ROI, and a clear path to ownership.
           </p>

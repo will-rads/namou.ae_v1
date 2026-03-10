@@ -217,7 +217,7 @@ export default function CTAPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 gap-3 lg:gap-4 animate-fade-in min-h-0 overflow-hidden">
+    <div className="flex flex-col flex-1 gap-3 lg:gap-4 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Next Steps</h1>
         <p className="text-sm text-muted mt-1">

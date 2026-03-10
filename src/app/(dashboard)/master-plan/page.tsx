@@ -89,9 +89,9 @@ function MasterPlanContent() {
   const showCompare = compareMode && comparePlots.length > 0;
 
   return (
-    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
       {/* Header row */}
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
         <div>
           <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Master Plan Overview</h1>
           <p className="text-sm text-muted mt-0.5">
@@ -153,11 +153,11 @@ function MasterPlanContent() {
         </div>
       )}
 
-      {/* Map + detail — horizontal layout */}
-      <div className="flex flex-row flex-1 gap-3 min-h-0">
+      {/* Map + detail — horizontal on desktop, stacked on mobile */}
+      <div className="flex flex-col md:flex-row flex-1 gap-3 min-h-0">
 
         {/* Map */}
-        <div className={`relative bg-mint-white rounded-2xl overflow-hidden border border-mint-light/40 shadow-sm ${showPanel || showCompare ? "w-1/2" : "flex-1"}`}>
+        <div className={`relative bg-mint-white rounded-2xl overflow-hidden border border-mint-light/40 shadow-sm min-h-[250px] md:min-h-0 ${showPanel || showCompare ? "md:w-1/2" : "flex-1"}`}>
           {/* Grid background */}
           <div className="absolute inset-0 opacity-10">
             <svg className="w-full h-full">
@@ -300,7 +300,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
   }
 
   return (
-    <div className="w-1/2 flex flex-col min-h-0">
+    <div className="md:w-1/2 flex flex-col min-h-0">
     <ContentCard className="flex-1 min-h-0 overflow-y-auto flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -384,7 +384,7 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
   }
 
   return (
-    <div className="w-1/2 flex flex-col min-h-0">
+    <div className="md:w-1/2 flex flex-col min-h-0">
       <ContentCard className="flex-1 overflow-y-auto flex flex-col">
         {/* Header — plot name */}
         <div className="flex items-start justify-between mb-4 shrink-0">
