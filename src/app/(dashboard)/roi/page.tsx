@@ -549,24 +549,24 @@ export default function ROIPage() {
               </div>
 
               {/* KPI Row */}
-              <div className="grid grid-cols-2 gap-3 shrink-0">
-                <KPICard label="Total Revenue (GDV)" value=""
+              <div className="grid grid-cols-4 gap-2 shrink-0">
+                <KPICard label="Revenue (GDV)" value=""
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
                 <KPICard label="Total Cost" value=""
                   compareValues={{ v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
                 <KPICard label="Total Profit" value="" primary
                   compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
-                <KPICard label="Profit Margin" value="" primary
+                <KPICard label="Margin" value="" primary
                   compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }} />
               </div>
 
               {/* Detailed comparison table */}
-              <ContentCard className="flex-1 min-h-0 overflow-y-auto">
-                <p className="text-xs uppercase tracking-widest text-muted mb-3 font-semibold">Detailed Comparison</p>
+              <ContentCard className="flex-1 min-h-0 overflow-y-auto py-2 px-4">
+                <p className="text-[10px] uppercase tracking-widest text-muted mb-1.5 font-semibold">Detailed Comparison</p>
                 <div className="grid gap-0" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-                  <div className="py-1.5 text-xs font-semibold text-muted">Metric</div>
-                  <div className="py-1.5 text-xs font-semibold text-forest text-right">{comparePlots[0].name}</div>
-                  <div className="py-1.5 text-xs font-semibold text-blue-700 text-right">{comparePlots[1].name}</div>
+                  <div className="py-1 text-[11px] font-semibold text-muted">Metric</div>
+                  <div className="py-1 text-[11px] font-semibold text-forest text-right">{comparePlots[0].name}</div>
+                  <div className="py-1 text-[11px] font-semibold text-blue-700 text-right">{comparePlots[1].name}</div>
 
                   {[
                     { label: "Plot Area", v1: `${formatNumber(inputs.plotSize)} sqft`, v2: `${formatNumber(inputs2.plotSize)} sqft`, section: "Land" },
@@ -587,18 +587,31 @@ export default function ROIPage() {
                   ].map((row, ri) => (
                     <React.Fragment key={row.label}>
                       {row.section && (
-                        <div className={`col-span-3 text-[10px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-2 pt-2 border-t border-mint-light/40" : ""} pb-1`}>
+                        <div className={`col-span-3 text-[9px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-1 pt-1 border-t border-mint-light/40" : ""} pb-0.5`}>
                           {row.section}
                         </div>
                       )}
-                      <div className={`py-1.5 text-sm ${row.highlight ? "font-semibold text-deep-forest" : "text-muted"}`}>{row.label}</div>
-                      <div className={`py-1.5 text-sm text-right ${row.highlight ? "font-bold text-forest" : "font-semibold text-deep-forest"}`}>{row.v1}</div>
-                      <div className={`py-1.5 text-sm text-right ${row.highlight ? "font-bold text-blue-700" : "font-semibold text-deep-forest"}`}>{row.v2}</div>
+                      <div className={`py-0.5 text-xs ${row.highlight ? "font-semibold text-deep-forest" : "text-muted"}`}>{row.label}</div>
+                      <div className={`py-0.5 text-xs text-right ${row.highlight ? "font-bold text-forest" : "font-semibold text-deep-forest"}`}>{row.v1}</div>
+                      <div className={`py-0.5 text-xs text-right ${row.highlight ? "font-bold text-blue-700" : "font-semibold text-deep-forest"}`}>{row.v2}</div>
                     </React.Fragment>
                   ))}
                 </div>
               </ContentCard>
 
+              {/* Offer Simulator button */}
+              <div className="flex justify-end shrink-0">
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
+                    router.push("/offer");
+                  }}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+                >
+                  Offer Simulator
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+              </div>
             </>
           )}
         </div>
