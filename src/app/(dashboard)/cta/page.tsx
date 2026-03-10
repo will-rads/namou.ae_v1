@@ -1,4 +1,8 @@
+"use client";
+
+import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import ContentCard from "@/components/ContentCard";
 
 const actions = [
@@ -14,6 +18,7 @@ const actions = [
     timeline: "2-3 business days to arrange",
     prep: "Valid passport / Emirates ID required",
     details: "Includes helicopter tour, plot walkthrough, and lunch with the project director.",
+    hasCalendar: true,
   },
   {
     title: "Book Another Call",
@@ -27,6 +32,7 @@ const actions = [
     timeline: "Same-day availability",
     prep: "No preparation needed",
     details: "30-min focused session to address questions about pricing, zoning, or legal structure.",
+    hasCalendar: true,
   },
   {
     title: "Schedule a Video Meeting",
@@ -40,6 +46,7 @@ const actions = [
     timeline: "Next available slot within 24 hours",
     prep: "Stable internet connection recommended",
     details: "Screen-share walkthrough of your customized ROI model with a senior analyst.",
+    hasCalendar: true,
   },
   {
     title: "Submit an Offer",
@@ -57,7 +64,99 @@ const actions = [
   },
 ];
 
+const TIME_SLOTS = [
+  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
+  "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM",
+  "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM",
+  "05:00 PM",
+];
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 export default function CTAPage() {
+  const [calendarAction, setCalendarAction] = useState<string | null>(null);
+  const [viewDate, setViewDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const calendarDays = useMemo(() => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    return cells;
+  }, [viewDate]);
+
+  function openCalendar(actionTitle: string) {
+    const now = new Date();
+    setViewDate(now);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setConfirmed(false);
+    setCalendarAction(actionTitle);
+  }
+
+  function closeCalendar() {
+    setCalendarAction(null);
+  }
+
+  function prevMonth() {
+    setViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    setSelectedDate(null);
+    setSelectedTime(null);
+  }
+
+  function nextMonth() {
+    setViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    setSelectedDate(null);
+    setSelectedTime(null);
+  }
+
+  function selectDay(day: number) {
+    const d = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    if (d < today) return;
+    setSelectedDate(d);
+    setSelectedTime(null);
+    setConfirmed(false);
+  }
+
+  function isSelected(day: number) {
+    if (!selectedDate) return false;
+    return selectedDate.getFullYear() === viewDate.getFullYear()
+      && selectedDate.getMonth() === viewDate.getMonth()
+      && selectedDate.getDate() === day;
+  }
+
+  function isToday(day: number) {
+    return today.getFullYear() === viewDate.getFullYear()
+      && today.getMonth() === viewDate.getMonth()
+      && today.getDate() === day;
+  }
+
+  function isPast(day: number) {
+    const d = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    return d < today;
+  }
+
+  function handleConfirm() {
+    setConfirmed(true);
+  }
+
   return (
     <div className="flex flex-col flex-1 gap-4 animate-fade-in">
       <div className="shrink-0">
@@ -68,8 +167,8 @@ export default function CTAPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 auto-rows-fr">
-        {actions.map((action) => (
-          <Link key={action.title} href={action.href} className="group flex">
+        {actions.map((action) => {
+          const inner = (
             <ContentCard
               className={`w-full flex flex-col transition-all group-hover:shadow-md group-hover:border-forest/30 ${
                 action.primary ? "border-forest/40" : ""
@@ -85,7 +184,6 @@ export default function CTAPage() {
                 </div>
               </div>
 
-              {/* Timeline + prep badges */}
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
@@ -97,7 +195,6 @@ export default function CTAPage() {
                 </span>
               </div>
 
-              {/* Extra detail */}
               <p className="mt-3 text-xs text-muted leading-relaxed">{action.details}</p>
 
               <div className="mt-auto pt-4 flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
@@ -107,9 +204,179 @@ export default function CTAPage() {
                 </svg>
               </div>
             </ContentCard>
-          </Link>
-        ))}
+          );
+
+          if (action.hasCalendar) {
+            return (
+              <button
+                key={action.title}
+                onClick={() => openCalendar(action.title)}
+                className="group flex text-left"
+              >
+                {inner}
+              </button>
+            );
+          }
+
+          return (
+            <Link key={action.title} href={action.href} className="group flex">
+              {inner}
+            </Link>
+          );
+        })}
       </div>
+
+      {/* Calendar Modal */}
+      {calendarAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-deep-forest/60 backdrop-blur-sm" onClick={closeCalendar} />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-2xl mx-4">
+            {/* Header */}
+            <div className="bg-forest px-8 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Image
+                  src="/logo.png"
+                  alt="Namou"
+                  width={120}
+                  height={40}
+                  className="object-contain h-8 w-auto brightness-0 invert"
+                />
+                <div className="w-px h-8 bg-white/20" />
+                <p className="text-sm font-medium text-white/90">{calendarAction}</p>
+              </div>
+              <button onClick={closeCalendar} className="text-white/60 hover:text-white transition-colors">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+
+            {confirmed ? (
+              /* Confirmation */
+              <div className="px-8 py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-forest/10 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+                <h3 className="text-xl font-bold text-forest mb-2">Confirmed</h3>
+                <p className="text-sm text-muted">
+                  Your <strong className="text-deep-forest">{calendarAction?.toLowerCase()}</strong> is scheduled for{" "}
+                  <strong className="text-deep-forest">
+                    {selectedDate && `${MONTHS[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`}
+                  </strong>{" "}
+                  at <strong className="text-deep-forest">{selectedTime}</strong>.
+                </p>
+                <p className="text-xs text-muted mt-3">Your Namou specialist will send a confirmation shortly.</p>
+                <button
+                  onClick={closeCalendar}
+                  className="mt-6 px-8 py-2.5 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              /* Calendar + Time picker */
+              <div className="flex">
+                {/* Calendar */}
+                <div className="flex-1 px-8 py-6">
+                  {/* Month navigation */}
+                  <div className="flex items-center justify-between mb-4">
+                    <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-mint-bg transition-colors text-muted hover:text-forest">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6" /></svg>
+                    </button>
+                    <h3 className="text-sm font-bold text-deep-forest">
+                      {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
+                    </h3>
+                    <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-mint-bg transition-colors text-muted hover:text-forest">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+                    </button>
+                  </div>
+
+                  {/* Day headers */}
+                  <div className="grid grid-cols-7 gap-1 mb-1">
+                    {DAYS.map(d => (
+                      <div key={d} className="text-center text-[10px] font-semibold text-muted uppercase tracking-wider py-1">
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Day cells */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {calendarDays.map((day, i) => {
+                      if (day === null) return <div key={`e-${i}`} />;
+                      const past = isPast(day);
+                      const sel = isSelected(day);
+                      const tod = isToday(day);
+                      return (
+                        <button
+                          key={day}
+                          onClick={() => selectDay(day)}
+                          disabled={past}
+                          className={`
+                            w-full aspect-square rounded-lg text-sm font-medium transition-colors flex items-center justify-center
+                            ${sel
+                              ? "bg-forest text-white"
+                              : tod
+                                ? "bg-forest/10 text-forest font-bold ring-1 ring-forest/30"
+                                : past
+                                  ? "text-muted/30 cursor-not-allowed"
+                                  : "text-deep-forest hover:bg-mint-bg"
+                            }
+                          `}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Time slots — visible when a date is selected */}
+                <div className={`w-48 border-l border-mint-light/40 flex flex-col transition-all ${selectedDate ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
+                  <div className="px-4 py-4 border-b border-mint-light/40">
+                    <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">
+                      {selectedDate
+                        ? `${MONTHS[selectedDate.getMonth()].slice(0, 3)} ${selectedDate.getDate()}`
+                        : "Select a date"}
+                    </p>
+                    <p className="text-xs text-muted mt-0.5">Pick a time</p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 max-h-[320px]">
+                    {TIME_SLOTS.map(time => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-center ${
+                          selectedTime === time
+                            ? "bg-forest text-white"
+                            : "border border-mint-light text-deep-forest hover:border-forest/30 hover:bg-mint-bg"
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Confirm */}
+                  <div className="px-3 py-3 border-t border-mint-light/40">
+                    <button
+                      onClick={handleConfirm}
+                      disabled={!selectedDate || !selectedTime}
+                      className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                        selectedDate && selectedTime
+                          ? "bg-forest text-white hover:bg-deep-forest"
+                          : "bg-mint-light/50 text-muted cursor-not-allowed"
+                      }`}
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
