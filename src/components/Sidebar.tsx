@@ -103,9 +103,11 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close mobile menu on route change
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Close on escape key
   const handleEsc = useCallback((e: KeyboardEvent) => {

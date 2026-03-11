@@ -72,15 +72,17 @@ function SignaturePad({
     return () => window.removeEventListener("resize", resize);
   }, [resize]);
 
-  clearRef.current = () => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    if (ctx) ctx.clearRect(0, 0, c.width, c.height);
-    hasStrokes.current = false;
-    resize();
-    onEnd("");
-  };
+  useEffect(() => {
+    clearRef.current = () => {
+      const c = canvasRef.current;
+      if (!c) return;
+      const ctx = c.getContext("2d");
+      if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+      hasStrokes.current = false;
+      resize();
+      onEnd("");
+    };
+  }, [resize, onEnd, clearRef]);
 
   function getPos(e: React.MouseEvent | React.TouchEvent) {
     const c = canvasRef.current!;
@@ -157,7 +159,12 @@ function inputCls(error?: boolean) {
 function PropertyIntroductionForm() {
   const [plot, setPlot] = useState<ReturnType<typeof getSelectedPlot>>(null);
   const [dateStr, setDateStr] = useState("");
-  useEffect(() => { setPlot(getSelectedPlot()); setDateStr(formatDate()); }, []);
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setPlot(getSelectedPlot());
+    setDateStr(formatDate());
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const [form, setForm] = useState({ fullName: "", mobile: "", email: "", passportId: "", city: "", country: "" });
   const [signature, setSignature] = useState("");
@@ -279,7 +286,12 @@ function PropertyIntroductionForm() {
 function A2AForm() {
   const [sharedPlots, setSharedPlots] = useState<typeof plots>([]);
   const [dateStr, setDateStr] = useState("");
-  useEffect(() => { setSharedPlots(getSelectedPlots()); setDateStr(formatDate()); }, []);
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setSharedPlots(getSelectedPlots());
+    setDateStr(formatDate());
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const [form, setForm] = useState({ companyName: "", address: "", tradeLicense: "", contactPerson: "", phone: "", email: "", investorName: "", investorPhone: "", investorEmail: "" });
   const [signature, setSignature] = useState("");

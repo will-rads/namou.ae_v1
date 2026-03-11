@@ -69,15 +69,17 @@ function SignaturePad({
     return () => window.removeEventListener("resize", resize);
   }, [resize]);
 
-  clearRef.current = () => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    if (ctx) ctx.clearRect(0, 0, c.width, c.height);
-    hasStrokes.current = false;
-    resize();
-    onEnd("");
-  };
+  useEffect(() => {
+    clearRef.current = () => {
+      const c = canvasRef.current;
+      if (!c) return;
+      const ctx = c.getContext("2d");
+      if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+      hasStrokes.current = false;
+      resize();
+      onEnd("");
+    };
+  }, [resize, onEnd, clearRef]);
 
   function getPos(e: React.MouseEvent | React.TouchEvent) {
     const c = canvasRef.current!;
@@ -131,10 +133,12 @@ function SignaturePad({
 export default function PropertyIntroductionPage() {
   const [plot, setPlot] = useState<ReturnType<typeof getSelectedPlot>>(null);
   const [dateStr, setDateStr] = useState("");
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setPlot(getSelectedPlot());
     setDateStr(formatDate());
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const [form, setForm] = useState({
     fullName: "",
