@@ -284,10 +284,10 @@ export default function ROIPage() {
       <div className="flex-1 min-h-0 flex flex-col gap-2 lg:gap-4 overflow-hidden">
 
         {/* ═══════════ TOP: Variables ═══════════ */}
-        <div className="flex-[2] flex flex-col gap-2 lg:gap-3 min-h-0 overflow-y-auto">
+        <div className="shrink-0 flex flex-col gap-2">
 
           {/* Active scenario info */}
-          <div className="bg-mint-bg/50 rounded-xl px-4 py-2.5 border border-mint-light/40 shrink-0">
+          <div className="bg-mint-bg/50 rounded-xl px-4 py-2 border border-mint-light/40 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted">Active:</span>
@@ -363,43 +363,42 @@ export default function ROIPage() {
             </div>
           </ContentCard>
           ) : (
-          <ContentCard className="flex-1 flex flex-col">
-            <div className="flex flex-col flex-1 divide-y divide-mint-light/40">
-              {/* Land Acquisition */}
-              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Land Acquisition</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted">Pricing Method</span>
-                  <TogglePair
-                    optA={{ key: "per-plot", label: "/ Plot sqft" }}
-                    optB={{ key: "per-gfa",  label: "/ GFA" }}
-                    value={inputs.pricingMethod}
-                    onChange={v => update("pricingMethod", v as PricingMethod)}
-                  />
+          <ContentCard className="p-4 flex flex-col">
+            <div className="grid grid-cols-2 gap-x-6">
+              {/* Left: Land + Construction */}
+              <div className="flex flex-col gap-2 border-r border-mint-light/40 pr-6">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Land Acquisition</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-muted">Pricing Method</span>
+                    <TogglePair
+                      optA={{ key: "per-plot", label: "/ Plot sqft" }}
+                      optB={{ key: "per-gfa",  label: "/ GFA" }}
+                      value={inputs.pricingMethod}
+                      onChange={v => update("pricingMethod", v as PricingMethod)}
+                    />
+                  </div>
+                  {inputs.pricingMethod === "per-plot"
+                    ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v)} />
+                    : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
+                  }
                 </div>
-                {inputs.pricingMethod === "per-plot"
-                  ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v)} />
-                  : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
-                }
+                <div className="pt-2 border-t border-mint-light/40">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Construction</p>
+                  <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
+                  <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
+                </div>
               </div>
-
-              {/* Design */}
-              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Design</p>
-                <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
-              </div>
-
-              {/* Construction */}
-              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Construction</p>
-                <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
-                <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
-              </div>
-
-              {/* Sales */}
-              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Sales</p>
-                <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
+              {/* Right: Design + Sales */}
+              <div className="flex flex-col gap-2">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Design</p>
+                  <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
+                </div>
+                <div className="pt-2 border-t border-mint-light/40">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Sales</p>
+                  <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
+                </div>
               </div>
             </div>
           </ContentCard>
@@ -408,7 +407,7 @@ export default function ROIPage() {
         </div>
 
         {/* ═══════════ BOTTOM: Results ═══════════ */}
-        <div className="flex-[3] flex flex-col gap-2 lg:gap-3 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-hidden">
 
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
@@ -478,9 +477,10 @@ export default function ROIPage() {
                 />
               </div>
 
-              {/* Investor Metrics */}
-              <ContentCard className="py-3 px-5 flex-1 flex flex-col">
-                <p className="text-xs uppercase tracking-widest text-muted mb-2 font-semibold">Investor Metrics</p>
+              {/* Investor Metrics + Sensitivity — side by side */}
+              <div className="flex gap-2 lg:gap-3 flex-1 min-h-0">
+              <ContentCard className="py-2 px-4 flex-1 flex flex-col">
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Investor Metrics</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
                   <MetricRow label="Return on Cost"      value={`${results.returnOnCost.toFixed(1)}%`} />
                   <MetricRow label="GDV Multiple"         value={`${results.gdvMultiple.toFixed(2)}×`} />
@@ -492,9 +492,9 @@ export default function ROIPage() {
               </ContentCard>
 
               {/* Sensitivity chart + actions */}
-              <ContentCard className="py-3 px-5 flex-1 flex flex-col">
-                <p className="text-xs uppercase tracking-widest text-muted mb-2 font-semibold">Profit vs. Exit Price</p>
-                <div className="flex items-end gap-3 flex-1 min-h-[60px]">
+              <ContentCard className="py-2 px-4 flex-1 flex flex-col">
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Profit vs. Exit Price</p>
+                <div className="flex items-end gap-3 flex-1 min-h-[48px]">
                   {sensitivityData.map(d => {
                     const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
                     const isCurrent = d.price === closestSensPrice;
@@ -519,7 +519,7 @@ export default function ROIPage() {
                 <p className="text-xs text-muted mt-2 text-center">AED per sqft NSA</p>
 
                 {/* Actions */}
-                <div className="flex justify-between mt-3 pt-3 border-t border-mint-light/40 relative">
+                <div className="flex justify-between mt-2 pt-2 border-t border-mint-light/40 relative">
                   <div className="relative">
                     <button
                       onClick={() => setShowPlotPicker(v => !v)}
@@ -566,6 +566,7 @@ export default function ROIPage() {
                   </button>
                 </div>
               </ContentCard>
+              </div>
             </div>
           )}
 
@@ -803,7 +804,7 @@ function ComputedRow({ label, value, highlight }: { label: string; value: string
 
 function MetricRow({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-2">
+    <div className="flex items-center justify-between py-1.5">
       <div>
         <p className="text-sm text-muted">{label}</p>
         {sub && <p className="text-xs text-muted/60">{sub}</p>}
