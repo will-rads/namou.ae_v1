@@ -366,7 +366,7 @@ export default function ROIPage() {
           <ContentCard className="flex-1 flex flex-col">
             <div className="flex flex-col flex-1 divide-y divide-mint-light/40">
               {/* Land Acquisition */}
-              <div className="flex-1 flex flex-col justify-evenly py-3">
+              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Land Acquisition</p>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted">Pricing Method</span>
@@ -384,20 +384,20 @@ export default function ROIPage() {
               </div>
 
               {/* Design */}
-              <div className="flex-1 flex flex-col justify-evenly py-3">
+              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Design</p>
                 <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
               </div>
 
               {/* Construction */}
-              <div className="flex-1 flex flex-col justify-evenly py-3">
+              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Construction</p>
                 <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
                 <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
               </div>
 
               {/* Sales */}
-              <div className="flex-1 flex flex-col justify-evenly py-3">
+              <div className="flex-1 flex flex-col justify-start gap-1.5 py-1.5">
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">Sales</p>
                 <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
               </div>
@@ -773,7 +773,7 @@ function NumInput({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="flex items-center justify-between py-2.5">
+    <div className="flex items-center justify-between py-1.5">
       <label className="text-sm text-muted">{label}</label>
       <div className="flex items-center border border-mint-light rounded-lg overflow-hidden focus-within:border-forest transition-colors">
         {prefix && <span className="px-2.5 py-1.5 text-sm text-muted bg-mint-bg border-r border-mint-light">{unit}</span>}
