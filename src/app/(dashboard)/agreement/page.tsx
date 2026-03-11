@@ -450,9 +450,22 @@ function A2AForm() {
 }
 
 /* ══════════════════════════════════════════════════════
-   Main Agreement Page — two forms side by side
+   Main Agreement Page — filtered by client type
    ══════════════════════════════════════════════════════ */
 export default function AgreementPage() {
+  const [clientType, setClientType] = useState<string | null>(null);
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("namou_session");
+      if (raw) setClientType(JSON.parse(raw).clientType ?? null);
+    } catch { /* ignore */ }
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const showPropertyForm = clientType === "Developer" || clientType === "Investor" || clientType === null;
+  const showA2AForm = clientType === "Broker" || clientType === null;
+
   return (
     <div className="flex flex-col flex-1 gap-2 lg:gap-4 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
@@ -460,16 +473,20 @@ export default function AgreementPage() {
         <p className="text-sm text-muted mt-1">Fill in the relevant form below.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
-        {/* Left — Property Introduction Form */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 flex flex-col overflow-y-auto min-h-0">
-          <PropertyIntroductionForm />
-        </div>
+      <div className={`flex-1 min-h-0 ${showPropertyForm && showA2AForm ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col"}`}>
+        {/* Property Introduction Form — Developer / Investor */}
+        {showPropertyForm && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 flex flex-col overflow-y-auto min-h-0">
+            <PropertyIntroductionForm />
+          </div>
+        )}
 
-        {/* Right — A2A Agreement */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 flex flex-col overflow-y-auto min-h-0">
-          <A2AForm />
-        </div>
+        {/* A2A Agreement — Broker */}
+        {showA2AForm && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 flex flex-col overflow-y-auto min-h-0">
+            <A2AForm />
+          </div>
+        )}
       </div>
     </div>
   );
