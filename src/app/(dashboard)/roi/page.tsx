@@ -280,11 +280,11 @@ export default function ROIPage() {
         </div>
       </div>
 
-      {/* ── Split screen: left = simulator, right = results ── */}
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-2 lg:gap-4 overflow-hidden">
+      {/* ── Top/bottom: top = variables, bottom = results ── */}
+      <div className="flex-1 min-h-0 flex flex-col gap-2 lg:gap-4 overflow-hidden">
 
-        {/* ═══════════ LEFT: Variables ═══════════ */}
-        <div className="md:w-1/2 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-y-auto pr-1">
+        {/* ═══════════ TOP: Variables ═══════════ */}
+        <div className="flex-[2] flex flex-col gap-2 lg:gap-3 min-h-0 overflow-y-auto">
 
           {/* Active scenario info */}
           <div className="bg-mint-bg/50 rounded-xl px-4 py-2.5 border border-mint-light/40 shrink-0">
@@ -407,14 +407,14 @@ export default function ROIPage() {
 
         </div>
 
-        {/* ═══════════ RIGHT: Results ═══════════ */}
-        <div className="md:w-1/2 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-hidden pl-1">
+        {/* ═══════════ BOTTOM: Results ═══════════ */}
+        <div className="flex-[3] flex flex-col gap-2 lg:gap-3 min-h-0 overflow-hidden">
 
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
             <div className="flex flex-col gap-2 lg:gap-3 h-full">
               {/* KPI Row */}
-              <div className="grid grid-cols-2 gap-2 lg:gap-3 shrink-0">
+              <div className="grid grid-cols-4 gap-2 lg:gap-3 shrink-0">
                 <KPICard
                   label="Total Revenue (GDV)"
                   value={fmtAED(results.revenue)}
