@@ -15,9 +15,11 @@ interface Props {
 
 const MAP_CENTER: [number, number] = [25.745, 55.855];
 const OVERVIEW_ZOOM = 11;
-// Zoom 18 shows individual buildings, road widths, and plot boundaries clearly —
-// deep enough for a real-estate investor to evaluate access and immediate context.
-const DETAIL_ZOOM = 18;
+// Zoom 17 pairs well with maxNativeZoom:16 — Leaflet upscales the real zoom-16
+// satellite tile by 2× (barely perceptible softness), which is far more useful
+// for investment inspection than the "Map data not yet available" tiles that
+// Esri returns at zoom 17+ for recently developed RAK coastal areas.
+const DETAIL_ZOOM = 17;
 
 function buildIcon(name: string, active: boolean): L.DivIcon {
   const bg     = active ? "#003D2E"             : "rgba(245,158,11,0.95)";
@@ -48,6 +50,8 @@ export default function PlotMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<L.Map | null>(null);
   const markersRef   = useRef<Map<string, L.Marker>>(new Map());
+  // Holds the approximate-area circle for the currently selected plot
+  const circleRef    = useRef<L.Circle | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   // Keep the callback stable so markers don't recreate on every parent render
@@ -61,54 +65,56 @@ export default function PlotMap({
     const map = L.map(containerRef.current, {
       center: MAP_CENTER,
       zoom: OVERVIEW_ZOOM,
-      // maxZoom: 22 — allows the user to scroll/zoom past the provider's native
-      // tile max. Leaflet will upscale the highest available tiles rather than
-      // showing "Map data not available" placeholders, keeping real imagery
-      // visible at any zoom depth.
-      maxZoom: 22,
-      // zoomSnap: 0.5 — half-step zoom increments feel smoother and more
-      // controlled when inspecting plot boundaries.
-      zoomSnap: 0.5,
-      // Disable the default top-left zoom control; we add it at bottom-right
-      // so it doesn't overlap the "Available Plots" overlay panel.
+      maxZoom: 22,      // user can scroll past native tile max; Leaflet upscales
+      zoomSnap: 0.5,    // half-step increments for fine-grained inspection
       zoomControl: false,
       attributionControl: true,
     });
 
-    // Zoom controls at bottom-right — clear of the Available Plots overlay
+    // Zoom controls at bottom-right — clear of the Available Plots overlay (top-left)
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    // ── CartoDB Voyager — full real-world tile layer ─────────────────────────
-    // Replaces Esri World Imagery which returns "Map data not yet available"
-    // placeholder tiles for Al Marjan Beach District and other RAK areas at
-    // zoom 17+. Esri's raster cache does not fully cover recently developed
-    // coastal areas; it returns an actual tile IMAGE containing that text
-    // (HTTP 200) so maxNativeZoom cannot help — Leaflet has no way to detect
-    // a placeholder and fall back to a lower zoom.
+    // ── Esri World Imagery — photo-realistic satellite basemap ──────────────
     //
-    // CartoDB Voyager tiles are vector-rendered on-demand from OpenStreetMap,
-    // guaranteeing full coverage at every zoom level for every area.
-    // Roads, buildings, coastline, water, and labels are all present at zoom 18.
-    // maxNativeZoom: 20  → native tile resolution goes to zoom 20
-    // maxZoom: 22        → Leaflet upscales zoom-20 tiles at 21-22
+    // IMPORTANT: maxNativeZoom is set to 16, NOT 19.
+    //
+    // Esri's raster tile cache for recently developed RAK coastal areas
+    // (Al Marjan Beach District, Al Maireed, etc.) runs out at zoom 17+.
+    // When coverage is absent Esri returns an HTTP 200 with an actual PNG
+    // image containing "Map data not yet available" text — NOT a 404.
+    // Leaflet cannot distinguish a placeholder PNG from real imagery, so it
+    // renders the placeholder faithfully at every tile position.
+    //
+    // Setting maxNativeZoom:16 tells Leaflet: never request tiles above zoom 16
+    // from this provider. At zoom 17-22 Leaflet upscales the real zoom-16
+    // tiles instead — showing actual satellite imagery (slightly soft at high
+    // zoom) rather than repeating placeholder text tiles.
+    //
+    // Zoom-16 Esri tiles reliably exist for the entire RAK region.
     L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
         attribution:
-          "&copy; <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions' target='_blank'>CARTO</a>",
-        subdomains: "abcd",
-        maxNativeZoom: 20,
+          "Tiles &copy; <a href='https://www.esri.com' target='_blank'>Esri</a> &mdash; " +
+          "Esri, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP",
+        maxNativeZoom: 16,
         maxZoom: 22,
       }
+    ).addTo(map);
+
+    // ── Esri Reference — road names and place labels overlay ─────────────────
+    // maxNativeZoom:16 matches the imagery layer so labels scale up together.
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+      { opacity: 0.9, maxNativeZoom: 16, maxZoom: 22 }
     ).addTo(map);
 
     mapRef.current = map;
     setMapReady(true);
 
     // ── ResizeObserver: keep Leaflet in sync with container size changes ─────
-    // When the detail panel opens the map container shrinks from full-width to
-    // md:w-1/2 via CSS flex. Without this, Leaflet's viewport cache stays stale
-    // and flyTo centres on wrong coordinates.
+    // When the detail panel opens the map shrinks to md:w-1/2. Without this,
+    // Leaflet's viewport cache is stale and flyTo centres on wrong coordinates.
     const ro = new ResizeObserver(() => {
       if (mapRef.current) mapRef.current.invalidateSize();
     });
@@ -119,6 +125,7 @@ export default function PlotMap({
       map.remove();
       mapRef.current = null;
       markersRef.current.clear();
+      circleRef.current = null;
     };
   }, []);
 
@@ -148,6 +155,46 @@ export default function PlotMap({
     });
   }, [mapReady, plots, selectedPlot, comparePlots, compareMode]);
 
+  // ── Approximate plot-area circle ─────────────────────────────────────────
+  // Draws a dashed amber ring sized to the selected plot's recorded area.
+  // The radius is derived from plotArea (sqft → m²) as a circle of equivalent
+  // area — it is approximate, not a surveyed boundary. The dashed style
+  // communicates this clearly. On satellite imagery this ring gives the
+  // investor an immediate visual sense of the plot's physical footprint
+  // relative to nearby roads and structures.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+
+    // Remove previous circle
+    if (circleRef.current) {
+      circleRef.current.remove();
+      circleRef.current = null;
+    }
+
+    if (
+      !compareMode &&
+      selectedPlot?.lat != null &&
+      selectedPlot?.lng != null &&
+      selectedPlot.plotArea
+    ) {
+      const areaM2  = selectedPlot.plotArea * 0.0929; // sqft → m²
+      const radiusM = Math.sqrt(areaM2 / Math.PI);    // equivalent-area circle
+
+      circleRef.current = L.circle(
+        [selectedPlot.lat!, selectedPlot.lng!],
+        {
+          radius:      radiusM,
+          color:       "#D97706",   // amber — matches the unselected marker colour
+          weight:      2.5,
+          opacity:     0.85,
+          fillColor:   "#F59E0B",
+          fillOpacity: 0.10,
+          dashArray:   "6 4",      // dashed = approximate indicator, not exact boundary
+        }
+      ).addTo(mapRef.current);
+    }
+  }, [mapReady, selectedPlot, compareMode]);
+
   // ── Pan/zoom to selected plot (or return to overview) ───────────────────
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
@@ -155,10 +202,9 @@ export default function PlotMap({
     if (!compareMode && selectedPlot?.lat != null && selectedPlot?.lng != null) {
       const lat = selectedPlot.lat!;
       const lng = selectedPlot.lng!;
-      // requestAnimationFrame defers until the browser has finished laying out
-      // the React DOM changes (detail panel opening, map container resizing).
-      // By then the ResizeObserver has already fired invalidateSize(), so flyTo
-      // computes the correct centre in the current container dimensions.
+      // requestAnimationFrame defers until after the browser has settled the
+      // React DOM layout (detail panel opened, map container resized,
+      // ResizeObserver invalidateSize fired), then refreshes dimensions and flies.
       const id = requestAnimationFrame(() => {
         if (!mapRef.current) return;
         mapRef.current.invalidateSize();
