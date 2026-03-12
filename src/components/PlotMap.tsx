@@ -11,21 +11,36 @@ interface Props {
   onSelectPlot: (plot: Plot) => void;
 }
 
-const MAP_CENTER          = { lat: 25.745, lng: 55.855 };
-const OVERVIEW_ZOOM       = 11;
+// RAK overview: center between Al Marjan (lng ~55.74) and Al Maireed (lng ~55.97).
+// Zoom 12 ≈ 70 km field-of-view at 25°N — all 17 plots fit with meaningful
+// context (coastline, road network, and nearby developments visible) without
+// zooming so far out that the first screen loses its premium, curated feel.
+const MAP_CENTER          = { lat: 25.747, lng: 55.856 };
+const OVERVIEW_ZOOM       = 12;
 const INSPECTION_MAX_ZOOM = 20; // Google has native zoom 20+ for UAE coastal areas
 
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
 
+// Optional: set NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in .env.local to unlock:
+//   • WebGL vector renderer — smooth continuous camera tilt, 3D buildings,
+//     fluid zoom transitions (closest in-browser equivalent of Google Earth)
+//   • AdvancedMarkerElement — GPU-composited HTML markers, crisp on HiDPI
+//
+// How to create a Map ID (takes ~30 s):
+//   Google Cloud Console → APIs & Services → Google Maps Platform →
+//   Map Management → Create Map ID → type: JavaScript → renderer: Vector
+const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "";
+
 // ── Script loading singleton ───────────────────────────────────────────────
 //
-// Loads the Google Maps JavaScript API once, even under React StrictMode's
-// double-mount. Returns a Promise that resolves when the API is ready.
+// Loads the Google Maps JS API exactly once per page session, even under
+// React StrictMode's double-mount. Using:
+//   v=weekly        — latest stable release channel; ensures newest marker/tilt API
+//   libraries=marker — loads AdvancedMarkerElement alongside the core API
 let gmapsLoadPromise: Promise<void> | null = null;
 
 function ensureGoogleMaps(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  // Already loaded (e.g. second mount after StrictMode cleanup)
   if ((window as unknown as { google?: { maps?: unknown } }).google?.maps) {
     return Promise.resolve();
   }
@@ -33,7 +48,7 @@ function ensureGoogleMaps(): Promise<void> {
 
   gmapsLoadPromise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
-    script.src   = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}`;
+    script.src   = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=marker&v=weekly`;
     script.async = true;
     script.defer = true;
     script.addEventListener("load",  () => resolve());
@@ -47,14 +62,11 @@ function ensureGoogleMaps(): Promise<void> {
   return gmapsLoadPromise;
 }
 
-// ── Marker icon builder ────────────────────────────────────────────────────
+// ── Classic Marker icon builder (fallback when MAP_ID is not set) ──────────
 //
-// Returns an inline-SVG data-URL icon matching the amber/forest pill design.
-// Width adapts to the plot name length; anchor is at the bottom-centre
-// (tip of the downward arrow), so the marker pin touches the coordinate.
-//
-// Must only be called after the Google Maps script has loaded (i.e. inside
-// effects where mapReady is true) because google.maps.Size/Point are used.
+// Inline-SVG data-URL pill matching the amber/forest Namou design.
+// Adaptive width; anchor at bottom-centre so the pin tip touches the coordinate.
+// Only callable after the Google Maps script has loaded (google.maps.Size/Point).
 function buildMarkerIcon(name: string, active: boolean): google.maps.Icon {
   const bg     = active ? "#003D2E"              : "rgba(245,158,11,0.95)";
   const bdr    = active ? "#002A1F"              : "#D97706";
@@ -63,7 +75,6 @@ function buildMarkerIcon(name: string, active: boolean): google.maps.Icon {
     ? "drop-shadow(0 3px 8px rgba(0,61,46,0.60))"
     : "drop-shadow(0 2px 6px rgba(0,0,0,0.42))";
 
-  // Adaptive width: at least 80 px, ~6 px per character + 18 px side padding
   const w   = Math.max(80, name.length * 6 + 18);
   const h   = 34;
   const mid = w / 2;
@@ -77,10 +88,82 @@ function buildMarkerIcon(name: string, active: boolean): google.maps.Icon {
     `</svg>`;
 
   return {
-    url:         "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
-    scaledSize:  new google.maps.Size(w, h),
-    anchor:      new google.maps.Point(mid, h),
+    url:        "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(w, h),
+    anchor:     new google.maps.Point(mid, h),
   };
+}
+
+// ── AdvancedMarkerElement content builder (used when MAP_ID is set) ────────
+//
+// Returns a live HTMLElement tree together with named references to its pill
+// and arrow children so the icon-update effect can mutate their inline styles
+// in-place — no DOM removal or re-creation per selection change.
+//
+// The AdvancedMarkerElement positions its content so that the centre-bottom
+// of the root element aligns with the marker's coordinate.  Adding a 5 px
+// downward arrow at the bottom of root means the arrow tip touches the point.
+function buildAdvancedMarkerContent(
+  name: string,
+  active: boolean,
+): { root: HTMLElement; pill: HTMLElement; arrow: HTMLElement } {
+  const bg     = active ? "#003D2E"              : "rgba(245,158,11,0.95)";
+  const border = active ? "#002A1F"              : "#D97706";
+  const color  = active ? "#ffffff"              : "#78350F";
+  const shadow = active
+    ? "0 3px 8px rgba(0,61,46,0.60)"
+    : "0 2px 6px rgba(0,0,0,0.42)";
+
+  const root = document.createElement("div");
+  root.style.cssText = "position:relative;display:inline-block;cursor:pointer;user-select:none";
+
+  const pill = document.createElement("div");
+  pill.style.cssText = [
+    `background:${bg}`,
+    `border:1.5px solid ${border}`,
+    `color:${color}`,
+    "font-family:system-ui,-apple-system,sans-serif",
+    "font-size:9.5px",
+    "font-weight:700",
+    "padding:4px 8px",
+    "border-radius:6px",
+    "white-space:nowrap",
+    `box-shadow:${shadow}`,
+    "letter-spacing:0.02em",
+    "transition:background 0.15s,color 0.15s,box-shadow 0.15s",
+  ].join(";");
+  pill.textContent = name;
+
+  const arrow = document.createElement("div");
+  arrow.style.cssText = [
+    "position:absolute",
+    "left:50%",
+    "transform:translateX(-50%)",
+    "bottom:-5px",
+    "width:0",
+    "height:0",
+    "border-left:4px solid transparent",
+    "border-right:4px solid transparent",
+    `border-top:5px solid ${border}`,
+  ].join(";");
+
+  root.appendChild(pill);
+  root.appendChild(arrow);
+  return { root, pill, arrow };
+}
+
+// ── Marker type union + type guard ─────────────────────────────────────────
+//
+// AdvancedMarkerElement (MAP_ID path) uses property setters (.map, .zIndex,
+// .content) while classic Marker (fallback) uses methods (.setMap(),
+// .setZIndex(), .setIcon()).  The type guard keeps each update/cleanup path
+// type-safe without unsafe casts throughout.
+type AnyMarker = google.maps.marker.AdvancedMarkerElement | google.maps.Marker;
+
+function isAdvancedMarker(m: AnyMarker): m is google.maps.marker.AdvancedMarkerElement {
+  // Classic Marker exposes setMap() as a method.
+  // AdvancedMarkerElement exposes map as a property (getter/setter), not setMap().
+  return typeof (m as google.maps.Marker).setMap !== "function";
 }
 
 export default function PlotMap({
@@ -90,11 +173,14 @@ export default function PlotMap({
   compareMode,
   onSelectPlot,
 }: Props) {
-  const containerRef    = useRef<HTMLDivElement>(null);
-  const mapRef          = useRef<google.maps.Map | null>(null);
-  const markersRef      = useRef<Map<string, google.maps.Marker>>(new Map());
-  const circleRef       = useRef<google.maps.Circle | null>(null);
-  const roRef           = useRef<ResizeObserver | null>(null);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const mapRef        = useRef<google.maps.Map | null>(null);
+  const markersRef    = useRef<Map<string, AnyMarker>>(new Map());
+  // Keeps references to the pill + arrow DOM nodes for each AdvancedMarkerElement
+  // so the icon-update effect can patch their styles without replacing content.
+  const contentElsRef = useRef<Map<string, { pill: HTMLElement; arrow: HTMLElement }>>(new Map());
+  const circleRef     = useRef<google.maps.Circle | null>(null);
+  const roRef         = useRef<ResizeObserver | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   // Stable refs — prevent stale closures in marker click handlers and effects
@@ -102,16 +188,17 @@ export default function PlotMap({
   const selectedRef     = useRef(selectedPlot);
   const comparePlotsRef = useRef(comparePlots);
   useEffect(() => { onSelectRef.current     = onSelectPlot; }, [onSelectPlot]);
-  useEffect(() => { selectedRef.current     = selectedPlot;  }, [selectedPlot]);
+  useEffect(() => { selectedRef.current     = selectedPlot; }, [selectedPlot]);
   useEffect(() => { comparePlotsRef.current = comparePlots; }, [comparePlots]);
 
-  // ── Map initialisation (once on mount) ────────────────────────────────────
+  // ── Map initialisation (once on mount) ──────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current || !GOOGLE_KEY) return;
 
-    // Capture markersRef.current at effect-run time so the cleanup function
-    // always operates on the same Map instance (satisfies react-hooks/exhaustive-deps).
+    // Capture at effect-body time so the cleanup function always operates on
+    // the same Map instances (avoids stale-ref in teardown).
     const markersMap = markersRef.current;
+    const contentEls = contentElsRef.current;
     let cancelled = false;
 
     ensureGoogleMaps()
@@ -121,25 +208,53 @@ export default function PlotMap({
         const map = new google.maps.Map(containerRef.current, {
           center:    MAP_CENTER,
           zoom:      OVERVIEW_ZOOM,
-          // HYBRID = satellite imagery + road/place name labels.
-          // Better than pure SATELLITE for real-estate context (shows road
-          // names and access routes that matter to investors and brokers).
+
+          // HYBRID: satellite imagery with road/place-name labels baked in.
+          // Labels are essential for real-estate decisions — investors need to
+          // read street names, access routes, and development names.  Pure
+          // SATELLITE gives the same pixel quality but removes this context.
           mapTypeId: google.maps.MapTypeId.HYBRID,
-          maxZoom:   INSPECTION_MAX_ZOOM,
-          // Controls — zoom at bottom-right (away from Available Plots overlay)
-          zoomControl:       true,
-          zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM },
-          mapTypeControl:     false, // fixed to HYBRID; keep UI clean
-          streetViewControl:  false,
-          fullscreenControl:  false,
-          gestureHandling:    "greedy", // scroll always zooms (no two-finger requirement)
+
+          // mapId: switches Google Maps to the WebGL vector renderer when set.
+          // Enables smooth continuous tilt (full 3D buildings and terrain),
+          // fluid zoom transitions, and AdvancedMarkerElement support —
+          // the closest in-browser equivalent of Google Earth.
+          // Without mapId the raster renderer is used, which is still excellent
+          // and activates 45° aerial photography at appropriate zoom levels.
+          ...(MAP_ID ? { mapId: MAP_ID } : {}),
+
+          // tilt: 45 — the single most Google-Earth-like option available.
+          //   Raster renderer (no MAP_ID): activates 45° aerial photography
+          //     at zoom ≥ 13 where Google has oblique imagery.  UAE coastal
+          //     cities (including parts of RAK) have this coverage.
+          //   Vector renderer (MAP_ID set): enables smooth, continuous 3D
+          //     camera tilt with 3D building models at zoom ≥ 12.
+          //   At the initial overview zoom (12) with the raster renderer the
+          //   option has no visible effect — tilt engages automatically as the
+          //   user zooms in, providing a progressive reveal of the 3D context.
+          tilt:    45,
+
+          maxZoom: INSPECTION_MAX_ZOOM,
+
+          // Controls — positioned to avoid Namou's overlay panels:
+          //   Available Plots panel lives at top-3 left-3 (CSS absolute)
+          //   Area Summary panel lives at top-3 right-3 (CSS absolute)
+          zoomControl:          true,
+          zoomControlOptions:   { position: google.maps.ControlPosition.RIGHT_BOTTOM },
+          // rotateControl: compass widget for freely rotating the tilted view,
+          // mirroring the Google Earth UX.  LEFT_BOTTOM avoids the Plots panel.
+          rotateControl:        true,
+          rotateControlOptions: { position: google.maps.ControlPosition.LEFT_BOTTOM },
+          mapTypeControl:       false, // fixed to HYBRID; keep UI clean
+          streetViewControl:    false,
+          fullscreenControl:    false, // omitted — would overlap Area Summary overlay
+          gestureHandling:      "greedy", // scroll always zooms, no two-finger gate
         });
 
         mapRef.current = map;
 
         // ResizeObserver — triggers Google Maps resize event when the CSS
-        // container width changes (e.g. detail panel opens at md:w-1/2).
-        // Equivalent to Leaflet's invalidateSize() call.
+        // container width changes (detail panel opens → map shrinks to md:w-1/2).
         const ro = new ResizeObserver(() => {
           if (mapRef.current) {
             google.maps.event.trigger(mapRef.current, "resize");
@@ -159,10 +274,15 @@ export default function PlotMap({
 
       if (mapRef.current) {
         markersMap.forEach((marker) => {
-          google.maps.event.clearInstanceListeners(marker);
-          marker.setMap(null);
+          if (isAdvancedMarker(marker)) {
+            marker.map = null; // AdvancedMarkerElement: remove via property setter
+          } else {
+            google.maps.event.clearInstanceListeners(marker);
+            marker.setMap(null);
+          }
         });
         markersMap.clear();
+        contentEls.clear();
 
         if (circleRef.current) {
           circleRef.current.setMap(null);
@@ -175,20 +295,32 @@ export default function PlotMap({
     };
   }, []);
 
-  // ── Build markers when the plots array changes ────────────────────────────
+  // ── Build markers when the plots array changes ───────────────────────────
   //
-  // Does NOT depend on selectedPlot / comparePlots — icon updates are handled
-  // cheaply by the effect below using marker.setIcon() (no teardown/rebuild).
-  // Initial icon states are read from refs populated on every render.
+  // Uses AdvancedMarkerElement when MAP_ID is set — GPU-composited HTML pins,
+  // crisp rendering on HiDPI/Retina, correct layering in 3D tilt mode.
+  // Falls back to classic Marker when MAP_ID is absent — same pill design via
+  // inline SVG, works on all raster-mode map instances.
+  //
+  // Initial icon state is read from refs so this effect stays scoped to
+  // [mapReady, plots].  Selection-driven colour changes are handled without a
+  // full rebuild by the next effect.
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
-    const map = mapRef.current;
+    const map        = mapRef.current;
+    const contentEls = contentElsRef.current;
 
+    // Tear down existing markers before rebuilding
     markersRef.current.forEach((marker) => {
-      google.maps.event.clearInstanceListeners(marker);
-      marker.setMap(null);
+      if (isAdvancedMarker(marker)) {
+        marker.map = null;
+      } else {
+        google.maps.event.clearInstanceListeners(marker);
+        marker.setMap(null);
+      }
     });
     markersRef.current.clear();
+    contentEls.clear();
 
     plots.forEach((plot) => {
       if (plot.lat == null || plot.lng == null) return;
@@ -197,24 +329,51 @@ export default function PlotMap({
         selectedRef.current?.id === plot.id ||
         comparePlotsRef.current.some((p) => p.id === plot.id);
 
-      const marker = new google.maps.Marker({
-        position:  { lat: plot.lat, lng: plot.lng },
-        map,
-        icon:      buildMarkerIcon(plot.name, isActive),
-        title:     plot.name,
-        optimized: false, // keep each marker as a real DOM element
-        zIndex:    isActive ? 1000 : 1,
-      });
+      let marker: AnyMarker;
 
-      marker.addListener("click", () => onSelectRef.current(plot));
+      if (MAP_ID && google.maps.marker?.AdvancedMarkerElement) {
+        // ── AdvancedMarkerElement path ──────────────────────────────────────
+        // Requires a Map instance that has a mapId.  Renders as a real HTML
+        // element composited by WebGL — stays crisp at any device pixel ratio,
+        // sorts correctly with 3D buildings in tilt mode, and supports CSS
+        // transitions on the pill text.
+        const { root, pill, arrow } = buildAdvancedMarkerContent(plot.name, isActive);
+
+        marker = new google.maps.marker.AdvancedMarkerElement({
+          position: { lat: plot.lat, lng: plot.lng },
+          map,
+          content:  root,
+          title:    plot.name,
+          zIndex:   isActive ? 1000 : 1,
+        });
+
+        contentEls.set(plot.id, { pill, arrow });
+        marker.addListener("click", () => onSelectRef.current(plot));
+
+      } else {
+        // ── Classic Marker fallback path ────────────────────────────────────
+        // Works without mapId.  Inline-SVG pill icon matches Namou design.
+        marker = new google.maps.Marker({
+          position:  { lat: plot.lat, lng: plot.lng },
+          map,
+          icon:      buildMarkerIcon(plot.name, isActive),
+          title:     plot.name,
+          optimized: false, // keep each marker as a real DOM element
+          zIndex:    isActive ? 1000 : 1,
+        });
+        marker.addListener("click", () => onSelectRef.current(plot));
+      }
+
       markersRef.current.set(plot.id, marker);
     });
   // selectedPlot / comparePlots intentionally excluded — handled by next effect
   }, [mapReady, plots]);
 
-  // ── Update marker icons when selection changes (no full rebuild) ──────────
+  // ── Update marker appearance on selection change (no full rebuild) ────────
   //
-  // Calls marker.setIcon() / setZIndex() only — no DOM removal or insertion.
+  // AdvancedMarkerElement path: mutates the pill/arrow inline styles stored in
+  // contentElsRef — no DOM removal or re-creation; CSS transition on the pill.
+  // Classic Marker path: calls marker.setIcon() / setZIndex().
   useEffect(() => {
     if (!mapReady) return;
     const plotLookup = new Map(plots.map((p) => [p.id, p]));
@@ -227,15 +386,35 @@ export default function PlotMap({
         selectedPlot?.id === id ||
         comparePlots.some((p) => p.id === id);
 
-      marker.setIcon(buildMarkerIcon(plot.name, isActive));
-      marker.setZIndex(isActive ? 1000 : 1);
+      if (isAdvancedMarker(marker)) {
+        const els = contentElsRef.current.get(id);
+        if (els) {
+          const bg     = isActive ? "#003D2E"              : "rgba(245,158,11,0.95)";
+          const border = isActive ? "#002A1F"              : "#D97706";
+          const color  = isActive ? "#ffffff"              : "#78350F";
+          const shadow = isActive
+            ? "0 3px 8px rgba(0,61,46,0.60)"
+            : "0 2px 6px rgba(0,0,0,0.42)";
+          els.pill.style.background      = bg;
+          els.pill.style.borderColor     = border;
+          els.pill.style.color           = color;
+          els.pill.style.boxShadow       = shadow;
+          els.arrow.style.borderTopColor = border;
+        }
+        marker.zIndex = isActive ? 1000 : 1;
+      } else {
+        marker.setIcon(buildMarkerIcon(plot.name, isActive));
+        marker.setZIndex(isActive ? 1000 : 1);
+      }
     });
   }, [mapReady, plots, selectedPlot, comparePlots, compareMode]);
 
   // ── Approximate plot-area circle ─────────────────────────────────────────
   //
-  // Dashed amber ring derived from plotArea (sqft → m²) as an equivalent-area
-  // circle. APPROXIMATE — no real polygon geometry exists in this dataset.
+  // Amber ring derived from plotArea (sqft → m²) as an equivalent-area circle.
+  // APPROXIMATE — the dataset has point coordinates only; no real polygon
+  // geometry exists.  The circle gives an honest visual size cue and is used
+  // by the fitBounds effect below to compute the inspection zoom level.
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
 
@@ -251,7 +430,7 @@ export default function PlotMap({
       selectedPlot.plotArea
     ) {
       const areaM2  = selectedPlot.plotArea * 0.0929; // sqft → m²
-      const radiusM = Math.sqrt(areaM2 / Math.PI);    // equivalent-area circle
+      const radiusM = Math.sqrt(areaM2 / Math.PI);    // equivalent-area circle radius
 
       circleRef.current = new google.maps.Circle({
         center:        { lat: selectedPlot.lat, lng: selectedPlot.lng },
@@ -270,21 +449,20 @@ export default function PlotMap({
 
   // ── Pan/zoom to selected plot (or return to overview) ────────────────────
   //
-  // Uses fitBounds(paddedCircleBounds) — equivalent to Leaflet's pad(1.0):
-  // bounds span extended by 100% on each side (= 3× original diameter).
-  //
+  // Uses fitBounds(paddedCircleBounds): extends the circle bounding box by
+  // 100% on each side (= 3× original diameter, matching Leaflet pad(1.0)).
   // At zoom 19–20 with Google HYBRID, UAE imagery is ~0.15–0.3 m/px —
   // individual buildings, road widths, and bare-land parcel detail are clear.
-  // maxZoom:20 on the map prevents overshooting the useful imagery depth.
+  //
+  // requestAnimationFrame defers until React DOM layout has settled (detail
+  // panel opened, container resized, resize event fired by ResizeObserver)
+  // so fitBounds sees the final viewport dimensions.
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
 
     if (!compareMode && selectedPlot?.lat != null && selectedPlot?.lng != null) {
       const lat = selectedPlot.lat!;
       const lng = selectedPlot.lng!;
-      // requestAnimationFrame defers until after the browser has settled the
-      // React DOM layout (detail panel opened, container resized, resize event
-      // triggered by ResizeObserver) so fitBounds sees the final viewport size.
       const id = requestAnimationFrame(() => {
         if (!mapRef.current) return;
         google.maps.event.trigger(mapRef.current, "resize");
@@ -292,7 +470,7 @@ export default function PlotMap({
         if (circleRef.current) {
           const bounds = circleRef.current.getBounds();
           if (bounds) {
-            // Replicate Leaflet pad(1.0): extend by 100% on each side → 3× span
+            // Extend by 100% on each side → 3× span (generous context around plot)
             const ne      = bounds.getNorthEast();
             const sw      = bounds.getSouthWest();
             const latSpan = ne.lat() - sw.lat();
@@ -320,7 +498,7 @@ export default function PlotMap({
     }
   }, [mapReady, selectedPlot, compareMode]);
 
-  // ── No API key — show setup placeholder ──────────────────────────────────
+  // ── No API key — show setup placeholder ─────────────────────────────────
   if (!GOOGLE_KEY) {
     return (
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-mint-white text-center px-6">
@@ -344,7 +522,12 @@ export default function PlotMap({
           <code className="bg-mint-bg border border-mint-light/60 px-1 py-0.5 rounded text-[10px]">
             .env.local
           </code>{" "}
-          to activate satellite imagery.
+          to activate satellite imagery. Optionally also add{" "}
+          <code className="bg-mint-bg border border-mint-light/60 px-1 py-0.5 rounded text-[10px]">
+            NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
+          </code>{" "}
+          (create a Map ID in Google Cloud Console → Map Management) to unlock
+          WebGL vector rendering with 3D buildings and advanced markers.
         </p>
       </div>
     );
