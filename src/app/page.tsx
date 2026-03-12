@@ -43,7 +43,7 @@ export default function LandingPage() {
 
       {/* Top bar */}
       <header className="relative z-10 flex items-center justify-center px-4 sm:px-12 py-4 sm:py-6">
-        <span className="text-xs tracking-[0.35em] uppercase text-[#6B7B6B] font-heading">
+        <span className="text-xs tracking-[0.35em] uppercase text-white/60 font-heading">
           Real Estate Done Right
         </span>
       </header>
@@ -61,7 +61,7 @@ export default function LandingPage() {
             className="object-contain w-auto h-[15vh] sm:h-[28vh] lg:h-[34vh]"
             priority
           />
-          <p className="text-sm sm:text-base md:text-lg text-[#4A5A3C]/80 max-w-xl mx-auto leading-relaxed mt-2 sm:mt-3 px-2">
+          <p className="text-sm sm:text-base md:text-lg text-white/70 max-w-xl mx-auto leading-relaxed mt-2 sm:mt-3 px-2">
             Strategic land investment opportunities across Ras Al Khaimah.
             Curated plots, transparent ROI, and a clear path to ownership.
           </p>

@@ -445,23 +445,6 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
             </div>
           </AccordionSection>
 
-          {/* 3. Land Map Location */}
-          <AccordionSection
-            title="Land Map Location"
-            icon={<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>}
-            isOpen={openSection === "map"}
-            onToggle={() => toggle("map")}
-          >
-            <div className="aspect-[16/9] rounded-lg bg-mint-bg border border-mint-light/40 flex items-center justify-center">
-              <div className="text-center text-muted">
-                <svg className="w-8 h-8 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-                </svg>
-                <p className="text-xs font-medium text-deep-forest">{plot.location}</p>
-                <p className="text-[10px] mt-0.5">Airport: {plot.airportEta} · Casino: {plot.casinoEta}</p>
-              </div>
-            </div>
-          </AccordionSection>
         </div>
 
         {/* CTAs */}

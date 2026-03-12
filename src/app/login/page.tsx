@@ -57,7 +57,7 @@ export default function LoginPage() {
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/rak-bg.jpg')" }}
+        style={{ backgroundImage: "url('/rak-hero.jpg')" }}
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-deep-forest/40" />
