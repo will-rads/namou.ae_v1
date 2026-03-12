@@ -15,7 +15,9 @@ interface Props {
 
 const MAP_CENTER: [number, number] = [25.745, 55.855];
 const OVERVIEW_ZOOM = 11;
-const DETAIL_ZOOM = 16;
+// Zoom 18 shows individual buildings, road widths, and plot boundaries clearly —
+// deep enough for a real-estate investor to evaluate access and immediate context.
+const DETAIL_ZOOM = 18;
 
 function buildIcon(name: string, active: boolean): L.DivIcon {
   const bg     = active ? "#003D2E"             : "rgba(245,158,11,0.95)";
@@ -48,7 +50,7 @@ export default function PlotMap({
   const markersRef   = useRef<Map<string, L.Marker>>(new Map());
   const [mapReady, setMapReady] = useState(false);
 
-  // Keep the callback stable across renders so markers don't recreate on every parent render
+  // Keep the callback stable so markers don't recreate on every parent render
   const onSelectRef = useRef(onSelectPlot);
   useEffect(() => { onSelectRef.current = onSelectPlot; }, [onSelectPlot]);
 
@@ -59,33 +61,51 @@ export default function PlotMap({
     const map = L.map(containerRef.current, {
       center: MAP_CENTER,
       zoom: OVERVIEW_ZOOM,
-      zoomControl: true,
+      // maxZoom: 22 — allows the user to scroll/zoom past the provider's native
+      // tile max. Leaflet will upscale the highest available tiles rather than
+      // showing "Map data not available" placeholders, keeping real imagery
+      // visible at any zoom depth.
+      maxZoom: 22,
+      // zoomSnap: 0.5 — half-step zoom increments feel smoother and more
+      // controlled when inspecting plot boundaries.
+      zoomSnap: 0.5,
+      // Disable the default top-left zoom control; we add it at bottom-right
+      // so it doesn't overlap the "Available Plots" overlay panel.
+      zoomControl: false,
       attributionControl: true,
     });
 
-    // Esri World Imagery — photo-realistic satellite base layer (free, no API key)
+    // Zoom controls at bottom-right — clear of the Available Plots overlay
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+
+    // ── Esri World Imagery — photo-realistic satellite basemap ──────────────
+    // maxNativeZoom: 19  → highest zoom level Esri has real tiles for in UAE/RAK
+    // maxZoom: 22        → at zoom 20-22 Leaflet tiles the zoom-19 imagery scaled
+    //                      up, giving real detail instead of "no data" tiles.
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
         attribution:
           "Tiles &copy; <a href='https://www.esri.com' target='_blank'>Esri</a> &mdash; Esri, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP",
-        maxZoom: 20,
+        maxNativeZoom: 19,
+        maxZoom: 22,
       }
     ).addTo(map);
 
-    // Esri Reference — road names + place labels overlay on top of satellite
+    // ── Esri Reference — road names and place labels overlay ────────────────
+    // Same maxNativeZoom/maxZoom so labels remain present at deep zoom levels.
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-      { opacity: 0.85, maxZoom: 20 }
+      { opacity: 0.85, maxNativeZoom: 19, maxZoom: 22 }
     ).addTo(map);
 
     mapRef.current = map;
     setMapReady(true);
 
-    // ── ResizeObserver: tell Leaflet whenever the container changes size ──
-    // This is critical: when the detail panel opens the map container shrinks
-    // from full-width to md:w-1/2. Without this, Leaflet's internal viewport
-    // cache is stale and flyTo centers on the wrong point.
+    // ── ResizeObserver: keep Leaflet in sync with container size changes ─────
+    // When the detail panel opens the map container shrinks from full-width to
+    // md:w-1/2 via CSS flex. Without this, Leaflet's viewport cache stays stale
+    // and flyTo centres on wrong coordinates.
     const ro = new ResizeObserver(() => {
       if (mapRef.current) mapRef.current.invalidateSize();
     });
@@ -128,22 +148,33 @@ export default function PlotMap({
   // ── Pan/zoom to selected plot (or return to overview) ───────────────────
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
-    const map = mapRef.current;
 
     if (!compareMode && selectedPlot?.lat != null && selectedPlot?.lng != null) {
-      // invalidateSize() ensures Leaflet knows the current container dimensions
-      // before flying. This is essential when the detail panel has just opened
-      // and the map container has resized — without it flyTo centres on stale
-      // (full-width) dimensions and the pin appears off-centre.
-      map.invalidateSize();
-      map.flyTo(
-        [selectedPlot.lat, selectedPlot.lng],
-        DETAIL_ZOOM,
-        { animate: true, duration: 1.2 }
-      );
+      const lat = selectedPlot.lat!;
+      const lng = selectedPlot.lng!;
+      // requestAnimationFrame defers until the browser has finished laying out
+      // the React DOM changes (detail panel opening, map container resizing).
+      // By then the ResizeObserver has already fired invalidateSize(), so flyTo
+      // computes the correct centre in the current container dimensions.
+      const id = requestAnimationFrame(() => {
+        if (!mapRef.current) return;
+        mapRef.current.invalidateSize();
+        mapRef.current.flyTo([lat, lng], DETAIL_ZOOM, {
+          animate: true,
+          duration: 1.2,
+        });
+      });
+      return () => cancelAnimationFrame(id);
     } else if (!compareMode && !selectedPlot) {
-      map.invalidateSize();
-      map.flyTo(MAP_CENTER, OVERVIEW_ZOOM, { animate: true, duration: 1.0 });
+      const id = requestAnimationFrame(() => {
+        if (!mapRef.current) return;
+        mapRef.current.invalidateSize();
+        mapRef.current.flyTo(MAP_CENTER, OVERVIEW_ZOOM, {
+          animate: true,
+          duration: 1.0,
+        });
+      });
+      return () => cancelAnimationFrame(id);
     }
   }, [mapReady, selectedPlot, compareMode]);
 
