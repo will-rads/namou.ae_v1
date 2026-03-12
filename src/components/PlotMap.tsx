@@ -17,7 +17,14 @@ interface Props {
 // zooming so far out that the first screen loses its premium, curated feel.
 const MAP_CENTER          = { lat: 25.747, lng: 55.856 };
 const OVERVIEW_ZOOM       = 12;
-const INSPECTION_MAX_ZOOM = 20; // Google has native zoom 20+ for UAE coastal areas
+// 18 = safe ceiling for reliable Google HYBRID tile coverage across all 17 RAK
+// plot locations (coastal Al Marjan AND inland Al Maireed).  At zoom 18 the
+// resolution is ~0.6 m/px — individual buildings, road widths, and bare-land
+// parcel detail are clearly visible, which is excellent for real-estate
+// inspection.  Allowing zoom 19-20 causes "Map data not yet available" tiles
+// in the Al Maireed area where Google's satellite coverage does not reach that
+// depth; maxZoom:18 prevents fitBounds from ever requesting those missing tiles.
+const INSPECTION_MAX_ZOOM = 18;
 
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
 
@@ -35,8 +42,11 @@ const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "";
 //
 // Loads the Google Maps JS API exactly once per page session, even under
 // React StrictMode's double-mount. Using:
-//   v=weekly        — latest stable release channel; ensures newest marker/tilt API
 //   libraries=marker — loads AdvancedMarkerElement alongside the core API
+// No v= channel is specified; this defaults to the quarterly stable release,
+// which has the most reliable tile-loading behaviour across all map types.
+// (The weekly channel can handle tile-coverage fallbacks differently and was
+// a contributing factor to "Map data not yet available" tile artefacts.)
 let gmapsLoadPromise: Promise<void> | null = null;
 
 function ensureGoogleMaps(): Promise<void> {
@@ -48,7 +58,7 @@ function ensureGoogleMaps(): Promise<void> {
 
   gmapsLoadPromise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
-    script.src   = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=marker&v=weekly`;
+    script.src   = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=marker`;
     script.async = true;
     script.defer = true;
     script.addEventListener("load",  () => resolve());
@@ -216,39 +226,27 @@ export default function PlotMap({
           mapTypeId: google.maps.MapTypeId.HYBRID,
 
           // mapId: switches Google Maps to the WebGL vector renderer when set.
-          // Enables smooth continuous tilt (full 3D buildings and terrain),
-          // fluid zoom transitions, and AdvancedMarkerElement support —
-          // the closest in-browser equivalent of Google Earth.
-          // Without mapId the raster renderer is used, which is still excellent
-          // and activates 45° aerial photography at appropriate zoom levels.
+          // Enables fluid zoom transitions and AdvancedMarkerElement support.
+          // Without mapId the raster renderer is used — also excellent and
+          // provides complete HYBRID tile coverage for all RAK plot locations.
+          // NOTE: tilt:45 is intentionally omitted here.  Setting tilt:45 on
+          // the raster renderer causes Google to request 45° oblique aerial
+          // tiles; most of RAK (including all Al Maireed inland plots) has no
+          // such coverage, producing "Map data not yet available" placeholder
+          // tiles while the server attempts and then abandons the oblique
+          // request.  Omitting tilt keeps the standard top-down HYBRID view
+          // which has full coverage through zoom 18 across all plot locations.
           ...(MAP_ID ? { mapId: MAP_ID } : {}),
-
-          // tilt: 45 — the single most Google-Earth-like option available.
-          //   Raster renderer (no MAP_ID): activates 45° aerial photography
-          //     at zoom ≥ 13 where Google has oblique imagery.  UAE coastal
-          //     cities (including parts of RAK) have this coverage.
-          //   Vector renderer (MAP_ID set): enables smooth, continuous 3D
-          //     camera tilt with 3D building models at zoom ≥ 12.
-          //   At the initial overview zoom (12) with the raster renderer the
-          //   option has no visible effect — tilt engages automatically as the
-          //   user zooms in, providing a progressive reveal of the 3D context.
-          tilt:    45,
 
           maxZoom: INSPECTION_MAX_ZOOM,
 
-          // Controls — positioned to avoid Namou's overlay panels:
-          //   Available Plots panel lives at top-3 left-3 (CSS absolute)
-          //   Area Summary panel lives at top-3 right-3 (CSS absolute)
-          zoomControl:          true,
-          zoomControlOptions:   { position: google.maps.ControlPosition.RIGHT_BOTTOM },
-          // rotateControl: compass widget for freely rotating the tilted view,
-          // mirroring the Google Earth UX.  LEFT_BOTTOM avoids the Plots panel.
-          rotateControl:        true,
-          rotateControlOptions: { position: google.maps.ControlPosition.LEFT_BOTTOM },
-          mapTypeControl:       false, // fixed to HYBRID; keep UI clean
-          streetViewControl:    false,
-          fullscreenControl:    false, // omitted — would overlap Area Summary overlay
-          gestureHandling:      "greedy", // scroll always zooms, no two-finger gate
+          // Controls — zoom at RIGHT_BOTTOM (away from Available Plots overlay)
+          zoomControl:        true,
+          zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM },
+          mapTypeControl:     false, // fixed to HYBRID; keep UI clean
+          streetViewControl:  false,
+          fullscreenControl:  false, // omitted — would overlap Area Summary overlay
+          gestureHandling:    "greedy", // scroll always zooms, no two-finger gate
         });
 
         mapRef.current = map;
@@ -451,8 +449,10 @@ export default function PlotMap({
   //
   // Uses fitBounds(paddedCircleBounds): extends the circle bounding box by
   // 100% on each side (= 3× original diameter, matching Leaflet pad(1.0)).
-  // At zoom 19–20 with Google HYBRID, UAE imagery is ~0.15–0.3 m/px —
-  // individual buildings, road widths, and bare-land parcel detail are clear.
+  // fitBounds respects maxZoom (18), so even small plots (Maireed RP-02,
+  // radius ~13 m) will never push the map to zoom 19-20 where Google HYBRID
+  // tiles are unavailable for inland RAK.  At zoom 18 (~0.6 m/px) buildings,
+  // road widths, and bare-land parcel boundaries are clearly visible.
   //
   // requestAnimationFrame defers until React DOM layout has settled (detail
   // panel opened, container resized, resize event fired by ResizeObserver)
