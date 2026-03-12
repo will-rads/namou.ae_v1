@@ -92,7 +92,6 @@ export default function PlotMap({
 }: Props) {
   const containerRef    = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<google.maps.Map | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
   const markersRef      = useRef<Map<string, google.maps.Marker>>(new Map());
   const circleRef       = useRef<google.maps.Circle | null>(null);
   const roRef           = useRef<ResizeObserver | null>(null);
@@ -110,6 +109,9 @@ export default function PlotMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current || !GOOGLE_KEY) return;
 
+    // Capture markersRef.current at effect-run time so the cleanup function
+    // always operates on the same Map instance (satisfies react-hooks/exhaustive-deps).
+    const markersMap = markersRef.current;
     let cancelled = false;
 
     ensureGoogleMaps()
@@ -156,11 +158,11 @@ export default function PlotMap({
       roRef.current = null;
 
       if (mapRef.current) {
-        markersRef.current.forEach((marker) => {
+        markersMap.forEach((marker) => {
           google.maps.event.clearInstanceListeners(marker);
           marker.setMap(null);
         });
-        markersRef.current.clear();
+        markersMap.clear();
 
         if (circleRef.current) {
           circleRef.current.setMap(null);
@@ -195,7 +197,6 @@ export default function PlotMap({
         selectedRef.current?.id === plot.id ||
         comparePlotsRef.current.some((p) => p.id === plot.id);
 
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const marker = new google.maps.Marker({
         position:  { lat: plot.lat, lng: plot.lng },
         map,
@@ -209,7 +210,6 @@ export default function PlotMap({
       markersRef.current.set(plot.id, marker);
     });
   // selectedPlot / comparePlots intentionally excluded — handled by next effect
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, plots]);
 
   // ── Update marker icons when selection changes (no full rebuild) ──────────
@@ -227,7 +227,6 @@ export default function PlotMap({
         selectedPlot?.id === id ||
         comparePlots.some((p) => p.id === id);
 
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
       marker.setIcon(buildMarkerIcon(plot.name, isActive));
       marker.setZIndex(isActive ? 1000 : 1);
     });

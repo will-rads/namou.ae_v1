@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+// NOTE: credentials are demo-only (no backend). Replace with a real
+// authentication flow before deploying to a public environment.
 const USERS = [
   { username: "Jad", password: "123" },
   { username: "William", password: "123" },

@@ -49,7 +49,7 @@ export default function ExampleDealPage() {
           <ContentCard className="border-mint-light">
             <p className="text-sm text-muted leading-relaxed">
               Based on these assumptions, the maximum viable land price for this RAK Central tower is{" "}
-              <strong className="text-forest">${formatNumber(outputs.maximumLandPrice)}</strong>.
+              <strong className="text-forest">AED {formatNumber(outputs.maximumLandPrice)}</strong>.
             </p>
           </ContentCard>
 
