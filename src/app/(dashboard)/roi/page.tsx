@@ -300,7 +300,7 @@ export default function ROIPage() {
 
           {/* Input variables */}
           {isCompareMode && inputs2 && results2 ? (
-          <ContentCard className="flex-1 flex flex-col overflow-y-auto">
+          <ContentCard className="flex flex-col overflow-y-auto min-h-0">
             {/* Fixed per-plot data */}
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1.5">
@@ -355,8 +355,8 @@ export default function ROIPage() {
                 </div>
               </div>
 
-              {/* Right: KPI results */}
-              <div className="flex flex-col gap-2 justify-evenly">
+              {/* Right: KPI results (2×2 grid) */}
+              <div className="grid grid-cols-2 gap-2 auto-rows-fr">
                 <KPICard label="Revenue (GDV)" value=""
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
                 <KPICard label="Total Cost" value=""
@@ -471,7 +471,7 @@ export default function ROIPage() {
         </div>
 
         {/* ═══════════ BOTTOM: Results ═══════════ */}
-        <div className="flex-1 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-y-auto">
 
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
