@@ -446,19 +446,13 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
         </div>
 
         {/* CTAs */}
-        <div className="mt-4 pt-4 border-t border-mint-light/60 flex gap-2 shrink-0">
+        <div className="mt-4 pt-4 border-t border-mint-light/60 shrink-0">
           <Link
             href="/roi"
-            className="flex-1 text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
+            className="block w-full text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
           >
             Analyze ROI
           </Link>
-          <a
-            href="/offer"
-            className="flex-1 text-center px-4 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
-          >
-            Submit Offer
-          </a>
         </div>
       </ContentCard>
     </div>
