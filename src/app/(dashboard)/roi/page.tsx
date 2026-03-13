@@ -596,18 +596,8 @@ export default function ROIPage() {
                   <div className="py-1 text-[11px] font-semibold text-blue-700 text-right">{comparePlots[1].name}</div>
 
                   {[
-                    { label: "Plot Area", v1: `${formatNumber(inputs.plotSize)} sqft`, v2: `${formatNumber(inputs2.plotSize)} sqft`, section: "Land" },
-                    { label: "Land Cost", v1: fmtAED(results.landCost), v2: fmtAED(results2.landCost) },
-                    { label: "Price / sqft", v1: `AED ${formatNumber(inputs.pricePerPlotSqft)}`, v2: `AED ${formatNumber(inputs2.pricePerPlotSqft)}` },
-                    { label: "GFA", v1: `${formatNumber(Math.round(results.gfa))} sqft`, v2: `${formatNumber(Math.round(results2.gfa))} sqft`, section: "Development" },
-                    { label: "NSA", v1: `${formatNumber(Math.round(results.nsa))} sqft`, v2: `${formatNumber(Math.round(results2.nsa))} sqft` },
-                    { label: "FAR", v1: inputs.gfaRatio.toString(), v2: inputs2.gfaRatio.toString() },
-                    { label: "Construction Cost", v1: fmtAED(results.constructionCost), v2: fmtAED(results2.constructionCost), section: "Costs" },
-                    { label: "Total Cost", v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost) },
-                    { label: "Revenue (GDV)", v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), section: "Returns" },
-                    { label: "Profit", v1: fmtAED(results.profit), v2: fmtAED(results2.profit), highlight: true },
-                    { label: "Profit Margin", v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, highlight: true },
-                    { label: "Return on Cost", v1: `${results.returnOnCost.toFixed(1)}%`, v2: `${results2.returnOnCost.toFixed(1)}%` },
+                    { label: "NSA", v1: `${formatNumber(Math.round(results.nsa))} sqft`, v2: `${formatNumber(Math.round(results2.nsa))} sqft`, section: "Development" },
+                    { label: "Return on Cost", v1: `${results.returnOnCost.toFixed(1)}%`, v2: `${results2.returnOnCost.toFixed(1)}%`, section: "Investor Metrics" },
                     { label: "GDV Multiple", v1: `${results.gdvMultiple.toFixed(2)}×`, v2: `${results2.gdvMultiple.toFixed(2)}×` },
                     { label: "Profit / Land sqft", v1: `AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`, v2: `AED ${formatNumber(Math.round(results2.profitPerPlotSqft))}` },
                     { label: "Residual Land Value", v1: fmtAED(results.rlv), v2: fmtAED(results2.rlv) },
@@ -618,9 +608,9 @@ export default function ROIPage() {
                           {row.section}
                         </div>
                       )}
-                      <div className={`py-0.5 text-xs ${row.highlight ? "font-semibold text-deep-forest" : "text-muted"}`}>{row.label}</div>
-                      <div className={`py-0.5 text-xs text-right ${row.highlight ? "font-bold text-forest" : "font-semibold text-deep-forest"}`}>{row.v1}</div>
-                      <div className={`py-0.5 text-xs text-right ${row.highlight ? "font-bold text-blue-700" : "font-semibold text-deep-forest"}`}>{row.v2}</div>
+                      <div className="py-0.5 text-xs text-muted">{row.label}</div>
+                      <div className="py-0.5 text-xs text-right font-semibold text-deep-forest">{row.v1}</div>
+                      <div className="py-0.5 text-xs text-right font-semibold text-deep-forest">{row.v2}</div>
                     </React.Fragment>
                   ))}
                 </div>
