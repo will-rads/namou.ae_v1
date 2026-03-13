@@ -581,7 +581,6 @@ export default function ROIPage() {
             <>
               {/* Detailed comparison table */}
               <ContentCard className="flex-1 min-h-0 overflow-y-auto py-2 px-4">
-                <p className="text-[10px] uppercase tracking-widest text-muted mb-1.5 font-semibold">Detailed Comparison</p>
                 <div className="grid gap-0" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
                   <div className="py-1 text-[11px] font-semibold text-muted">Metric</div>
                   <div className="py-1 text-[11px] font-semibold text-forest text-right">{comparePlots[0].name}</div>
