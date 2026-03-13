@@ -320,7 +320,8 @@ export default function ROIPage() {
             {/* Shared variable inputs — 2-column grid */}
             <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Shared Variables</p>
             <div className="grid grid-cols-2 gap-x-6 flex-1">
-              <div className="flex flex-col">
+              {/* Left: All inputs */}
+              <div className="flex flex-col border-r border-mint-light/40 pr-6">
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Land</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
                   <div className="flex items-center justify-between py-1.5">
@@ -343,15 +344,8 @@ export default function ROIPage() {
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
                   <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
                   <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
-                  <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
-                </div>
-              </div>
-
-              <div className="flex flex-col">
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Development</p>
-                <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
                   <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
-                  <DualComputedRow label="NSA" v1={`${formatNumber(Math.round(results.nsa))} sqft`} v2={`${formatNumber(Math.round(results2.nsa))} sqft`} />
+                  <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
                 </div>
 
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-2">Sales</p>
@@ -359,6 +353,18 @@ export default function ROIPage() {
                   <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
                   <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
                 </div>
+              </div>
+
+              {/* Right: KPI results */}
+              <div className="flex flex-col gap-2 justify-evenly">
+                <KPICard label="Revenue (GDV)" value=""
+                  compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="Total Cost" value=""
+                  compareValues={{ v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="Total Profit" value="" primary
+                  compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="Margin" value="" primary
+                  compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }} />
               </div>
             </div>
           </ContentCard>
@@ -579,18 +585,6 @@ export default function ROIPage() {
                   <span className="text-sm font-semibold text-blue-700">{comparePlots[1].name}</span>
                   <span className="text-xs text-muted">{comparePlots[1].area}</span>
                 </div>
-              </div>
-
-              {/* KPI Row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
-                <KPICard label="Revenue (GDV)" value=""
-                  compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
-                <KPICard label="Total Cost" value=""
-                  compareValues={{ v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
-                <KPICard label="Total Profit" value="" primary
-                  compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
-                <KPICard label="Margin" value="" primary
-                  compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }} />
               </div>
 
               {/* Detailed comparison table */}
