@@ -354,8 +354,8 @@ export default function ROIPage() {
                 </div>
               </div>
 
-              {/* Right: KPI results (2×2 grid) */}
-              <div className="grid grid-cols-2 gap-2 auto-rows-fr">
+              {/* Right: KPI results (2×4 grid) */}
+              <div className="grid grid-cols-2 gap-1.5 auto-rows-fr">
                 <KPICard label="Revenue (GDV)" value=""
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
                 <KPICard label="Total Cost" value=""
@@ -364,6 +364,14 @@ export default function ROIPage() {
                   compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
                 <KPICard label="Margin" value="" primary
                   compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }} />
+                <KPICard label="Return on Cost" value=""
+                  compareValues={{ v1: `${results.returnOnCost.toFixed(1)}%`, v2: `${results2.returnOnCost.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="GDV Multiple" value=""
+                  compareValues={{ v1: `${results.gdvMultiple.toFixed(2)}×`, v2: `${results2.gdvMultiple.toFixed(2)}×`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="Profit / Land sqft" value=""
+                  compareValues={{ v1: `AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`, v2: `AED ${formatNumber(Math.round(results2.profitPerPlotSqft))}`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="Residual Land Value" value=""
+                  compareValues={{ v1: fmtAED(results.rlv), v2: fmtAED(results2.rlv), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
               </div>
             </div>
           </ContentCard>
@@ -584,10 +592,6 @@ export default function ROIPage() {
                     { label: "FAR", v1: `${inputs.gfaRatio}×`, v2: `${inputs2.gfaRatio}×` },
                     { label: "GFA", v1: `${formatNumber(Math.round(results.gfa))} sqft`, v2: `${formatNumber(Math.round(results2.gfa))} sqft` },
                     { label: "NSA", v1: `${formatNumber(Math.round(results.nsa))} sqft`, v2: `${formatNumber(Math.round(results2.nsa))} sqft`, section: "Development" },
-                    { label: "Return on Cost", v1: `${results.returnOnCost.toFixed(1)}%`, v2: `${results2.returnOnCost.toFixed(1)}%`, section: "Investor Metrics" },
-                    { label: "GDV Multiple", v1: `${results.gdvMultiple.toFixed(2)}×`, v2: `${results2.gdvMultiple.toFixed(2)}×` },
-                    { label: "Profit / Land sqft", v1: `AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`, v2: `AED ${formatNumber(Math.round(results2.profitPerPlotSqft))}` },
-                    { label: "Residual Land Value", v1: fmtAED(results.rlv), v2: fmtAED(results2.rlv) },
                   ].map((row, ri) => (
                     <React.Fragment key={row.label}>
                       {row.section && (
