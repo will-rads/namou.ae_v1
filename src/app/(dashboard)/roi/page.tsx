@@ -294,6 +294,21 @@ export default function ROIPage() {
                 <span className="text-sm font-bold text-forest">{SCENARIO_META[activeScenario].label}</span>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${SCENARIO_META[activeScenario].riskColor}`}>{SCENARIO_META[activeScenario].riskLevel}</span>
               </div>
+              {isCompareMode && (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-forest" />
+                    <span className="text-xs font-semibold text-forest">{comparePlots[0].name}</span>
+                    <span className="text-[10px] text-muted">{comparePlots[0].area}</span>
+                  </div>
+                  <span className="text-muted text-[10px]">vs</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-700" />
+                    <span className="text-xs font-semibold text-blue-700">{comparePlots[1].name}</span>
+                    <span className="text-[10px] text-muted">{comparePlots[1].area}</span>
+                  </div>
+                </div>
+              )}
             </div>
             <p className="text-xs text-muted mt-1">{SCENARIO_META[activeScenario].description}</p>
           </div>
@@ -556,21 +571,6 @@ export default function ROIPage() {
           {/* ── Comparison results ── */}
           {isCompareMode && results2 && inputs2 && (
             <>
-              {/* Color legend bar */}
-              <div className="flex items-center justify-center gap-6 shrink-0">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-forest" />
-                  <span className="text-sm font-semibold text-forest">{comparePlots[0].name}</span>
-                  <span className="text-xs text-muted">{comparePlots[0].area}</span>
-                </div>
-                <span className="text-muted text-xs">vs</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-700" />
-                  <span className="text-sm font-semibold text-blue-700">{comparePlots[1].name}</span>
-                  <span className="text-xs text-muted">{comparePlots[1].area}</span>
-                </div>
-              </div>
-
               {/* Detailed comparison table */}
               <ContentCard className="flex-1 min-h-0 overflow-y-auto py-2 px-4">
                 <p className="text-[10px] uppercase tracking-widest text-muted mb-1.5 font-semibold">Detailed Comparison</p>
