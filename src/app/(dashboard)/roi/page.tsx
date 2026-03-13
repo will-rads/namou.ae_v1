@@ -323,7 +323,7 @@ export default function ROIPage() {
               <div className="flex flex-col border-r border-mint-light/40 pr-6">
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Land</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
-                  <div className="flex items-center justify-between py-1.5">
+                  <div className="flex items-center justify-between py-0.5">
                     <span className="text-xs text-muted">Pricing Method</span>
                     <TogglePair
                       optA={{ key: "per-plot", label: "/ Plot sqft" }}
@@ -339,7 +339,7 @@ export default function ROIPage() {
                   <DualComputedRow label="Total Land Cost" v1={fmtAED(results.landCost)} v2={fmtAED(results2.landCost)} />
                 </div>
 
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-2">Construction</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Construction</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
                   <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
                   <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
@@ -347,7 +347,7 @@ export default function ROIPage() {
                   <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
                 </div>
 
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-2">Sales</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Sales</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
                   <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
                   <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
@@ -355,7 +355,7 @@ export default function ROIPage() {
               </div>
 
               {/* Right: KPI results (2×4 grid) */}
-              <div className="grid grid-cols-2 gap-1.5 auto-rows-fr">
+              <div className="grid grid-cols-2 gap-1 auto-rows-fr">
                 <KPICard label="Revenue (GDV)" value=""
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
                 <KPICard label="Total Cost" value=""
@@ -650,13 +650,13 @@ function KPICard({
       onMouseEnter={() => (tooltipLines || tooltipFormula) && setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <ContentCard className={`${cardBg} py-3 px-4`}>
-        <p className="text-xs uppercase tracking-widest text-muted mb-1 font-semibold text-center">{label}</p>
+      <ContentCard className={`${cardBg} ${compareValues ? "py-1.5 px-3" : "py-3 px-4"}`}>
+        <p className={`text-xs uppercase tracking-widest text-muted ${compareValues ? "mb-0.5" : "mb-1"} font-semibold text-center`}>{label}</p>
         {compareValues ? (
           <div className="flex items-start gap-2">
             <div className="flex-1 text-center">
-              <p className="text-[10px] font-medium text-forest mb-0.5">{compareValues.label1}</p>
-              <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-tight text-forest`}>{compareValues.v1}</p>
+              <p className="text-[10px] font-medium text-forest leading-tight">{compareValues.label1}</p>
+              <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-tight text-forest`}>{compareValues.v1}</p>
               {compareValues.badge1 && (
                 <span className={`mt-1 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
                   {compareValues.badge1.label}
@@ -665,8 +665,8 @@ function KPICard({
             </div>
             <div className="w-px self-stretch bg-mint-light/60" />
             <div className="flex-1 text-center">
-              <p className="text-[10px] font-medium text-blue-700 mb-0.5">{compareValues.label2}</p>
-              <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-tight text-blue-700`}>{compareValues.v2}</p>
+              <p className="text-[10px] font-medium text-blue-700 leading-tight">{compareValues.label2}</p>
+              <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-tight text-blue-700`}>{compareValues.v2}</p>
               {compareValues.badge2 && (
                 <span className={`mt-1 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
                   {compareValues.badge2.label}
@@ -799,7 +799,7 @@ function DualFixedRow({ label, v1, v2, computed }: { label: string; v1: string; 
 
 function DualComputedRow({ label, v1, v2 }: { label: string; v1: string; v2: string }) {
   return (
-    <div className="flex items-center justify-between py-2 -mx-3 px-3 rounded-lg bg-mint-bg/40">
+    <div className="flex items-center justify-between py-1 -mx-3 px-3 rounded-lg bg-mint-bg/40">
       <p className="text-xs text-muted flex items-center gap-1">
         <span className="text-[10px] text-forest/50">=</span>
         {label}
