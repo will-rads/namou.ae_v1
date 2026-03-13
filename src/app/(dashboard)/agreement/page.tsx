@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { plots } from "@/data/mock";
 
 /* ── helpers ── */
@@ -453,14 +454,21 @@ function A2AForm() {
    Main Agreement Page — filtered by client type
    ══════════════════════════════════════════════════════ */
 export default function AgreementPage() {
+  const router = useRouter();
   const [clientType, setClientType] = useState<string | null>(null);
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("namou_session");
-      if (raw) setClientType(JSON.parse(raw).clientType ?? null);
-    } catch { /* ignore */ }
-  }, []);
+      if (raw) {
+        setClientType(JSON.parse(raw).clientType ?? null);
+      } else {
+        router.replace("/login");
+      }
+    } catch {
+      router.replace("/login");
+    }
+  }, [router]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const showPropertyForm = clientType === "Developer" || clientType === "Investor" || clientType === null;
