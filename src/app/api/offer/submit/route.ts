@@ -4,24 +4,7 @@ interface OfferPayload {
   sourcePage: string;
   sourceAction: string;
   agreement_type: string;
-  assignee_email: string;
-  number: string;
-  data: {
-    name: string;
-    email: string;
-    broker_number: string;
-    company_name: string;
-    agent_id_number: string;
-    trade_license: string;
-    id_number: string;
-    city: string;
-    country: string;
-    investor_name: string;
-    investor_email: string;
-    investor_number: string;
-    properties: string;
-    broker_commision_cut: string;
-  };
+  [key: string]: unknown;
 }
 
 export async function POST(req: NextRequest) {
@@ -38,6 +21,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden: invalid source" }, { status: 403 });
   }
 
+  if (!body.agreement_type) {
+    return NextResponse.json({ error: "Missing agreement_type" }, { status: 400 });
+  }
+
   // Env vars
   const webhookUrl = process.env.N8N_OFFER_WEBHOOK_URL;
   const webhookAuth = process.env.N8N_OFFER_AUTH;
@@ -47,13 +34,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
 
-  // Build outbound payload — strip source markers
-  const outbound = {
-    agreement_type: body.agreement_type,
-    assignee_email: body.assignee_email,
-    number: body.number,
-    data: body.data,
-  };
+  // Build outbound payload — strip source markers, forward everything else
+  const outbound: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body)) {
+    if (key !== "sourcePage" && key !== "sourceAction") {
+      outbound[key] = value;
+    }
+  }
 
   // Forward to n8n webhook
   try {

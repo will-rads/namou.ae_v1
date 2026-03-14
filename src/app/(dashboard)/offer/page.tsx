@@ -62,7 +62,7 @@ function inputCls(error?: boolean) {
 
 /* ── Next Steps Modal ── */
 
-function NextStepsModal({ onClose, plotName, enableOfferWebhook = false }: { onClose: () => void; plotName: string; enableOfferWebhook?: boolean }) {
+function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook = false }: { onClose: () => void; plotName: string; selectedPlots: Plot[]; enableOfferWebhook?: boolean }) {
   const [clientType, setClientType] = useState<string | null>(null);
   useEffect(() => {
     try { const raw = sessionStorage.getItem("namou_session"); if (raw) setClientType(JSON.parse(raw).clientType ?? null); } catch { /* ignore */ }
@@ -124,13 +124,24 @@ function NextStepsModal({ onClose, plotName, enableOfferWebhook = false }: { onC
       setSubmitting(true);
       setSubmitError(null);
       try {
+        const properties = selectedPlots.length > 0
+          ? selectedPlots.map(p => ({
+              id: p.id,
+              Location: p.area,
+              Price: p.askingPrice,
+              Type: p.landUse,
+              Area_sqft: p.plotArea,
+              Ownership: "Free hold",
+            }))
+          : [{ id: "-", Location: "-", Price: 0, Type: "-", Area_sqft: 0, Ownership: "Free hold" }];
+
         const payload = isBroker
           ? {
               sourcePage: "/offer",
               sourceAction: "offer-popup-submit",
               agreement_type: "a2a",
               assignee_email: "undefined",
-              number: a2aForm.phone || "-",
+              contact_id: a2aForm.phone || "-",
               data: {
                 name: a2aForm.contactPerson || "-",
                 email: a2aForm.email || "-",
@@ -144,32 +155,26 @@ function NextStepsModal({ onClose, plotName, enableOfferWebhook = false }: { onC
                 investor_name: a2aForm.investorName || "-",
                 investor_email: a2aForm.investorEmail || "-",
                 investor_number: a2aForm.investorPhone || "null",
-                properties: plotName || "-",
-                broker_commision_cut: "2%",
+                properties: properties,
+                broker_commision_cut: "2",
               },
             }
           : {
               sourcePage: "/offer",
               sourceAction: "offer-popup-submit",
-              agreement_type: "pi",
+              agreement_type: "b2a",
+              contact_id: piForm.mobile || "-",
               assignee_email: "undefined",
-              number: piForm.mobile || "-",
               data: {
-                name: piForm.fullName || "-",
+                investor_name: piForm.fullName || "-",
+                investor_number: piForm.mobile || "null",
                 email: piForm.email || "-",
-                broker_number: "-",
-                company_name: "-",
-                agent_id_number: "-",
-                trade_license: "-",
                 id_number: piForm.passportId || "-",
                 city: piForm.city || "null",
                 country: piForm.country || "-",
-                investor_name: piForm.fullName || "-",
-                investor_email: piForm.email || "-",
-                investor_number: piForm.mobile || "null",
-                properties: plotName || "-",
-                broker_commision_cut: "-",
+                properties: properties,
               },
+              commission: "2%",
             };
 
         const res = await fetch("/api/offer/submit", {
@@ -357,11 +362,17 @@ export default function FinalOfferPage() {
     try { const s = sessionStorage.getItem("selected_plot"); if (s) { const p: Plot = JSON.parse(s); return p.id; } } catch { /* ignore */ }
     return plots[0].id;
   });
+  const [comparePlots] = useState<Plot[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { const s = sessionStorage.getItem("compare_plots"); if (s) { const cp: Plot[] = JSON.parse(s); if (cp.length === 2) return cp; } } catch { /* ignore */ }
+    return [];
+  });
   const [submitted, setSubmitted] = useState(false);
   const [dealRef, setDealRef] = useState<string | null>(null);
   const [showNextSteps, setShowNextSteps] = useState(false);
 
   const selectedPlot = plots.find((p) => p.id === selectedPlotId) || plots[0];
+  const selectedPlots = comparePlots.length === 2 ? comparePlots : [selectedPlot];
   const hasROI = roiData !== null;
 
   // Use ROI data if available, otherwise fall back to basic calculation
@@ -579,7 +590,7 @@ export default function FinalOfferPage() {
 
       {/* Next Steps modal */}
       {showNextSteps && (
-        <NextStepsModal onClose={() => setShowNextSteps(false)} plotName={selectedPlot.name} enableOfferWebhook />
+        <NextStepsModal onClose={() => setShowNextSteps(false)} plotName={selectedPlot.name} selectedPlots={selectedPlots} enableOfferWebhook />
       )}
     </div>
   );
