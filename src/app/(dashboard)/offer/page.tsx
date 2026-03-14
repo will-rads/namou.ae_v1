@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
 import { plots, formatNumber, type Plot } from "@/data/mock";
@@ -38,6 +38,304 @@ function fmtAED(n: number): string {
   return `AED ${n.toFixed(0)}`;
 }
 
+/* ── Agreement-style helpers (match /agreement page) ── */
+
+function Field({ label, required, error, children }: { label: string; required?: boolean; error?: boolean; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11px] font-medium text-deep-forest">
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      </span>
+      {children}
+      {error && <span className="text-[10px] text-red-500">Required</span>}
+    </label>
+  );
+}
+
+function inputCls(error?: boolean) {
+  return `w-full px-3 py-2 rounded-lg border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${
+    error
+      ? "border-red-400 bg-red-50/30 focus:border-red-500"
+      : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"
+  }`;
+}
+
+function SignaturePad({ onEnd, clearRef }: { onEnd: (dataUrl: string) => void; clearRef: React.MutableRefObject<(() => void) | null> }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
+  const hasStrokes = useRef(false);
+
+  const setupCtx = useCallback((ctx: CanvasRenderingContext2D) => {
+    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = 2; ctx.strokeStyle = "#003D2E";
+  }, []);
+
+  const resize = useCallback(() => {
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    let savedImg: ImageData | null = null;
+    if (hasStrokes.current) savedImg = ctx.getImageData(0, 0, c.width, c.height);
+    const rect = c.getBoundingClientRect();
+    c.width = rect.width * 2; c.height = rect.height * 2;
+    ctx.scale(2, 2); setupCtx(ctx);
+    if (savedImg) ctx.putImageData(savedImg, 0, 0);
+  }, [setupCtx]);
+
+  useEffect(() => { resize(); window.addEventListener("resize", resize); return () => window.removeEventListener("resize", resize); }, [resize]);
+
+  useEffect(() => {
+    clearRef.current = () => {
+      const c = canvasRef.current; if (!c) return;
+      const ctx = c.getContext("2d"); if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+      hasStrokes.current = false; resize(); onEnd("");
+    };
+  }, [resize, onEnd, clearRef]);
+
+  function getPos(e: React.MouseEvent | React.TouchEvent) {
+    const c = canvasRef.current!; const rect = c.getBoundingClientRect();
+    if ("touches" in e && e.touches.length > 0) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  }
+
+  function start(e: React.MouseEvent | React.TouchEvent) {
+    drawing.current = true; hasStrokes.current = true;
+    const ctx = canvasRef.current?.getContext("2d"); if (!ctx) return;
+    const { x, y } = getPos(e); ctx.beginPath(); ctx.moveTo(x, y);
+  }
+  function move(e: React.MouseEvent | React.TouchEvent) {
+    if (!drawing.current) return;
+    const ctx = canvasRef.current?.getContext("2d"); if (!ctx) return;
+    const { x, y } = getPos(e); ctx.lineTo(x, y); ctx.stroke();
+  }
+  function end() { drawing.current = false; if (canvasRef.current) onEnd(canvasRef.current.toDataURL("image/png")); }
+
+  return (
+    <canvas ref={canvasRef} onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+      onTouchStart={start} onTouchMove={move} onTouchEnd={end} className="w-full h-full cursor-crosshair touch-none" />
+  );
+}
+
+/* ── Next Steps Modal ── */
+
+function NextStepsModal({ onClose, plotName }: { onClose: () => void; plotName: string }) {
+  const [clientType, setClientType] = useState<string | null>(null);
+  useEffect(() => {
+    try { const raw = sessionStorage.getItem("namou_session"); if (raw) setClientType(JSON.parse(raw).clientType ?? null); } catch { /* ignore */ }
+  }, []);
+
+  const isBroker = clientType === "Broker";
+
+  // Property Introduction form state (Developer / Investor / default)
+  const [piForm, setPiForm] = useState({ fullName: "", mobile: "", email: "", passportId: "", city: "", country: "" });
+  // A2A form state (Broker)
+  const [a2aForm, setA2aForm] = useState({ companyName: "", address: "", tradeLicense: "", contactPerson: "", phone: "", email: "", investorName: "", investorPhone: "", investorEmail: "" });
+
+  const [signature, setSignature] = useState("");
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const clearSig = useRef<(() => void) | null>(null);
+
+  function setPi(field: string, value: string) {
+    setPiForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: false }));
+  }
+  function setA2a(field: string, value: string) {
+    setA2aForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: false }));
+  }
+
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  function validate() {
+    const errs: Record<string, boolean> = {};
+    if (isBroker) {
+      if (!a2aForm.companyName.trim()) errs.companyName = true;
+      if (!a2aForm.address.trim()) errs.address = true;
+      if (!a2aForm.tradeLicense.trim()) errs.tradeLicense = true;
+      if (!a2aForm.contactPerson.trim()) errs.contactPerson = true;
+      if (!a2aForm.phone.trim()) errs.phone = true;
+      if (!a2aForm.email.trim() || !emailRe.test(a2aForm.email)) errs.email = true;
+      if (!a2aForm.investorName.trim()) errs.investorName = true;
+      if (!a2aForm.investorPhone.trim()) errs.investorPhone = true;
+      if (!a2aForm.investorEmail.trim() || !emailRe.test(a2aForm.investorEmail)) errs.investorEmail = true;
+    } else {
+      if (!piForm.fullName.trim()) errs.fullName = true;
+      if (!piForm.mobile.trim()) errs.mobile = true;
+      if (!piForm.email.trim() || !emailRe.test(piForm.email)) errs.email = true;
+      if (!piForm.passportId.trim()) errs.passportId = true;
+      if (!piForm.city.trim()) errs.city = true;
+      if (!piForm.country.trim()) errs.country = true;
+    }
+    if (!signature) errs.signature = true;
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (validate()) setSubmitted(true);
+  }
+
+  const dateStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+
+      {/* modal card — matches agreement card style */}
+      <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-mint-light/30 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* close button */}
+        <button onClick={onClose} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-mint-bg hover:bg-mint-light/60 flex items-center justify-center transition-colors z-10">
+          <svg className="w-3.5 h-3.5 text-deep-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M18 6L6 18M6 6l12 12" /></svg>
+        </button>
+
+        {submitted ? (
+          <div className="flex flex-col items-center justify-center text-center px-6 py-12">
+            <div className="w-14 h-14 rounded-full bg-forest/10 flex items-center justify-center mb-4">
+              <svg className="w-7 h-7 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20 6 9 17 4 12" /></svg>
+            </div>
+            <h3 className="text-lg font-bold text-forest mb-1">Submitted</h3>
+            <p className="text-xs text-muted max-w-xs">
+              {isBroker
+                ? "Your A2A Agreement has been submitted. A representative will review and countersign shortly."
+                : "Your Property Introduction Form has been submitted. A specialist will be in touch shortly."}
+            </p>
+            <button onClick={onClose} className="mt-4 px-6 py-2 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors">
+              Close
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
+            {/* Header */}
+            <div className="bg-forest rounded-xl px-5 py-4 flex items-center justify-between">
+              <p className="text-sm font-bold text-white">{isBroker ? "A2A Agreement" : "Property Introduction Form"}</p>
+              <p className="text-sm font-bold text-white/80" dir="rtl">{isBroker ? "اتفاقية وسيط إلى وسيط" : "نموذج تعريف العقار"}</p>
+            </div>
+
+            {/* Property / context summary */}
+            <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
+              <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">
+                {isBroker ? "Property" : "Property Being Introduced"}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
+                {!isBroker && <div><p className="text-[10px] text-muted">Commission</p><p className="text-xs font-semibold text-deep-forest">2%</p></div>}
+              </div>
+            </div>
+
+            {/* Fields — conditional on client type */}
+            {isBroker ? (
+              <>
+                {/* Party A (read-only) */}
+                <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
+                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Party A (Namou Properties LLC)</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div><p className="text-[10px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>
+                    <div><p className="text-[10px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>
+                    <div><p className="text-[10px] text-muted">Contact</p><p className="text-xs font-semibold text-deep-forest">info@namou.ae</p></div>
+                  </div>
+                </div>
+
+                {/* Party B */}
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Party B (Referring Agent)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Company Name" required error={errors.companyName}>
+                      <input type="text" value={a2aForm.companyName} onChange={(e) => setA2a("companyName", e.target.value)} maxLength={100} className={inputCls(errors.companyName)} placeholder="ABC Real Estate" />
+                    </Field>
+                    <Field label="Trade License No." required error={errors.tradeLicense}>
+                      <input type="text" value={a2aForm.tradeLicense} onChange={(e) => setA2a("tradeLicense", e.target.value)} maxLength={30} className={inputCls(errors.tradeLicense)} placeholder="DXB-0000-0000" />
+                    </Field>
+                    <div className="col-span-2">
+                      <Field label="Address" required error={errors.address}>
+                        <input type="text" value={a2aForm.address} onChange={(e) => setA2a("address", e.target.value)} maxLength={200} className={inputCls(errors.address)} placeholder="Business Bay, Dubai, UAE" />
+                      </Field>
+                    </div>
+                    <Field label="Contact Person" required error={errors.contactPerson}>
+                      <input type="text" value={a2aForm.contactPerson} onChange={(e) => setA2a("contactPerson", e.target.value)} maxLength={100} className={inputCls(errors.contactPerson)} placeholder="Jane Smith" />
+                    </Field>
+                    <Field label="Phone" required error={errors.phone}>
+                      <input type="tel" value={a2aForm.phone} onChange={(e) => setA2a("phone", e.target.value)} maxLength={20} className={inputCls(errors.phone)} placeholder="+971 50 000 0000" />
+                    </Field>
+                    <div className="col-span-2">
+                      <Field label="Email" required error={errors.email}>
+                        <input type="email" value={a2aForm.email} onChange={(e) => setA2a("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="agent@company.com" />
+                      </Field>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Referred Investor */}
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Referred Investor</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <Field label="Investor Full Name" required error={errors.investorName}>
+                        <input type="text" value={a2aForm.investorName} onChange={(e) => setA2a("investorName", e.target.value)} maxLength={100} className={inputCls(errors.investorName)} placeholder="John Doe" />
+                      </Field>
+                    </div>
+                    <Field label="Investor Phone" required error={errors.investorPhone}>
+                      <input type="tel" value={a2aForm.investorPhone} onChange={(e) => setA2a("investorPhone", e.target.value)} maxLength={20} className={inputCls(errors.investorPhone)} placeholder="+971 55 000 0000" />
+                    </Field>
+                    <Field label="Investor Email" required error={errors.investorEmail}>
+                      <input type="email" value={a2aForm.investorEmail} onChange={(e) => setA2a("investorEmail", e.target.value)} maxLength={254} className={inputCls(errors.investorEmail)} placeholder="investor@email.com" />
+                    </Field>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* Property Introduction fields (Developer / Investor / default) */
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Full Name" required error={errors.fullName}>
+                  <input type="text" value={piForm.fullName} onChange={(e) => setPi("fullName", e.target.value)} maxLength={100} className={inputCls(errors.fullName)} placeholder="John Doe" />
+                </Field>
+                <Field label="Mobile Number" required error={errors.mobile}>
+                  <input type="tel" value={piForm.mobile} onChange={(e) => setPi("mobile", e.target.value)} maxLength={20} className={inputCls(errors.mobile)} placeholder="+971 50 000 0000" />
+                </Field>
+                <Field label="Email" required error={errors.email}>
+                  <input type="email" value={piForm.email} onChange={(e) => setPi("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="investor@email.com" />
+                </Field>
+                <Field label="Passport No / ID" required error={errors.passportId}>
+                  <input type="text" value={piForm.passportId} onChange={(e) => setPi("passportId", e.target.value)} maxLength={30} className={inputCls(errors.passportId)} placeholder="A12345678" />
+                </Field>
+                <Field label="City" required error={errors.city}>
+                  <input type="text" value={piForm.city} onChange={(e) => setPi("city", e.target.value)} maxLength={80} className={inputCls(errors.city)} placeholder="Dubai" />
+                </Field>
+                <Field label="Country" required error={errors.country}>
+                  <input type="text" value={piForm.country} onChange={(e) => setPi("country", e.target.value)} maxLength={80} className={inputCls(errors.country)} placeholder="UAE" />
+                </Field>
+              </div>
+            )}
+
+            {/* Signature */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[9px] uppercase tracking-widest text-muted font-semibold">{isBroker ? "Signature (Party B)" : "Signature"}</p>
+                <button type="button" onClick={() => clearSig.current?.()} className="text-[10px] text-forest hover:text-deep-forest transition-colors font-medium">Clear</button>
+              </div>
+              <div className={`w-full h-24 border-2 border-dashed rounded-lg overflow-hidden ${errors.signature ? "border-red-400 bg-red-50/30" : "border-mint-light bg-white"}`}>
+                <SignaturePad onEnd={setSignature} clearRef={clearSig} />
+              </div>
+              {errors.signature && <p className="text-[10px] text-red-500 mt-0.5">Signature is required</p>}
+            </div>
+
+            {/* Date + Submit */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-[10px] text-muted mb-1">Date</p>
+                <p className="text-xs font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-lg px-3 py-1.5">{dateStr}</p>
+              </div>
+              <button type="submit" className="px-6 py-2.5 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors">
+                Submit
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function FinalOfferPage() {
   const [roiData] = useState<ROIData | null>(() => {
     if (typeof window === "undefined") return null;
@@ -54,6 +352,7 @@ export default function FinalOfferPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [dealRef, setDealRef] = useState<string | null>(null);
+  const [showNextSteps, setShowNextSteps] = useState(false);
 
   const selectedPlot = plots.find((p) => p.id === selectedPlotId) || plots[0];
   const hasROI = roiData !== null;
@@ -236,12 +535,12 @@ export default function FinalOfferPage() {
               >
                 Submit Offer
               </button>
-              <Link
-                href="/cta"
+              <button
+                onClick={() => setShowNextSteps(true)}
                 className="px-6 py-3 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-white transition-colors"
               >
                 Next Steps
-              </Link>
+              </button>
             </div>
           </ContentCard>
         ) : (
@@ -270,6 +569,11 @@ export default function FinalOfferPage() {
           </ContentCard>
         )}
       </div>
+
+      {/* Next Steps modal */}
+      {showNextSteps && (
+        <NextStepsModal onClose={() => setShowNextSteps(false)} plotName={selectedPlot.name} />
+      )}
     </div>
   );
 }
