@@ -368,8 +368,54 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
   );
 }
 
+interface PaymentStage { label: string; pct: number; amount: number; sub?: string }
+
+function parsePaymentStages(text: string, price: number): PaymentStage[] {
+  const stages: PaymentStage[] = [];
+  const segments = text.split(/\s*\/\s*/);
+  let totalPct = 0;
+  for (const seg of segments) {
+    const parts = seg.split(/\s*—\s*/);
+    const m = parts[0].match(/(\d+)%\s*(.*)/);
+    if (!m) continue;
+    const pct = parseInt(m[1]);
+    let label = m[2].trim();
+    const yearMatch = label.match(/end of each year\s+([\d,\s&]+)\s*(.*)/i);
+    if (yearMatch) {
+      const years = yearMatch[1].match(/\d+/g) || [];
+      const suffix = yearMatch[2].trim();
+      for (const y of years) {
+        stages.push({ label: `End of year ${y}${suffix ? ` ${suffix}` : ""}`, pct, amount: Math.round(price * pct / 100) });
+        totalPct += pct;
+      }
+    } else {
+      if (label) label = label.charAt(0).toUpperCase() + label.slice(1);
+      else label = "Payment";
+      stages.push({ label, pct, amount: Math.round(price * pct / 100) });
+      totalPct += pct;
+    }
+    if (parts.length > 1) {
+      const tail = parts[1].trim();
+      const instMatch = tail.match(/(\d+)\s*instalment/i);
+      const remainPct = 100 - totalPct;
+      if (instMatch && remainPct > 0) {
+        const n = parseInt(instMatch[1]);
+        const total = Math.round(price * remainPct / 100);
+        stages.push({ label: `Balance (${n} quarterly instalments)`, pct: remainPct, amount: total, sub: `AED ${formatNumber(Math.round(total / n))} per instalment` });
+        totalPct += remainPct;
+      } else if (/remaining|close/i.test(tail) && 100 - totalPct > 0) {
+        const rp = 100 - totalPct;
+        stages.push({ label: /within 30 days/i.test(tail) ? "Balance (within 30 days)" : "Balance", pct: rp, amount: Math.round(price * rp / 100) });
+        totalPct += rp;
+      }
+    }
+  }
+  return stages;
+}
+
 function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void }) {
   const [openSection, setOpenSection] = useState<string>("land-info");
+  const paymentStages = plot.paymentPlan ? parsePaymentStages(plot.paymentPlan, plot.askingPrice) : [];
 
   function toggle(key: string) {
     setOpenSection(prev => (prev === key ? "" : key));
@@ -430,7 +476,28 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
             isOpen={openSection === "payment-plan"}
             onToggle={() => toggle("payment-plan")}
           >
-            <p className="text-sm text-deep-forest leading-relaxed">{plot.paymentPlan}</p>
+            {paymentStages.length > 0 ? (
+              <div className="divide-y divide-mint-light/60">
+                {paymentStages.map((s, i) => (
+                  <div key={i} className="flex items-center justify-between py-2.5">
+                    <div>
+                      <p className="text-xs text-muted flex items-center gap-2">
+                        {s.label}
+                        <span className="text-[10px] font-semibold text-forest bg-forest/10 px-1.5 py-0.5 rounded">{s.pct}%</span>
+                      </p>
+                      {s.sub && <p className="text-[10px] text-muted/60 mt-0.5">{s.sub}</p>}
+                    </div>
+                    <p className="text-sm font-bold text-deep-forest">AED {formatNumber(s.amount)}</p>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between py-2.5">
+                  <p className="text-xs font-semibold text-forest">Total</p>
+                  <p className="text-sm font-bold text-forest">AED {formatNumber(plot.askingPrice)}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-deep-forest leading-relaxed">{plot.paymentPlan}</p>
+            )}
           </AccordionSection>
           )}
 
