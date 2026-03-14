@@ -10,6 +10,7 @@
   --color-white: #ffffff;
   --color-foreground: #1a1a1a;
   --color-muted: #6b7b75;
+  --color-compare-b: #0f766e;
 
   --font-heading: var(--font-dm-sans), "Segoe UI", system-ui, sans-serif;
   --font-body: var(--font-roboto-mono), "SF Mono", ui-monospace, monospace;

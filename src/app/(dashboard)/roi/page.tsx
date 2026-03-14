@@ -217,7 +217,7 @@ export default function ROIPage() {
             {isCompareMode ? (
               <>
                 {comparePlots.map((cp, ci) => (
-                  <span key={cp.id} className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${ci === 0 ? "text-forest bg-forest/10 border-forest/20" : "text-blue-700 bg-blue-50 border-blue-200"}`}>
+                  <span key={cp.id} className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${ci === 0 ? "text-forest bg-forest/10 border-forest/20" : "text-compare-b bg-compare-b/10 border-compare-b/20"}`}>
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
                     </svg>
@@ -281,7 +281,7 @@ export default function ROIPage() {
       </div>
 
       {/* ── Top/bottom: top = variables, bottom = results ── */}
-      <div className="flex-1 min-h-0 flex flex-col gap-1 lg:gap-2 overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col gap-0.5 lg:gap-1 overflow-hidden">
 
         {/* ═══════════ TOP: Variables ═══════════ */}
         <div className="shrink-0 flex flex-col gap-1">
@@ -303,8 +303,8 @@ export default function ROIPage() {
                 </div>
                 <span className="text-muted text-[9px]">vs</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-700" />
-                  <span className="text-[10px] font-semibold text-blue-700">{comparePlots[1].name}</span>
+                  <span className="w-2 h-2 rounded-full bg-compare-b" />
+                  <span className="text-[10px] font-semibold text-compare-b">{comparePlots[1].name}</span>
                   <span className="text-[9px] text-muted">{comparePlots[1].area}</span>
                 </div>
               </div>
@@ -313,9 +313,7 @@ export default function ROIPage() {
 
           {/* Input variables */}
           {isCompareMode && inputs2 && results2 ? (
-          <ContentCard className="flex flex-col overflow-y-auto min-h-0">
-            {/* Shared variable inputs — 2-column grid */}
-            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Shared Variables</p>
+          <ContentCard className="flex flex-col overflow-y-auto min-h-0 py-2 px-3 md:py-3 md:px-4">
             <div className="grid grid-cols-2 gap-x-6 flex-1">
               {/* Left: All inputs */}
               <div className="flex flex-col border-r border-mint-light/40 pr-6">
@@ -581,8 +579,8 @@ export default function ROIPage() {
               <ContentCard className="flex-1 min-h-0 overflow-auto py-1 px-4">
                 <div className="grid gap-0" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
                   <div className="py-0.5 text-[11px] font-semibold text-muted">Metric</div>
-                  <div className="py-0.5 text-[11px] font-semibold text-forest text-right">{comparePlots[0].name}</div>
-                  <div className="py-0.5 text-[11px] font-semibold text-blue-700 text-right">{comparePlots[1].name}</div>
+                  <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-forest" /></div>
+                  <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-compare-b" /></div>
 
                   {[
                     { label: "Plot Size", v1: `${formatNumber(inputs.plotSize)} sqft`, v2: `${formatNumber(inputs2.plotSize)} sqft`, section: "Fixed (Per Plot)" },
@@ -643,11 +641,11 @@ function KPICard({
     : "";
   return (
     <div
-      className="relative"
+      className={`relative ${compareValues ? "h-full" : ""}`}
       onMouseEnter={() => (tooltipLines || tooltipFormula) && setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <ContentCard className={`${cardBg} ${compareValues ? "py-1.5 px-3" : "py-3 px-4"}`}>
+      <ContentCard className={`${cardBg} ${compareValues ? "py-1.5 px-3 h-full flex flex-col justify-center" : "py-3 px-4"}`}>
         <p className={`text-xs uppercase tracking-widest text-muted ${compareValues ? "mb-0.5" : "mb-1"} font-semibold text-center`}>{label}</p>
         {compareValues ? (
           <div className="flex items-start gap-2">
@@ -662,8 +660,8 @@ function KPICard({
             </div>
             <div className="w-px self-stretch bg-mint-light/60" />
             <div className="flex-1 text-center">
-              <p className="text-[10px] font-medium text-blue-700 leading-tight">{compareValues.label2}</p>
-              <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-tight text-blue-700`}>{compareValues.v2}</p>
+              <p className="text-[10px] font-medium text-compare-b leading-tight">{compareValues.label2}</p>
+              <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-tight text-compare-b`}>{compareValues.v2}</p>
               {compareValues.badge2 && (
                 <span className={`mt-0.5 inline-block text-[10px] font-semibold px-2 py-0 rounded-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
                   {compareValues.badge2.label}
@@ -788,7 +786,7 @@ function DualFixedRow({ label, v1, v2, computed }: { label: string; v1: string; 
       </span>
       <div className="flex items-center gap-6 text-xs">
         <span className="font-semibold text-forest">{v1}</span>
-        <span className="font-semibold text-[#3b82f6]">{v2}</span>
+        <span className="font-semibold text-compare-b">{v2}</span>
       </div>
     </div>
   );
@@ -803,7 +801,7 @@ function DualComputedRow({ label, v1, v2 }: { label: string; v1: string; v2: str
       </p>
       <div className="flex items-center gap-4">
         <p className="text-xs font-bold text-forest">{v1}</p>
-        <p className="text-xs font-bold text-[#3b82f6]">{v2}</p>
+        <p className="text-xs font-bold text-compare-b">{v2}</p>
       </div>
     </div>
   );
