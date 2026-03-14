@@ -372,7 +372,7 @@ export default function ROIPage() {
             </div>
           </ContentCard>
           ) : (
-          <ContentCard className="p-4 flex flex-col">
+          <ContentCard className="p-3 flex flex-col">
             <div className="grid grid-cols-2 gap-x-6">
               {/* Left: All inputs */}
               <div className="flex flex-col gap-2 border-r border-mint-light/40 pr-6">
@@ -404,7 +404,7 @@ export default function ROIPage() {
                 </div>
               </div>
               {/* Right: KPI results */}
-              <div className="flex flex-col gap-2 justify-evenly">
+              <div className="flex flex-col gap-1 justify-evenly">
                 <KPICard
                   label="Total Revenue (GDV)"
                   value={fmtAED(results.revenue)}
@@ -474,11 +474,11 @@ export default function ROIPage() {
         </div>
 
         {/* ═══════════ BOTTOM: Results ═══════════ */}
-        <div className="flex-1 flex flex-col gap-2 lg:gap-3 min-h-0 overflow-y-auto">
+        <div className={`flex-1 flex flex-col min-h-0 overflow-y-auto ${isCompareMode ? "gap-2 lg:gap-3" : "gap-1 lg:gap-1.5"}`}>
 
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
-            <div className="flex flex-col gap-2 lg:gap-3 h-full">
+            <div className="flex flex-col gap-1 lg:gap-1.5 h-full">
               {/* Investor Metrics + Sensitivity — side by side */}
               <div className="flex gap-2 lg:gap-3 flex-1 min-h-0">
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
@@ -645,8 +645,8 @@ function KPICard({
       onMouseEnter={() => (tooltipLines || tooltipFormula) && setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <ContentCard className={`${cardBg} ${compareValues ? "py-1.5 px-3 h-full flex flex-col justify-center" : "py-3 px-4"}`}>
-        <p className={`text-xs uppercase tracking-widest text-muted ${compareValues ? "mb-0.5" : "mb-1"} font-semibold text-center`}>{label}</p>
+      <ContentCard className={`${cardBg} ${compareValues ? "py-1.5 px-3 h-full flex flex-col justify-center" : "py-1.5 px-4"}`}>
+        <p className={`text-xs uppercase tracking-widest text-muted ${compareValues ? "mb-0.5" : "mb-0.5"} font-semibold text-center`}>{label}</p>
         {compareValues ? (
           <div className="flex items-start gap-2">
             <div className="flex-1 text-center">
@@ -671,10 +671,10 @@ function KPICard({
           </div>
         ) : (
           <div className="text-center">
-            <p className={`${primary ? "text-2xl" : "text-xl"} font-bold font-heading leading-tight ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</p>
-            {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
+            <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-tight ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+            {sub && <p className="text-xs text-muted mt-0">{sub}</p>}
             {badge && (
-              <span className={`mt-1.5 inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${badge.bg} ${badge.text}`}>
+              <span className={`mt-1 inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
                 {badge.label}
               </span>
             )}
