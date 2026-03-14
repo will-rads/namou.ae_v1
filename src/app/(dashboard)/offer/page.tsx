@@ -116,7 +116,7 @@ function SignaturePad({ onEnd, clearRef }: { onEnd: (dataUrl: string) => void; c
 
 /* ── Next Steps Modal ── */
 
-function NextStepsModal({ onClose, plotName }: { onClose: () => void; plotName: string }) {
+function NextStepsModal({ onClose, plotName, enableOfferWebhook = false }: { onClose: () => void; plotName: string; enableOfferWebhook?: boolean }) {
   const [clientType, setClientType] = useState<string | null>(null);
   useEffect(() => {
     try { const raw = sessionStorage.getItem("namou_session"); if (raw) setClientType(JSON.parse(raw).clientType ?? null); } catch { /* ignore */ }
@@ -132,6 +132,8 @@ function NextStepsModal({ onClose, plotName }: { onClose: () => void; plotName: 
   const [signature, setSignature] = useState("");
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const clearSig = useRef<(() => void) | null>(null);
 
   function setPi(field: string, value: string) {
@@ -170,9 +172,82 @@ function NextStepsModal({ onClose, plotName }: { onClose: () => void; plotName: 
     return Object.keys(errs).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (validate()) setSubmitted(true);
+    if (!validate()) return;
+    if (submitting) return; // prevent duplicate submissions
+
+    if (enableOfferWebhook) {
+      setSubmitting(true);
+      setSubmitError(null);
+      try {
+        const payload = isBroker
+          ? {
+              sourcePage: "/offer",
+              sourceAction: "offer-popup-submit",
+              agreement_type: "a2a",
+              assignee_email: "undefined",
+              number: a2aForm.phone || "-",
+              data: {
+                name: a2aForm.contactPerson || "-",
+                email: a2aForm.email || "-",
+                broker_number: a2aForm.phone || "-",
+                company_name: a2aForm.companyName || "-",
+                agent_id_number: "-",
+                trade_license: a2aForm.tradeLicense || "-",
+                id_number: "-",
+                city: "null",
+                country: a2aForm.address || "-",
+                investor_name: a2aForm.investorName || "-",
+                investor_email: a2aForm.investorEmail || "-",
+                investor_number: a2aForm.investorPhone || "null",
+                properties: plotName || "-",
+                broker_commision_cut: "2%",
+              },
+            }
+          : {
+              sourcePage: "/offer",
+              sourceAction: "offer-popup-submit",
+              agreement_type: "pi",
+              assignee_email: "undefined",
+              number: piForm.mobile || "-",
+              data: {
+                name: piForm.fullName || "-",
+                email: piForm.email || "-",
+                broker_number: "-",
+                company_name: "-",
+                agent_id_number: "-",
+                trade_license: "-",
+                id_number: piForm.passportId || "-",
+                city: piForm.city || "null",
+                country: piForm.country || "-",
+                investor_name: piForm.fullName || "-",
+                investor_email: piForm.email || "-",
+                investor_number: piForm.mobile || "null",
+                properties: plotName || "-",
+                broker_commision_cut: "-",
+              },
+            };
+
+        const res = await fetch("/api/offer/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ error: "Unknown error" }));
+          throw new Error(body.error || `Request failed (${res.status})`);
+        }
+      } catch (err: unknown) {
+        setSubmitError(err instanceof Error ? err.message : "Submission failed");
+        setSubmitting(false);
+        return;
+      }
+      setSubmitting(false);
+    }
+
+    setSubmitted(true);
   }
 
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
@@ -319,14 +394,21 @@ function NextStepsModal({ onClose, plotName }: { onClose: () => void; plotName: 
               {errors.signature && <p className="text-[10px] text-red-500 mt-0.5">Signature is required</p>}
             </div>
 
+            {/* Error message */}
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-600">
+                {submitError}
+              </div>
+            )}
+
             {/* Date + Submit */}
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-[10px] text-muted mb-1">Date</p>
                 <p className="text-xs font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-lg px-3 py-1.5">{dateStr}</p>
               </div>
-              <button type="submit" className="px-6 py-2.5 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors">
-                Submit
+              <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {submitting ? "Submitting…" : "Submit"}
               </button>
             </div>
           </form>
@@ -572,7 +654,7 @@ export default function FinalOfferPage() {
 
       {/* Next Steps modal */}
       {showNextSteps && (
-        <NextStepsModal onClose={() => setShowNextSteps(false)} plotName={selectedPlot.name} />
+        <NextStepsModal onClose={() => setShowNextSteps(false)} plotName={selectedPlot.name} enableOfferWebhook />
       )}
     </div>
   );
