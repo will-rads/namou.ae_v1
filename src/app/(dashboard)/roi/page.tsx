@@ -457,6 +457,7 @@ export default function ROIPage() {
                   value={`${results.profitMargin.toFixed(1)}%`}
                   badge={dealLabel}
                   primary
+                  tooltipAbove
                   tooltipFormula="Margin = (Profit ÷ Revenue) × 100"
                   tooltipLines={[
                     `Profit: ${fmtAED(results.profit)}`,
@@ -627,13 +628,14 @@ export default function ROIPage() {
 
 function KPICard({
   label, value, sub, primary, badge, tooltipFormula, tooltipLines,
-  compareValues,
+  compareValues, tooltipAbove,
 }: {
   label: string; value: string; sub?: string; primary?: boolean;
   badge?: { label: string; bg: string; text: string };
   tooltipFormula?: string;
   tooltipLines?: string[];
   compareValues?: { v1: string; v2: string; label1: string; label2: string; badge1?: { label: string; bg: string; text: string }; badge2?: { label: string; bg: string; text: string } };
+  tooltipAbove?: boolean;
 }) {
   const [show, setShow] = useState(false);
   const cardBg = primary
@@ -682,8 +684,8 @@ function KPICard({
         )}
       </ContentCard>
       {(tooltipLines || tooltipFormula) && show && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[300px] pointer-events-none">
-          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-deep-forest rotate-45 rounded-sm" />
+        <div className={`absolute left-1/2 -translate-x-1/2 z-50 bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[300px] pointer-events-none ${tooltipAbove ? "bottom-full mb-2" : "top-full mt-2"}`}>
+          <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-deep-forest rotate-45 rounded-sm ${tooltipAbove ? "-bottom-1.5" : "-top-1.5"}`} />
           {tooltipFormula && (
             <p className="text-sm font-bold text-mint mb-2 tracking-wide font-mono">{tooltipFormula}</p>
           )}
