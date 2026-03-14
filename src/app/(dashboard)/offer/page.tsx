@@ -223,31 +223,31 @@ function NextStepsModal({ onClose, plotName, enableOfferWebhook = false }: { onC
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
+          <form onSubmit={handleSubmit} className={`flex flex-col p-5 ${isBroker ? "gap-2.5" : "gap-4"}`}>
             {/* Header */}
-            <div className="bg-forest rounded-xl px-5 py-4 flex items-center justify-between">
+            <div className={`bg-forest rounded-xl px-5 flex items-center justify-between ${isBroker ? "py-3" : "py-4"}`}>
               <p className="text-sm font-bold text-white">{isBroker ? "A2A Agreement" : "Property Introduction Form"}</p>
               <p className="text-sm font-bold text-white/80" dir="rtl">{isBroker ? "اتفاقية وسيط إلى وسيط" : "نموذج تعريف العقار"}</p>
             </div>
 
-            {/* Property / context summary */}
-            <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
-              <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">
-                {isBroker ? "Property" : "Property Being Introduced"}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
-                {!isBroker && <div><p className="text-[10px] text-muted">Commission</p><p className="text-xs font-semibold text-deep-forest">2%</p></div>}
+            {/* Property / context summary — non-broker only; broker merges into Party A card */}
+            {!isBroker && (
+              <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
+                <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Property Being Introduced</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
+                  <div><p className="text-[10px] text-muted">Commission</p><p className="text-xs font-semibold text-deep-forest">2%</p></div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Fields — conditional on client type */}
             {isBroker ? (
               <>
-                {/* Party A (read-only) */}
-                <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
-                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Party A (Namou Properties LLC)</p>
-                  <div className="grid grid-cols-3 gap-3">
+                {/* Property + Party A (read-only, merged) */}
+                <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-2">
+                  <div className="grid grid-cols-4 gap-2">
+                    <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
                     <div><p className="text-[10px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>
                     <div><p className="text-[10px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>
                     <div><p className="text-[10px] text-muted">Contact</p><p className="text-xs font-semibold text-deep-forest">info@namou.ae</p></div>
@@ -256,42 +256,36 @@ function NextStepsModal({ onClose, plotName, enableOfferWebhook = false }: { onC
 
                 {/* Party B */}
                 <div>
-                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Party B (Referring Agent)</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-1.5">Party B (Referring Agent)</p>
+                  <div className="grid grid-cols-2 gap-2.5">
                     <Field label="Company Name" required error={errors.companyName}>
                       <input type="text" value={a2aForm.companyName} onChange={(e) => setA2a("companyName", e.target.value)} maxLength={100} className={inputCls(errors.companyName)} placeholder="ABC Real Estate" />
                     </Field>
                     <Field label="Trade License No." required error={errors.tradeLicense}>
                       <input type="text" value={a2aForm.tradeLicense} onChange={(e) => setA2a("tradeLicense", e.target.value)} maxLength={30} className={inputCls(errors.tradeLicense)} placeholder="DXB-0000-0000" />
                     </Field>
-                    <div className="col-span-2">
-                      <Field label="Address" required error={errors.address}>
-                        <input type="text" value={a2aForm.address} onChange={(e) => setA2a("address", e.target.value)} maxLength={200} className={inputCls(errors.address)} placeholder="Business Bay, Dubai, UAE" />
-                      </Field>
-                    </div>
                     <Field label="Contact Person" required error={errors.contactPerson}>
                       <input type="text" value={a2aForm.contactPerson} onChange={(e) => setA2a("contactPerson", e.target.value)} maxLength={100} className={inputCls(errors.contactPerson)} placeholder="Jane Smith" />
                     </Field>
                     <Field label="Phone" required error={errors.phone}>
                       <input type="tel" value={a2aForm.phone} onChange={(e) => setA2a("phone", e.target.value)} maxLength={20} className={inputCls(errors.phone)} placeholder="+971 50 000 0000" />
                     </Field>
-                    <div className="col-span-2">
-                      <Field label="Email" required error={errors.email}>
-                        <input type="email" value={a2aForm.email} onChange={(e) => setA2a("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="agent@company.com" />
-                      </Field>
-                    </div>
+                    <Field label="Address" required error={errors.address}>
+                      <input type="text" value={a2aForm.address} onChange={(e) => setA2a("address", e.target.value)} maxLength={200} className={inputCls(errors.address)} placeholder="Business Bay, Dubai, UAE" />
+                    </Field>
+                    <Field label="Email" required error={errors.email}>
+                      <input type="email" value={a2aForm.email} onChange={(e) => setA2a("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="agent@company.com" />
+                    </Field>
                   </div>
                 </div>
 
                 {/* Referred Investor */}
                 <div>
-                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Referred Investor</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2">
-                      <Field label="Investor Full Name" required error={errors.investorName}>
-                        <input type="text" value={a2aForm.investorName} onChange={(e) => setA2a("investorName", e.target.value)} maxLength={100} className={inputCls(errors.investorName)} placeholder="John Doe" />
-                      </Field>
-                    </div>
+                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-1.5">Referred Investor</p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <Field label="Investor Full Name" required error={errors.investorName}>
+                      <input type="text" value={a2aForm.investorName} onChange={(e) => setA2a("investorName", e.target.value)} maxLength={100} className={inputCls(errors.investorName)} placeholder="John Doe" />
+                    </Field>
                     <Field label="Investor Phone" required error={errors.investorPhone}>
                       <input type="tel" value={a2aForm.investorPhone} onChange={(e) => setA2a("investorPhone", e.target.value)} maxLength={20} className={inputCls(errors.investorPhone)} placeholder="+971 55 000 0000" />
                     </Field>
