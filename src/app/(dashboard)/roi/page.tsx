@@ -374,13 +374,49 @@ export default function ROIPage() {
             <ContentCard className="py-2 px-2">
               <div className="grid grid-cols-2 gap-1 auto-rows-fr h-full">
                 <KPICard label="Revenue (GDV)" value=""
-                  compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                  compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }}
+                  tooltipFormula="Revenue = NSA × Selling Price/sqft"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: ${formatNumber(Math.round(results.nsa))} NSA × AED ${formatNumber(inputs.sellingPricePerNSA)}`,
+                    `= ${fmtAED(results.revenue)}`,
+                    "---",
+                    `${comparePlots[1].name}: ${formatNumber(Math.round(results2.nsa))} NSA × AED ${formatNumber(inputs.sellingPricePerNSA)}`,
+                    `= ${fmtAED(results2.revenue)}`,
+                  ]}
+                />
                 <KPICard label="Total Cost" value=""
-                  compareValues={{ v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                  compareValues={{ v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost), label1: comparePlots[0].name, label2: comparePlots[1].name }}
+                  tooltipFormula="Total Cost = Land + Construction"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: Land ${fmtAED(results.landCost)} + Constr. ${fmtAED(results.constructionCost)}`,
+                    `= ${fmtAED(results.totalCost)}`,
+                    "---",
+                    `${comparePlots[1].name}: Land ${fmtAED(results2.landCost)} + Constr. ${fmtAED(results2.constructionCost)}`,
+                    `= ${fmtAED(results2.totalCost)}`,
+                  ]}
+                />
                 <KPICard label="Total Profit" value="" primary
-                  compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                  compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }}
+                  tooltipFormula="Profit = Revenue − Total Cost"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: ${fmtAED(results.revenue)} − ${fmtAED(results.totalCost)}`,
+                    `= ${fmtAED(results.profit)}`,
+                    "---",
+                    `${comparePlots[1].name}: ${fmtAED(results2.revenue)} − ${fmtAED(results2.totalCost)}`,
+                    `= ${fmtAED(results2.profit)}`,
+                  ]}
+                />
                 <KPICard label="Margin" value="" primary
-                  compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }} />
+                  compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }}
+                  tooltipFormula="Margin = (Profit ÷ Revenue) × 100"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: ${fmtAED(results.profit)} ÷ ${fmtAED(results.revenue)}`,
+                    `= ${results.profitMargin.toFixed(1)}%`,
+                    "---",
+                    `${comparePlots[1].name}: ${fmtAED(results2.profit)} ÷ ${fmtAED(results2.revenue)}`,
+                    `= ${results2.profitMargin.toFixed(1)}%`,
+                  ]}
+                />
                 <KPICard label="Return on Cost" value=""
                   compareValues={{ v1: `${results.returnOnCost.toFixed(1)}%`, v2: `${results2.returnOnCost.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
                 <KPICard label="GDV Multiple" value=""
@@ -481,7 +517,6 @@ export default function ROIPage() {
                   value={`${results.profitMargin.toFixed(1)}%`}
                   badge={dealLabel}
                   primary
-                  tooltipAbove
                   tooltipFormula="Margin = (Profit ÷ Revenue) × 100"
                   tooltipLines={[
                     `Profit: ${fmtAED(results.profit)}`,
@@ -657,24 +692,45 @@ export default function ROIPage() {
 
 function KPICard({
   label, value, sub, primary, badge, tooltipFormula, tooltipLines,
-  compareValues, tooltipAbove,
+  compareValues,
 }: {
   label: string; value: string; sub?: string; primary?: boolean;
   badge?: { label: string; bg: string; text: string };
   tooltipFormula?: string;
   tooltipLines?: string[];
   compareValues?: { v1: string; v2: string; label1: string; label2: string; badge1?: { label: string; bg: string; text: string }; badge2?: { label: string; bg: string; text: string } };
-  tooltipAbove?: boolean;
 }) {
   const [show, setShow] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [tipStyle, setTipStyle] = useState<React.CSSProperties>({});
+  const [above, setAbove] = useState(false);
+
+  function handleEnter() {
+    if (!(tooltipLines || tooltipFormula) || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const goAbove = rect.bottom + 220 > window.innerHeight;
+    setAbove(goAbove);
+    setTipStyle({
+      position: "fixed",
+      left: rect.left + rect.width / 2,
+      transform: "translateX(-50%)",
+      zIndex: 9999,
+      ...(goAbove
+        ? { bottom: window.innerHeight - rect.top + 8 }
+        : { top: rect.bottom + 8 }),
+    });
+    setShow(true);
+  }
+
   const cardBg = primary
     ? "bg-forest/10 border-forest/25 ring-1 ring-forest/10"
     : "";
   const valueSz = value.length <= 7 ? "text-3xl" : "text-2xl";
   return (
     <div
+      ref={ref}
       className="relative h-full"
-      onMouseEnter={() => (tooltipLines || tooltipFormula) && setShow(true)}
+      onMouseEnter={handleEnter}
       onMouseLeave={() => setShow(false)}
     >
       <ContentCard className={`${cardBg} ${compareValues ? "py-1 px-2" : "py-2 px-3"} h-full flex flex-col justify-center`}>
@@ -713,9 +769,9 @@ function KPICard({
           </div>
         )}
       </ContentCard>
-      {(tooltipLines || tooltipFormula) && show && (
-        <div className={`absolute left-1/2 -translate-x-1/2 z-50 bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[300px] pointer-events-none ${tooltipAbove ? "bottom-full mb-2" : "top-full mt-2"}`}>
-          <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-deep-forest rotate-45 rounded-sm ${tooltipAbove ? "-bottom-1.5" : "-top-1.5"}`} />
+      {(tooltipLines || tooltipFormula) && show && createPortal(
+        <div className="bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[300px] pointer-events-none" style={tipStyle}>
+          <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-deep-forest rotate-45 rounded-sm ${above ? "-bottom-1.5" : "-top-1.5"}`} />
           {tooltipFormula && (
             <p className="text-sm font-bold text-mint mb-2 tracking-wide font-mono">{tooltipFormula}</p>
           )}
@@ -730,7 +786,8 @@ function KPICard({
               </p>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
