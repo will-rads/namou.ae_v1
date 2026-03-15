@@ -663,25 +663,25 @@ function KPICard({
       onMouseEnter={() => (tooltipLines || tooltipFormula) && setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <ContentCard className={`${cardBg} ${compareValues ? "py-2.5 px-4 h-full flex flex-col justify-center" : "py-1.5 px-4"}`}>
-        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-[11px] mb-1" : "text-xs mb-0.5"}`}>{label}</p>
+      <ContentCard className={`${cardBg} ${compareValues ? "py-3 px-5 h-full flex flex-col justify-center" : "py-1.5 px-4"}`}>
+        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-xs mb-1.5" : "text-xs mb-0.5"}`}>{label}</p>
         {compareValues ? (
-          <div className="flex items-stretch gap-4">
+          <div className="flex items-stretch gap-5">
             <div className="flex-1 text-center min-w-0">
-              <p className="text-[11px] font-medium text-forest leading-normal mb-0.5">{compareValues.label1}</p>
-              <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
+              <p className="text-xs font-medium text-forest leading-normal mb-0.5">{compareValues.label1}</p>
+              <p className={`${primary ? "text-2xl" : "text-xl"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
               {compareValues.badge1 && (
-                <span className={`mt-0.5 inline-block text-[10px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
+                <span className={`mt-1 inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
                   {compareValues.badge1.label}
                 </span>
               )}
             </div>
             <div className="w-px shrink-0 bg-mint-light/60" />
             <div className="flex-1 text-center min-w-0">
-              <p className="text-[11px] font-medium text-compare-b leading-normal mb-0.5">{compareValues.label2}</p>
-              <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
+              <p className="text-xs font-medium text-compare-b leading-normal mb-0.5">{compareValues.label2}</p>
+              <p className={`${primary ? "text-2xl" : "text-xl"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
               {compareValues.badge2 && (
-                <span className={`mt-0.5 inline-block text-[10px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
+                <span className={`mt-1 inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
                   {compareValues.badge2.label}
                 </span>
               )}
