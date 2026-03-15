@@ -468,40 +468,7 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
             </div>
           </AccordionSection>
 
-          {/* 2. Payment Plan */}
-          {plot.paymentPlan && (
-          <AccordionSection
-            title="Payment Plan"
-            icon={<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
-            isOpen={openSection === "payment-plan"}
-            onToggle={() => toggle("payment-plan")}
-          >
-            {paymentStages.length > 0 ? (
-              <div className="divide-y divide-mint-light/60">
-                {paymentStages.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between py-2.5">
-                    <div>
-                      <p className="text-xs text-muted flex items-center gap-2">
-                        {s.label}
-                        <span className="text-[10px] font-semibold text-forest bg-forest/10 px-1.5 py-0.5 rounded">{s.pct}%</span>
-                      </p>
-                      {s.sub && <p className="text-[10px] text-muted/60 mt-0.5">{s.sub}</p>}
-                    </div>
-                    <p className="text-sm font-bold text-deep-forest">AED {formatNumber(s.amount)}</p>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between py-2.5">
-                  <p className="text-xs font-semibold text-forest">Total</p>
-                  <p className="text-sm font-bold text-forest">AED {formatNumber(plot.askingPrice)}</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-deep-forest leading-relaxed">{plot.paymentPlan}</p>
-            )}
-          </AccordionSection>
-          )}
-
-          {/* 3. Land Gallery */}
+          {/* 2. Land Gallery */}
           <AccordionSection
             title="Land Gallery"
             icon={<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>}
