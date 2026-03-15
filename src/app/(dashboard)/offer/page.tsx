@@ -60,6 +60,53 @@ function inputCls(error?: boolean) {
   }`;
 }
 
+/* ── Payment Plan helpers ── */
+
+interface PaymentStage { label: string; pct: number; amount: number; sub?: string }
+
+function parsePaymentStages(text: string, price: number): PaymentStage[] {
+  const stages: PaymentStage[] = [];
+  const segments = text.split(/\s*\/\s*/);
+  let totalPct = 0;
+  for (const seg of segments) {
+    const parts = seg.split(/\s*—\s*/);
+    const m = parts[0].match(/(\d+)%\s*(.*)/);
+    if (!m) continue;
+    const pct = parseInt(m[1]);
+    let label = m[2].trim();
+    const yearMatch = label.match(/end of each year\s+([\d,\s&]+)\s*(.*)/i);
+    if (yearMatch) {
+      const years = yearMatch[1].match(/\d+/g) || [];
+      const suffix = yearMatch[2].trim();
+      for (const y of years) {
+        stages.push({ label: `End of year ${y}${suffix ? ` ${suffix}` : ""}`, pct, amount: Math.round(price * pct / 100) });
+        totalPct += pct;
+      }
+    } else {
+      if (label) label = label.charAt(0).toUpperCase() + label.slice(1);
+      else label = "Payment";
+      stages.push({ label, pct, amount: Math.round(price * pct / 100) });
+      totalPct += pct;
+    }
+    if (parts.length > 1) {
+      const tail = parts[1].trim();
+      const instMatch = tail.match(/(\d+)\s*instalment/i);
+      const remainPct = 100 - totalPct;
+      if (instMatch && remainPct > 0) {
+        const n = parseInt(instMatch[1]);
+        const total = Math.round(price * remainPct / 100);
+        stages.push({ label: `Balance (${n} quarterly instalments)`, pct: remainPct, amount: total, sub: `AED ${formatNumber(Math.round(total / n))} per instalment` });
+        totalPct += remainPct;
+      } else if (/remaining|close/i.test(tail) && 100 - totalPct > 0) {
+        const rp = 100 - totalPct;
+        stages.push({ label: /within 30 days/i.test(tail) ? "Balance (within 30 days)" : "Balance", pct: rp, amount: Math.round(price * rp / 100) });
+        totalPct += rp;
+      }
+    }
+  }
+  return stages;
+}
+
 /* ── Next Steps Modal ── */
 
 function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook = false }: { onClose: () => void; plotName: string; selectedPlots: Plot[]; enableOfferWebhook?: boolean }) {
@@ -419,14 +466,19 @@ export default function FinalOfferPage() {
   const scenarioLabel = offerSummary.scenario === "conservative" ? "Conservative"
     : offerSummary.scenario === "optimistic" ? "Optimistic" : "Base Case";
 
+  const paymentStages = useMemo(() => {
+    if (!selectedPlot.paymentPlan) return [];
+    return parsePaymentStages(selectedPlot.paymentPlan, offerSummary.landCost);
+  }, [selectedPlot, offerSummary.landCost]);
+
   return (
     <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
-        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Final Offer</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Payment Plan</h1>
         <p className="text-sm text-muted mt-1">
           {hasROI
-            ? "Your offer is based on the ROI model you configured. Review and submit."
-            : "Select a plot and review the offer summary below."}
+            ? "Review the payment schedule based on your selected plot and ROI variables."
+            : "Select a plot and review the payment plan below."}
         </p>
       </div>
 
@@ -468,54 +520,58 @@ export default function FinalOfferPage() {
         </ContentCard>
       )}
 
-      {/* Offer summary */}
+      {/* Payment plan summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
         <ContentCard className="bg-mint-bg border-mint-light">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1">Revenue (GDV)</p>
-          <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.revenue)}</p>
-          <p className="text-xs text-muted mt-1">{formatNumber(Math.round(offerSummary.nsa))} sqft NSA</p>
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Land Price</p>
+          <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.landCost)}</p>
+          <p className="text-xs text-muted mt-1">{formatNumber(selectedPlot.plotArea)} sqft</p>
         </ContentCard>
         <ContentCard className="bg-mint-bg border-mint-light">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1">Total Cost</p>
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Total Dev. Cost</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.totalCost)}</p>
           <p className="text-xs text-muted mt-1">Land + Construction</p>
         </ContentCard>
         <ContentCard className="bg-forest/10 border-forest/20">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1">Profit</p>
-          <p className={`text-2xl font-bold font-heading ${offerSummary.profit > 0 ? "text-forest" : "text-red-600"}`}>{fmtAED(offerSummary.profit)}</p>
-          <p className="text-xs text-muted mt-1">{offerSummary.returnOnCost.toFixed(1)}% ROC</p>
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Payment Stages</p>
+          <p className="text-2xl font-bold font-heading text-deep-forest">{paymentStages.length}</p>
+          <p className="text-xs text-muted mt-1">{selectedPlot.paymentPlan ? "Structured plan" : "No plan"}</p>
         </ContentCard>
         <ContentCard className="bg-forest/10 border-forest/20">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1">Profit Margin</p>
-          <p className="text-2xl font-bold font-heading text-deep-forest">{offerSummary.profitMargin.toFixed(1)}%</p>
-          <p className="text-xs text-muted mt-1">{scenarioLabel} scenario</p>
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Projected Profit</p>
+          <p className={`text-2xl font-bold font-heading ${offerSummary.profit > 0 ? "text-forest" : "text-red-600"}`}>{fmtAED(offerSummary.profit)}</p>
+          <p className="text-xs text-muted mt-1">{offerSummary.profitMargin.toFixed(1)}% margin</p>
         </ContentCard>
       </div>
 
       {/* Cost breakdown + offer details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
         <ContentCard className="flex flex-col">
-          <p className="text-xs uppercase tracking-widest text-muted mb-3 font-semibold">Cost Breakdown</p>
-          <div className="divide-y divide-mint-light/60 flex-1">
-            <div className="flex justify-between py-3">
-              <span className="text-sm text-muted">Land Cost</span>
-              <span className="text-base font-bold text-deep-forest">{fmtAED(offerSummary.landCost)}</span>
+          <p className="text-xs uppercase tracking-widest text-muted mb-3 font-semibold">Payment Schedule</p>
+          {paymentStages.length > 0 ? (
+            <div className="divide-y divide-mint-light/60 flex-1">
+              {paymentStages.map((stage, i) => (
+                <div key={i} className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-6 h-6 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-deep-forest font-medium truncate">{stage.label}</p>
+                      {stage.sub && <p className="text-xs text-muted">{stage.sub}</p>}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className="text-base font-bold text-deep-forest">{fmtAED(stage.amount)}</p>
+                    <p className="text-xs text-muted">{stage.pct}%</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between py-3">
-              <span className="text-sm text-muted">GFA</span>
-              <span className="text-base font-bold text-deep-forest">{formatNumber(Math.round(offerSummary.gfa))} sqft</span>
-            </div>
-            <div className="flex justify-between py-3">
-              <span className="text-sm text-muted">NSA</span>
-              <span className="text-base font-bold text-deep-forest">{formatNumber(Math.round(offerSummary.nsa))} sqft</span>
-            </div>
-            <div className="flex justify-between py-3">
-              <span className="text-sm text-muted">Residual Land Value</span>
-              <span className={`text-base font-bold ${offerSummary.rlv > 0 ? "text-forest" : "text-red-600"}`}>{fmtAED(offerSummary.rlv)}</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-mint-light/60 text-sm text-muted">
-            Plot: {selectedPlot.name} &middot; {selectedPlot.location}
+          ) : (
+            <p className="text-sm text-muted italic flex-1 flex items-center">No payment plan available for this plot.</p>
+          )}
+          <div className="mt-3 pt-3 border-t border-mint-light/60 flex justify-between text-sm">
+            <span className="text-muted">Total</span>
+            <span className="font-bold text-deep-forest">{fmtAED(offerSummary.landCost)}</span>
           </div>
         </ContentCard>
 

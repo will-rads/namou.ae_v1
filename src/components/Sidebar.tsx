@@ -8,7 +8,7 @@ import { Suspense, useState, useEffect, useCallback } from "react";
 const mainNavItems = [
   { href: "/master-plan", baseHref: "/master-plan", label: "Master Plan", icon: PlanIcon },
   { href: "/roi", baseHref: "/roi", label: "ROI", icon: TrendIcon },
-  { href: "/offer", baseHref: "/offer", label: "Final Offer", icon: CheckIcon },
+  { href: "/offer", baseHref: "/offer", label: "Payment Plan", icon: CheckIcon },
   { href: "/cta", baseHref: "/cta", label: "Next Steps", icon: RocketIcon },
 ];
 
