@@ -428,7 +428,7 @@ export default function ROIPage() {
 
             {/* Right: KPI results — own frame, 2×2 grid */}
             <ContentCard className="flex-1 py-2 px-2">
-              <div className="grid grid-cols-2 gap-1 auto-rows-fr h-full">
+              <div className="grid grid-cols-2 gap-2 auto-rows-fr h-full">
                 <KPICard
                   label="Total Revenue (GDV)"
                   value={fmtAED(results.revenue)}
@@ -670,14 +670,15 @@ function KPICard({
   const cardBg = primary
     ? "bg-forest/10 border-forest/25 ring-1 ring-forest/10"
     : "";
+  const valueSz = value.length <= 7 ? "text-3xl" : "text-2xl";
   return (
     <div
-      className={`relative ${compareValues ? "h-full" : ""}`}
+      className="relative h-full"
       onMouseEnter={() => (tooltipLines || tooltipFormula) && setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <ContentCard className={`${cardBg} ${compareValues ? "py-1.5 px-3 h-full flex flex-col justify-center" : "py-1.5 px-4"}`}>
-        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-xs mb-1" : "text-xs mb-0.5"}`}>{label}</p>
+      <ContentCard className={`${cardBg} ${compareValues ? "py-1.5 px-3" : "py-2 px-3"} h-full flex flex-col justify-center`}>
+        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-xs mb-1" : "text-[11px] mb-1"}`}>{label}</p>
         {compareValues ? (
           <div className="flex items-stretch gap-3">
             <div className="flex-1 text-center min-w-0">
@@ -702,8 +703,8 @@ function KPICard({
           </div>
         ) : (
           <div className="text-center">
-            <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-tight ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</p>
-            {sub && <p className="text-xs text-muted mt-0">{sub}</p>}
+            <p className={`${valueSz} font-bold font-heading leading-tight ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+            {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
             {badge && (
               <span className={`mt-1 inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
                 {badge.label}
