@@ -387,10 +387,10 @@ export default function ROIPage() {
           <ContentCard className="p-3 flex flex-col">
             <div className="grid grid-cols-2 gap-x-6">
               {/* Left: All inputs */}
-              <div className="flex flex-col gap-2 border-r border-mint-light/40 pr-6">
+              <div className="flex flex-col justify-evenly border-r border-mint-light/40 pr-6">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Land Acquisition</p>
-                  <div className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Land Acquisition</p>
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted">Pricing Method</span>
                     <TogglePair
                       optA={{ key: "per-plot", label: "/ Plot sqft" }}
@@ -404,14 +404,14 @@ export default function ROIPage() {
                     : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
                   }
                 </div>
-                <div className="pt-2 border-t border-mint-light/40">
-                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Construction</p>
+                <div className="pt-3 border-t border-mint-light/40">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Construction</p>
                   <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
                   <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
                   <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
                 </div>
-                <div className="pt-2 border-t border-mint-light/40">
-                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Sales</p>
+                <div className="pt-3 border-t border-mint-light/40">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Sales</p>
                   <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
                 </div>
               </div>
