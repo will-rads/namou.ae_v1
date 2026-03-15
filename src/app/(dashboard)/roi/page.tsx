@@ -297,7 +297,7 @@ export default function ROIPage() {
       <div className="flex-1 min-h-0 flex flex-col gap-0.5 lg:gap-1 overflow-hidden">
 
         {/* ═══════════ TOP: Variables ═══════════ */}
-        <div className={`flex flex-col gap-1 ${isCompareMode ? "min-h-0" : "shrink-0"}`}>
+        <div className={`flex flex-col ${isCompareMode ? "gap-0.5 min-h-0" : "gap-1 shrink-0"}`}>
 
           {/* Active scenario info */}
           <div className="bg-mint-bg/50 rounded-lg px-4 py-0.5 border border-mint-light/40 shrink-0 flex items-center justify-between gap-4">
@@ -328,8 +328,8 @@ export default function ROIPage() {
           {isCompareMode && inputs2 && results2 ? (
           <div className="grid grid-cols-[2fr_3fr] gap-2 min-h-0">
             {/* Left: Variables — own frame */}
-            <ContentCard className="flex flex-col py-2 px-4">
-              <div className="flex flex-col justify-evenly flex-1">
+            <ContentCard className="flex flex-col py-1.5 px-4">
+              <div className="flex flex-col justify-between flex-1">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Land</p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
@@ -350,7 +350,7 @@ export default function ROIPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-mint-light/40">
+                <div className="pt-1.5 border-t border-mint-light/40">
                   <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Construction</p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
@@ -360,7 +360,7 @@ export default function ROIPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-mint-light/40">
+                <div className="pt-1.5 border-t border-mint-light/40">
                   <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Sales</p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
@@ -371,7 +371,7 @@ export default function ROIPage() {
             </ContentCard>
 
             {/* Right: KPI results — own frame */}
-            <ContentCard className="py-2 px-2">
+            <ContentCard className="py-1 px-1.5">
               <div className="grid grid-cols-2 gap-1 auto-rows-fr h-full">
                 <KPICard label="Revenue (GDV)" value=""
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }}
@@ -739,7 +739,7 @@ function KPICard({
           <div className="flex items-stretch gap-2">
             <div className="flex-1 text-center min-w-0">
               <p className="text-[10px] font-medium text-forest leading-normal mb-0">{compareValues.label1}</p>
-              <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
+              <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
               {compareValues.badge1 && (
                 <span className={`mt-0.5 inline-block text-[10px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
                   {compareValues.badge1.label}
@@ -749,7 +749,7 @@ function KPICard({
             <div className="w-px shrink-0 bg-mint-light/60" />
             <div className="flex-1 text-center min-w-0">
               <p className="text-[10px] font-medium text-compare-b leading-normal mb-0">{compareValues.label2}</p>
-              <p className={`${primary ? "text-xl" : "text-lg"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
+              <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
               {compareValues.badge2 && (
                 <span className={`mt-0.5 inline-block text-[10px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
                   {compareValues.badge2.label}
