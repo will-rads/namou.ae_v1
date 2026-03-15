@@ -325,40 +325,46 @@ export default function ROIPage() {
 
           {/* Input variables */}
           {isCompareMode && inputs2 && results2 ? (
-          <ContentCard className="flex flex-col overflow-y-auto min-h-0 py-2 px-3 md:py-3 md:px-4">
+          <ContentCard className="flex flex-col overflow-y-auto min-h-0 py-3 px-3 md:py-4 md:px-4">
             <div className="grid grid-cols-2 gap-x-6 flex-1">
               {/* Left: All inputs */}
-              <div className="flex flex-col border-r border-mint-light/40 pr-6">
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Land</p>
-                <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-xs text-muted">Pricing Method</span>
-                    <TogglePair
-                      optA={{ key: "per-plot", label: "/ Plot sqft" }}
-                      optB={{ key: "per-gfa",  label: "/ GFA" }}
-                      value={inputs.pricingMethod}
-                      onChange={v => update("pricingMethod", v as PricingMethod)}
-                    />
+              <div className="flex flex-col justify-evenly border-r border-mint-light/40 pr-6">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Land</p>
+                  <div className="divide-y divide-mint-light/60 flex flex-col">
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-xs text-muted">Pricing Method</span>
+                      <TogglePair
+                        optA={{ key: "per-plot", label: "/ Plot sqft" }}
+                        optB={{ key: "per-gfa",  label: "/ GFA" }}
+                        value={inputs.pricingMethod}
+                        onChange={v => update("pricingMethod", v as PricingMethod)}
+                      />
+                    </div>
+                    {inputs.pricingMethod === "per-plot"
+                      ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v)} />
+                      : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
+                    }
+                    <DualComputedRow label="Total Land Cost" v1={fmtAED(results.landCost)} v2={fmtAED(results2.landCost)} />
                   </div>
-                  {inputs.pricingMethod === "per-plot"
-                    ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v)} />
-                    : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
-                  }
-                  <DualComputedRow label="Total Land Cost" v1={fmtAED(results.landCost)} v2={fmtAED(results2.landCost)} />
                 </div>
 
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Construction</p>
-                <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
-                  <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
-                  <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
-                  <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
-                  <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
+                <div className="pt-2 border-t border-mint-light/40">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Construction</p>
+                  <div className="divide-y divide-mint-light/60 flex flex-col">
+                    <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
+                    <NumInput label="Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
+                    <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
+                    <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
+                  </div>
                 </div>
 
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-0.5 mt-1">Sales</p>
-                <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
-                  <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
-                  <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
+                <div className="pt-2 border-t border-mint-light/40">
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1">Sales</p>
+                  <div className="divide-y divide-mint-light/60 flex flex-col">
+                    <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
+                    <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
+                  </div>
                 </div>
               </div>
 
