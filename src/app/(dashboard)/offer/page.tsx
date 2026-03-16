@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
 import { plots, formatNumber, type Plot } from "@/data/mock";
@@ -110,17 +110,17 @@ function parsePaymentStages(text: string, price: number): PaymentStage[] {
 /* ── Next Steps Modal ── */
 
 function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook = false }: { onClose: () => void; plotName: string; selectedPlots: Plot[]; enableOfferWebhook?: boolean }) {
-  const [clientType, setClientType] = useState<string | null>(null);
-  useEffect(() => {
-    try { const raw = sessionStorage.getItem("namou_session"); if (raw) setClientType(JSON.parse(raw).clientType ?? null); } catch { /* ignore */ }
-  }, []);
+  const [mode, setMode] = useState<"Investor" | "Broker">(() => {
+    try { const raw = sessionStorage.getItem("namou_session"); if (raw) { const ct = JSON.parse(raw).clientType; if (ct === "Broker") return "Broker"; } } catch { /* ignore */ }
+    return "Investor";
+  });
 
-  const isBroker = clientType === "Broker";
+  const isBroker = mode === "Broker";
 
   // Property Introduction form state (Developer / Investor / default)
   const [piForm, setPiForm] = useState({ fullName: "", mobile: "", email: "", passportId: "", city: "", country: "" });
   // A2A form state (Broker)
-  const [a2aForm, setA2aForm] = useState({ companyName: "", address: "", tradeLicense: "", contactPerson: "", phone: "", email: "", investorName: "", investorPhone: "", investorEmail: "" });
+  const [a2aForm, setA2aForm] = useState({ companyName: "", address: "", tradeLicense: "", contactPerson: "", phone: "", email: "" });
 
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -140,23 +140,21 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
 
   function validate() {
     const errs: Record<string, boolean> = {};
+    // Investor fields — always required
+    if (!piForm.fullName.trim()) errs.fullName = true;
+    if (!piForm.mobile.trim()) errs.mobile = true;
+    if (!piForm.email.trim() || !emailRe.test(piForm.email)) errs.email = true;
+    if (!piForm.passportId.trim()) errs.passportId = true;
+    if (!piForm.city.trim()) errs.city = true;
+    if (!piForm.country.trim()) errs.country = true;
+    // Broker A2A fields — required only in Broker mode
     if (isBroker) {
       if (!a2aForm.companyName.trim()) errs.companyName = true;
       if (!a2aForm.address.trim()) errs.address = true;
       if (!a2aForm.tradeLicense.trim()) errs.tradeLicense = true;
       if (!a2aForm.contactPerson.trim()) errs.contactPerson = true;
       if (!a2aForm.phone.trim()) errs.phone = true;
-      if (!a2aForm.email.trim() || !emailRe.test(a2aForm.email)) errs.email = true;
-      if (!a2aForm.investorName.trim()) errs.investorName = true;
-      if (!a2aForm.investorPhone.trim()) errs.investorPhone = true;
-      if (!a2aForm.investorEmail.trim() || !emailRe.test(a2aForm.investorEmail)) errs.investorEmail = true;
-    } else {
-      if (!piForm.fullName.trim()) errs.fullName = true;
-      if (!piForm.mobile.trim()) errs.mobile = true;
-      if (!piForm.email.trim() || !emailRe.test(piForm.email)) errs.email = true;
-      if (!piForm.passportId.trim()) errs.passportId = true;
-      if (!piForm.city.trim()) errs.city = true;
-      if (!piForm.country.trim()) errs.country = true;
+      if (!a2aForm.email.trim() || !emailRe.test(a2aForm.email)) errs.brokerEmail = true;
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -197,12 +195,12 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
                 company_name: a2aForm.companyName || "-",
                 agent_id_number: "-",
                 trade_license: a2aForm.tradeLicense || "-",
-                id_number: "-",
-                city: "null",
+                id_number: piForm.passportId || "-",
+                city: piForm.city || "null",
                 country: a2aForm.address || "-",
-                investor_name: a2aForm.investorName || "-",
-                investor_email: a2aForm.investorEmail || "-",
-                investor_number: a2aForm.investorPhone || "null",
+                investor_name: piForm.fullName || "-",
+                investor_email: piForm.email || "-",
+                investor_number: piForm.mobile || "null",
                 properties: properties,
                 broker_commision_cut: "2",
               },
@@ -277,101 +275,82 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className={`flex flex-col p-5 ${isBroker ? "gap-2.5" : "gap-4"}`}>
+          <form onSubmit={handleSubmit} className="flex flex-col p-5 gap-3">
             {/* Header */}
-            <div className={`bg-forest rounded-xl px-5 flex items-center justify-between ${isBroker ? "py-3" : "py-4"}`}>
+            <div className="bg-forest rounded-xl px-5 py-3 flex items-center justify-between">
               <p className="text-sm font-bold text-white">{isBroker ? "A2A Agreement" : "Property Introduction Form"}</p>
               <p className="text-sm font-bold text-white/80" dir="rtl">{isBroker ? "اتفاقية وسيط إلى وسيط" : "نموذج تعريف العقار"}</p>
             </div>
 
-            {/* Property / context summary — non-broker only; broker merges into Party A card */}
-            {!isBroker && (
-              <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
-                <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Property Being Introduced</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
-                  <div><p className="text-[10px] text-muted">Commission</p><p className="text-xs font-semibold text-deep-forest">2%</p></div>
+            {/* Investor / Broker toggle */}
+            <div className="flex rounded-lg border border-mint-light overflow-hidden text-sm">
+              {(["Investor", "Broker"] as const).map((m, i) => (
+                <button key={m} type="button" onClick={() => { setMode(m); setErrors({}); }}
+                  className={`flex-1 px-3 py-2 transition-colors ${i > 0 ? "border-l border-mint-light" : ""} ${mode === m ? "bg-forest text-white" : "text-muted bg-white hover:bg-mint-bg"}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+
+            {/* Property / context summary */}
+            <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-2">
+              <div className={`grid gap-2 ${isBroker ? "grid-cols-4" : "grid-cols-2"}`}>
+                <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
+                {isBroker && <div><p className="text-[10px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>}
+                {isBroker && <div><p className="text-[10px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>}
+                <div><p className="text-[10px] text-muted">{isBroker ? "Contact" : "Commission"}</p><p className="text-xs font-semibold text-deep-forest">{isBroker ? "info@namou.ae" : "2%"}</p></div>
+              </div>
+            </div>
+
+            {/* Investor fields — always shown */}
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Full Name" required error={errors.fullName}>
+                <input type="text" value={piForm.fullName} onChange={(e) => setPi("fullName", e.target.value)} maxLength={100} className={inputCls(errors.fullName)} placeholder="John Doe" />
+              </Field>
+              <Field label="Mobile Number" required error={errors.mobile}>
+                <input type="tel" value={piForm.mobile} onChange={(e) => setPi("mobile", e.target.value)} maxLength={20} className={inputCls(errors.mobile)} placeholder="+971 50 000 0000" />
+              </Field>
+              <Field label="Email" required error={errors.email}>
+                <input type="email" value={piForm.email} onChange={(e) => setPi("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="investor@email.com" />
+              </Field>
+              <Field label="Passport No / ID" required error={errors.passportId}>
+                <input type="text" value={piForm.passportId} onChange={(e) => setPi("passportId", e.target.value)} maxLength={30} className={inputCls(errors.passportId)} placeholder="A12345678" />
+              </Field>
+              <Field label="City" required error={errors.city}>
+                <input type="text" value={piForm.city} onChange={(e) => setPi("city", e.target.value)} maxLength={80} className={inputCls(errors.city)} placeholder="Dubai" />
+              </Field>
+              <Field label="Country" required error={errors.country}>
+                <input type="text" value={piForm.country} onChange={(e) => setPi("country", e.target.value)} maxLength={80} className={inputCls(errors.country)} placeholder="UAE" />
+              </Field>
+            </div>
+
+            {/* A2A Broker fields — visible always, disabled/greyed when Investor */}
+            <div className={!isBroker ? "opacity-40 pointer-events-none" : ""}>
+              <div>
+                <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-1.5">Broker Details (A2A)</p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Field label="Company Name" required={isBroker} error={isBroker ? errors.companyName : false}>
+                    <input type="text" value={a2aForm.companyName} onChange={(e) => setA2a("companyName", e.target.value)} disabled={!isBroker} maxLength={100} className={inputCls(isBroker ? errors.companyName : false)} placeholder="ABC Real Estate" />
+                  </Field>
+                  <Field label="Trade License No." required={isBroker} error={isBroker ? errors.tradeLicense : false}>
+                    <input type="text" value={a2aForm.tradeLicense} onChange={(e) => setA2a("tradeLicense", e.target.value)} disabled={!isBroker} maxLength={30} className={inputCls(isBroker ? errors.tradeLicense : false)} placeholder="DXB-0000-0000" />
+                  </Field>
+                  <Field label="Contact Person" required={isBroker} error={isBroker ? errors.contactPerson : false}>
+                    <input type="text" value={a2aForm.contactPerson} onChange={(e) => setA2a("contactPerson", e.target.value)} disabled={!isBroker} maxLength={100} className={inputCls(isBroker ? errors.contactPerson : false)} placeholder="Jane Smith" />
+                  </Field>
+                  <Field label="Phone" required={isBroker} error={isBroker ? errors.phone : false}>
+                    <input type="tel" value={a2aForm.phone} onChange={(e) => setA2a("phone", e.target.value)} disabled={!isBroker} maxLength={20} className={inputCls(isBroker ? errors.phone : false)} placeholder="+971 50 000 0000" />
+                  </Field>
+                  <Field label="Address" required={isBroker} error={isBroker ? errors.address : false}>
+                    <input type="text" value={a2aForm.address} onChange={(e) => setA2a("address", e.target.value)} disabled={!isBroker} maxLength={200} className={inputCls(isBroker ? errors.address : false)} placeholder="Business Bay, Dubai, UAE" />
+                  </Field>
+                  <Field label="Broker Email" required={isBroker} error={isBroker ? errors.brokerEmail : false}>
+                    <input type="email" value={a2aForm.email} onChange={(e) => setA2a("email", e.target.value)} disabled={!isBroker} maxLength={254} className={inputCls(isBroker ? errors.brokerEmail : false)} placeholder="agent@company.com" />
+                  </Field>
                 </div>
               </div>
-            )}
-
-            {/* Fields — conditional on client type */}
-            {isBroker ? (
-              <>
-                {/* Property + Party A (read-only, merged) */}
-                <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-2">
-                  <div className="grid grid-cols-4 gap-2">
-                    <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
-                    <div><p className="text-[10px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>
-                    <div><p className="text-[10px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>
-                    <div><p className="text-[10px] text-muted">Contact</p><p className="text-xs font-semibold text-deep-forest">info@namou.ae</p></div>
-                  </div>
-                </div>
-
-                {/* Party B */}
-                <div>
-                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-1.5">Party B (Referring Agent)</p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <Field label="Company Name" required error={errors.companyName}>
-                      <input type="text" value={a2aForm.companyName} onChange={(e) => setA2a("companyName", e.target.value)} maxLength={100} className={inputCls(errors.companyName)} placeholder="ABC Real Estate" />
-                    </Field>
-                    <Field label="Trade License No." required error={errors.tradeLicense}>
-                      <input type="text" value={a2aForm.tradeLicense} onChange={(e) => setA2a("tradeLicense", e.target.value)} maxLength={30} className={inputCls(errors.tradeLicense)} placeholder="DXB-0000-0000" />
-                    </Field>
-                    <Field label="Contact Person" required error={errors.contactPerson}>
-                      <input type="text" value={a2aForm.contactPerson} onChange={(e) => setA2a("contactPerson", e.target.value)} maxLength={100} className={inputCls(errors.contactPerson)} placeholder="Jane Smith" />
-                    </Field>
-                    <Field label="Phone" required error={errors.phone}>
-                      <input type="tel" value={a2aForm.phone} onChange={(e) => setA2a("phone", e.target.value)} maxLength={20} className={inputCls(errors.phone)} placeholder="+971 50 000 0000" />
-                    </Field>
-                    <Field label="Address" required error={errors.address}>
-                      <input type="text" value={a2aForm.address} onChange={(e) => setA2a("address", e.target.value)} maxLength={200} className={inputCls(errors.address)} placeholder="Business Bay, Dubai, UAE" />
-                    </Field>
-                    <Field label="Email" required error={errors.email}>
-                      <input type="email" value={a2aForm.email} onChange={(e) => setA2a("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="agent@company.com" />
-                    </Field>
-                  </div>
-                </div>
-
-                {/* Referred Investor */}
-                <div>
-                  <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-1.5">Referred Investor</p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <Field label="Investor Full Name" required error={errors.investorName}>
-                      <input type="text" value={a2aForm.investorName} onChange={(e) => setA2a("investorName", e.target.value)} maxLength={100} className={inputCls(errors.investorName)} placeholder="John Doe" />
-                    </Field>
-                    <Field label="Investor Phone" required error={errors.investorPhone}>
-                      <input type="tel" value={a2aForm.investorPhone} onChange={(e) => setA2a("investorPhone", e.target.value)} maxLength={20} className={inputCls(errors.investorPhone)} placeholder="+971 55 000 0000" />
-                    </Field>
-                    <Field label="Investor Email" required error={errors.investorEmail}>
-                      <input type="email" value={a2aForm.investorEmail} onChange={(e) => setA2a("investorEmail", e.target.value)} maxLength={254} className={inputCls(errors.investorEmail)} placeholder="investor@email.com" />
-                    </Field>
-                  </div>
-                </div>
-              </>
-            ) : (
-              /* Property Introduction fields (Developer / Investor / default) */
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Full Name" required error={errors.fullName}>
-                  <input type="text" value={piForm.fullName} onChange={(e) => setPi("fullName", e.target.value)} maxLength={100} className={inputCls(errors.fullName)} placeholder="John Doe" />
-                </Field>
-                <Field label="Mobile Number" required error={errors.mobile}>
-                  <input type="tel" value={piForm.mobile} onChange={(e) => setPi("mobile", e.target.value)} maxLength={20} className={inputCls(errors.mobile)} placeholder="+971 50 000 0000" />
-                </Field>
-                <Field label="Email" required error={errors.email}>
-                  <input type="email" value={piForm.email} onChange={(e) => setPi("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="investor@email.com" />
-                </Field>
-                <Field label="Passport No / ID" required error={errors.passportId}>
-                  <input type="text" value={piForm.passportId} onChange={(e) => setPi("passportId", e.target.value)} maxLength={30} className={inputCls(errors.passportId)} placeholder="A12345678" />
-                </Field>
-                <Field label="City" required error={errors.city}>
-                  <input type="text" value={piForm.city} onChange={(e) => setPi("city", e.target.value)} maxLength={80} className={inputCls(errors.city)} placeholder="Dubai" />
-                </Field>
-                <Field label="Country" required error={errors.country}>
-                  <input type="text" value={piForm.country} onChange={(e) => setPi("country", e.target.value)} maxLength={80} className={inputCls(errors.country)} placeholder="UAE" />
-                </Field>
-              </div>
-            )}
+            </div>
 
             {/* Error message */}
             {submitError && (

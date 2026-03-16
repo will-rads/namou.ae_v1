@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { landCategories, plots, areas, type LandCategory } from "@/data/mock";
@@ -11,21 +10,7 @@ function areaSlug(area: string) {
 }
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [checked, setChecked] = useState(false);
   const [selectedType, setSelectedType] = useState<LandCategory | null>(null);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!sessionStorage.getItem("namou_session")) {
-      router.replace("/client");
-    } else {
-      setChecked(true);
-    }
-  }, [router]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  if (!checked) return null;
 
   const availableAreas = selectedType
     ? areas.filter((area) => plots.some((p) => p.category === selectedType && p.area === area))
