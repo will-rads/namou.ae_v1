@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ContentCard from "@/components/ContentCard";
 import { plots, formatNumber, type Plot } from "@/data/mock";
 
@@ -110,6 +111,7 @@ function parsePaymentStages(text: string, price: number): PaymentStage[] {
 /* ── Next Steps Modal ── */
 
 function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook = false }: { onClose: () => void; plotName: string; selectedPlots: Plot[]; enableOfferWebhook?: boolean }) {
+  const router = useRouter();
   const [mode, setMode] = useState<"Investor" | "Broker">(() => {
     try { const raw = sessionStorage.getItem("namou_session"); if (raw) { const ct = JSON.parse(raw).clientType; if (ct === "Broker") return "Broker"; } } catch { /* ignore */ }
     return "Investor";
@@ -243,6 +245,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
     }
 
     setSubmitted(true);
+    router.push("/cta");
   }
 
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
