@@ -68,15 +68,6 @@ export default function PlotMap({
             attribution:
               "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
           },
-          "terrain-dem": {
-            type: "raster-dem",
-            tiles: [
-              "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
-            ],
-            tileSize: 256,
-            maxzoom: 15,
-            encoding: "terrarium",
-          },
         },
         layers: [
           {
@@ -85,10 +76,6 @@ export default function PlotMap({
             source: "esri-satellite",
           },
         ],
-        terrain: {
-          source: "terrain-dem",
-          exaggeration: 1.5,
-        },
       },
       center: MAP_CENTER,
       zoom: OVERVIEW_ZOOM,
@@ -100,6 +87,20 @@ export default function PlotMap({
     map.addControl(new maplibregl.NavigationControl(), "bottom-right");
 
     map.on("load", () => {
+      try {
+        map.addSource("terrain-dem", {
+          type: "raster-dem",
+          tiles: [
+            "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
+          ],
+          tileSize: 256,
+          maxzoom: 15,
+          encoding: "terrarium",
+        });
+        map.setTerrain({ source: "terrain-dem", exaggeration: 1.5 });
+      } catch {
+        // terrain tiles unavailable — satellite still renders fine
+      }
       setMapReady(true);
     });
 
