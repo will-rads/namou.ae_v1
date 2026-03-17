@@ -537,7 +537,7 @@ export default function FinalOfferPage() {
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                     <div>
-                      <p className="text-lg font-bold text-deep-forest">{stage.pct}% <span className="text-lg font-bold text-deep-forest">– {stage.label}</span></p>
+                      <p className="text-lg font-bold text-deep-forest">{stage.pct}% <span className="text-base font-bold text-muted">– {stage.label}</span></p>
                       {stage.sub && <p className="text-[11px] text-muted">{stage.sub}</p>}
                     </div>
                   </div>
