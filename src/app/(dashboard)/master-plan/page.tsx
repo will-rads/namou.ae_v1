@@ -337,13 +337,13 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
         {rows.map((row, ri) => (
           <React.Fragment key={row.label}>
             {row.section && (
-              <div className={`col-span-full text-[11px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-3 pt-3 border-t border-mint-light/40" : ""} pb-1.5`}>
+              <div className={`col-span-full text-[11px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-2 pt-2 border-t border-mint-light/40" : ""} pb-1`}>
                 {row.section}
               </div>
             )}
-            <div className="py-1.5 text-xs text-muted flex items-center">{row.label}</div>
+            <div className="py-1 text-xs text-muted flex items-center">{row.label}</div>
             {cPlots.map(p => (
-              <div key={p.id} className={`py-1.5 px-3 text-sm font-bold ${row.highlight ? "text-forest" : "text-deep-forest"}`}>
+              <div key={p.id} className={`py-1 px-3 text-sm font-bold ${row.highlight ? "text-forest" : "text-deep-forest"}`}>
                 {row.getValue(p)}
               </div>
             ))}
@@ -475,7 +475,7 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
             isOpen={openSection === "gallery"}
             onToggle={() => toggle("gallery")}
           >
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {[1, 2, 3, 4].map(i => (
                 <div
                   key={i}
@@ -543,7 +543,7 @@ function AccordionSection({
 
 function PlotRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-2.5">
+    <div className="flex items-center justify-between py-1.5">
       <p className="text-xs text-muted">{label}</p>
       <p className={`text-sm font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
     </div>

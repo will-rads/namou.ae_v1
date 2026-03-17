@@ -12,9 +12,7 @@ const mainNavItems = [
   { href: "/cta", baseHref: "/cta", label: "Next Steps", icon: RocketIcon },
 ];
 
-const resourceNavItems = [
-  { href: "/agreement", baseHref: "/agreement", label: "Agreement", icon: AgreementIcon },
-];
+const resourceNavItems: typeof mainNavItems = [];
 
 function ContextLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const searchParams = useSearchParams();
@@ -78,17 +76,6 @@ function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navI
         );
       })}
 
-      {/* Resources separator */}
-      <div className="mx-2 my-2 border-t border-white/10" />
-      <p className="px-2 text-[11px] uppercase tracking-widest text-white/30 mb-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">Resources</p>
-      {resourceNavItems.map((item) => {
-        const active = pathname.startsWith(item.baseHref);
-        return (
-          <NavLink key={item.baseHref} href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
-            <item.icon className="w-4 h-4 shrink-0" />
-          </NavLink>
-        );
-      })}
 
       {/* Context-sensitive bottom links */}
       <Suspense fallback={null}>

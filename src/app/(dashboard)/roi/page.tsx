@@ -220,7 +220,7 @@ export default function ROIPage() {
   }
 
   return (
-    <div className={`flex flex-col flex-1 min-h-0 overflow-y-auto animate-fade-in ${isCompareMode ? "" : "md:overflow-y-hidden"}`}>
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto md:overflow-y-hidden animate-fade-in">
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 mb-1 lg:mb-1">
@@ -294,7 +294,7 @@ export default function ROIPage() {
       </div>
 
       {/* ── Top/bottom: top = variables, bottom = results ── */}
-      <div className="flex-1 min-h-0 flex flex-col gap-0.5 lg:gap-1 overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col gap-0.5 lg:gap-1 overflow-visible">
 
         {/* ═══════════ TOP: Variables ═══════════ */}
         <div className={`flex flex-col ${isCompareMode ? "gap-0.5 min-h-0" : "gap-1 shrink-0"}`}>
@@ -331,7 +331,7 @@ export default function ROIPage() {
             <ContentCard className="flex flex-col py-1.5 px-4">
               <div className="flex flex-col justify-between flex-1">
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Land</p>
+                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0.5">Land</p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <div className="flex items-center justify-between py-1.5">
                       <span className="text-sm text-muted">Pricing Method</span>
@@ -350,8 +350,8 @@ export default function ROIPage() {
                   </div>
                 </div>
 
-                <div className="pt-1.5 border-t border-mint-light/40">
-                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
+                <div className="pt-1 border-t border-mint-light/40">
+                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0.5">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
                     <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
@@ -359,8 +359,8 @@ export default function ROIPage() {
                   </div>
                 </div>
 
-                <div className="pt-1.5 border-t border-mint-light/40">
-                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Sales</p>
+                <div className="pt-1 border-t border-mint-light/40">
+                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0.5">Sales</p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
                     <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
@@ -371,7 +371,7 @@ export default function ROIPage() {
 
             {/* Right: KPI results — own frame */}
             <ContentCard className="py-1 px-1.5">
-              <div className="grid grid-cols-2 gap-1 auto-rows-fr h-full">
+              <div className="grid grid-cols-2 gap-1 auto-rows-fr">
                 <KPICard label="Revenue (GDV)" value=""
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }}
                   tooltipFormula="Revenue = NSA × Selling Price/sqft"

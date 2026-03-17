@@ -270,7 +270,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             <h3 className="text-lg font-bold text-forest mb-1">Submitted</h3>
             <p className="text-xs text-muted max-w-xs">
               {isBroker
-                ? "Your A2A Agreement has been submitted. A representative will review and countersign shortly."
+                ? "Your Agent to Agent Agreement has been submitted. A representative will review and countersign shortly."
                 : "Your Property Introduction Form has been submitted. A specialist will be in touch shortly."}
             </p>
             <button onClick={onClose} className="mt-4 px-6 py-2 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors">
@@ -281,7 +281,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
           <form onSubmit={handleSubmit} className="flex flex-col p-5 gap-3">
             {/* Header */}
             <div className="bg-forest rounded-xl px-5 py-3 flex items-center justify-between">
-              <p className="text-sm font-bold text-white">{isBroker ? "A2A Agreement" : "Property Introduction Form"}</p>
+              <p className="text-sm font-bold text-white">{isBroker ? "Agent to Agent Agreement" : "Property Introduction Form"}</p>
               <p className="text-sm font-bold text-white/80" dir="rtl">{isBroker ? "اتفاقية وسيط إلى وسيط" : "نموذج تعريف العقار"}</p>
             </div>
 
@@ -331,7 +331,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             {/* A2A Broker fields — visible always, disabled/greyed when Investor */}
             <div className={!isBroker ? "opacity-40 pointer-events-none" : ""}>
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">Broker Details (A2A)</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">Broker Details (Agent to Agent)</p>
                 <div className="grid grid-cols-2 gap-2.5">
                   <Field label="Company Name" required={isBroker} error={isBroker ? errors.companyName : false}>
                     <input type="text" value={a2aForm.companyName} onChange={(e) => setA2a("companyName", e.target.value)} disabled={!isBroker} maxLength={100} className={inputCls(isBroker ? errors.companyName : false)} placeholder="ABC Real Estate" />
