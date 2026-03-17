@@ -536,12 +536,13 @@ export default function FinalOfferPage() {
                 <div key={i} className="flex items-center justify-between flex-1">
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                    <p className="text-lg font-bold text-deep-forest">{stage.pct}%</p>
+                    <div>
+                      <p className="text-lg font-bold text-deep-forest">{stage.pct}% <span className="text-xs font-normal text-muted">– {stage.label}</span></p>
+                      {stage.sub && <p className="text-[11px] text-muted">{stage.sub}</p>}
+                    </div>
                   </div>
                   <div className="text-right shrink-0 ml-3">
                     <p className="text-base font-bold text-deep-forest">{fmtAED(stage.amount)}</p>
-                    <p className="text-xs text-muted">{stage.label}</p>
-                    {stage.sub && <p className="text-[11px] text-muted">{stage.sub}</p>}
                   </div>
                 </div>
               ))}
