@@ -351,10 +351,9 @@ export default function ROIPage() {
                 </div>
 
                 <div className="pt-1.5 border-t border-mint-light/40">
-                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Construction</p>
+                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
-                    <NumInput label="Hard + Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
                     <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
                     <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
                   </div>
@@ -450,9 +449,8 @@ export default function ROIPage() {
                   }
                 </div>
                 <div className="pt-3 border-t border-mint-light/40">
-                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Construction</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
                   <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
-                  <NumInput label="Hard + Soft Cost" value={inputs.softCostPct} unit="%" suffix onChange={v => update("softCostPct", v)} />
                   <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
                 </div>
                 <div className="pt-3 border-t border-mint-light/40">
