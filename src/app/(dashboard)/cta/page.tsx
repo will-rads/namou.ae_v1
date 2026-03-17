@@ -187,7 +187,7 @@ export default function CTAPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 gap-3 lg:gap-4 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Next Steps</h1>
         <p className="text-sm text-muted mt-1">
@@ -195,14 +195,14 @@ export default function CTAPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 auto-rows-fr">
         {actions.map((action) => {
           const inner = (
             <ContentCard
               className="w-full flex flex-col transition-all group-hover:shadow-md group-hover:border-forest/30"
             >
-              <div className="flex items-start gap-5">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-forest/10 text-forest">
+              <div className="flex items-start gap-3">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-forest/10 text-forest">
                   {action.icon}
                 </div>
                 <div className="flex-1">
@@ -211,7 +211,7 @@ export default function CTAPage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                   {action.timeline}
@@ -222,9 +222,9 @@ export default function CTAPage() {
                 </span>
               </div>
 
-              <p className="mt-3 text-xs text-muted leading-relaxed">{action.details}</p>
+              <p className="mt-2 text-xs text-muted leading-relaxed">{action.details}</p>
 
-              <div className="mt-auto pt-4 flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-auto pt-2 flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
                 Get started
                 <svg className="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <polyline points="9 18 15 12 9 6" />

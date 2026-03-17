@@ -7,7 +7,7 @@ export default function ExampleDealPage() {
   const totalConstructionCost = exampleDealGFA * exampleDealDefaults.constructionCostPerSqFt;
 
   return (
-    <div className="flex flex-col flex-1 gap-6 min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-3 min-h-0 overflow-y-auto md:overflow-y-hidden">
 
       {/* Header */}
       <div>
@@ -18,11 +18,11 @@ export default function ExampleDealPage() {
       </div>
 
       {/* Main grid — fills remaining height */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1">
 
         {/* Assumptions */}
         <ContentCard className="h-full">
-          <p className="text-xs uppercase tracking-wider text-muted mb-4">Deal Assumptions</p>
+          <p className="text-xs uppercase tracking-wider text-muted mb-2">Deal Assumptions</p>
           <div className="divide-y divide-mint-light/60">
             <Row label="Project Type" value="High-end mixed-use tower" />
             <Row label="GFA" value={`${formatNumber(exampleDealGFA)} sq ft`} />
@@ -34,9 +34,9 @@ export default function ExampleDealPage() {
         </ContentCard>
 
         {/* Results */}
-        <div className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col gap-3 h-full">
           <ContentCard className="bg-mint-bg border-mint-light flex-1">
-            <p className="text-xs uppercase tracking-wider text-muted mb-4">Calculated Results</p>
+            <p className="text-xs uppercase tracking-wider text-muted mb-2">Calculated Results</p>
             <div className="divide-y divide-mint-light/60">
               <Row label="Total Development Value" value={`AED ${formatNumber(outputs.totalDevelopmentValue)}`} />
               <Row label="Total Construction Cost" value={`AED ${formatNumber(totalConstructionCost)}`} />
@@ -53,7 +53,7 @@ export default function ExampleDealPage() {
             </p>
           </ContentCard>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Link
               href="/roi"
               className="flex-1 text-center px-6 py-3 bg-white border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-white transition-colors"

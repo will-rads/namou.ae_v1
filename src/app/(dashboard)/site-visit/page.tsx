@@ -38,7 +38,7 @@ const iconMap: Record<string, (props: { className?: string }) => React.JSX.Eleme
 
 export default function SiteVisitPage() {
   return (
-    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0 flex items-center gap-3">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Visit Itinerary</h1>
         <span className="px-3 py-1 rounded-full bg-mint text-forest text-xs font-semibold uppercase tracking-wide">
@@ -48,7 +48,7 @@ export default function SiteVisitPage() {
 
       <ContentCard className="flex-1 flex flex-col min-h-0">
         {/* Schedule prompt */}
-        <div className="flex items-center gap-3 mb-6 p-3 bg-mint-white rounded-xl border border-mint-light/40 shrink-0">
+        <div className="flex items-center gap-3 mb-3 p-2 bg-mint-white rounded-xl border border-mint-light/40 shrink-0">
           <div className="w-10 h-10 rounded-full bg-forest flex items-center justify-center shrink-0">
             <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -70,7 +70,7 @@ export default function SiteVisitPage() {
             return (
               <div
                 key={item.id}
-                className="flex items-start gap-3 p-4 bg-mint-white/60 rounded-xl border border-mint-light/30"
+                className="flex items-start gap-3 p-3 bg-mint-white/60 rounded-xl border border-mint-light/30"
               >
                 <div className="w-9 h-9 rounded-full bg-forest/10 flex items-center justify-center shrink-0">
                   <IconComponent className="w-4 h-4 text-forest" />
@@ -85,7 +85,7 @@ export default function SiteVisitPage() {
         </div>
 
         {/* Confirm CTA */}
-        <div className="mt-6 shrink-0">
+        <div className="mt-3 shrink-0">
           <button className="px-8 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors">
             Confirm
           </button>

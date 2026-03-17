@@ -13,7 +13,7 @@ export default function RakLandscapePage() {
   const selectedLandmark = landmarks.find((l) => l.id === activeLandmark);
 
   return (
-    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       {/* Page header */}
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Getting to Know RAK</h1>
@@ -24,7 +24,7 @@ export default function RakLandscapePage() {
 
       <ContentCard className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 shrink-0">
+        <div className="flex gap-1 mb-2 shrink-0">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -41,7 +41,7 @@ export default function RakLandscapePage() {
         </div>
 
         {/* Map area — static satellite image placeholder */}
-        <div className="relative w-full flex-1 min-h-[280px] bg-mint-bg rounded-xl overflow-hidden">
+        <div className="relative w-full flex-1 min-h-[180px] bg-mint-bg rounded-xl overflow-hidden">
           {/* Placeholder satellite map */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#4A5A3C] via-[#6B7B5A] to-[#8B9E7E] opacity-30" />
           <div className="absolute inset-0 flex items-center justify-center">

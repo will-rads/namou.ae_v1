@@ -4,7 +4,7 @@ import { landCategories } from "@/data/mock";
 
 export default function OverviewPage() {
   return (
-    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Namou Land Investment</h1>
         <p className="text-sm text-muted mt-1">
@@ -13,7 +13,7 @@ export default function OverviewPage() {
       </div>
 
       <ContentCard>
-        <h2 className="text-lg font-semibold text-deep-forest mb-3">The Opportunity</h2>
+        <h2 className="text-lg font-semibold text-deep-forest mb-2">The Opportunity</h2>
         <p className="text-sm text-muted leading-relaxed max-w-2xl">
           RAK is one of the fastest-growing emirates for land investment. With new infrastructure,
           the Wynn casino resort, and expanding tourism, premium plots are appreciating at 15-25% annually.
@@ -24,7 +24,7 @@ export default function OverviewPage() {
 
       {/* Land categories grid */}
       <div className="flex flex-col flex-1 min-h-0">
-        <h2 className="text-lg font-semibold text-deep-forest mb-3 shrink-0">Browse by Category</h2>
+        <h2 className="text-lg font-semibold text-deep-forest mb-2 shrink-0">Browse by Category</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 auto-rows-fr">
           {landCategories.map((cat) => (
             <Link

@@ -454,7 +454,7 @@ export default function FinalOfferPage() {
   }, [selectedPlot, offerSummary.landCost]);
 
   return (
-    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Payment Plan</h1>
         <p className="text-sm text-muted mt-1">
@@ -466,7 +466,7 @@ export default function FinalOfferPage() {
 
       {/* Source info bar */}
       {hasROI && (
-        <div className="flex items-center justify-between bg-mint-bg/50 rounded-xl px-5 py-3 border border-mint-light/40 shrink-0">
+        <div className="flex items-center justify-between bg-mint-bg/50 rounded-xl px-4 py-2 border border-mint-light/40 shrink-0">
           <div className="flex items-center gap-3">
             {sourcePlot && (
               <span className="text-sm font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1 rounded-full">
@@ -503,7 +503,7 @@ export default function FinalOfferPage() {
       )}
 
       {/* Payment plan summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         <ContentCard className="bg-mint-bg border-mint-light">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Land Price</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.landCost)}</p>
@@ -527,9 +527,9 @@ export default function FinalOfferPage() {
       </div>
 
       {/* Cost breakdown + offer details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0">
         <ContentCard className="flex flex-col">
-          <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-2">Payment Schedule</p>
+          <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Payment Schedule</p>
           {paymentStages.length > 0 ? (
             <div className="flex flex-col flex-1 divide-y divide-mint-light/60">
               {paymentStages.map((stage, i) => (
@@ -559,16 +559,16 @@ export default function FinalOfferPage() {
         {/* Submit offer */}
         {!submitted ? (
           <ContentCard className="flex flex-col">
-            <p className="text-xs uppercase tracking-widest text-muted mb-3 font-semibold">Submit Your Offer</p>
-            <p className="text-sm text-muted mb-4 leading-relaxed">
+            <p className="text-xs uppercase tracking-widest text-muted mb-2 font-semibold">Submit Your Offer</p>
+            <p className="text-sm text-muted mb-2 leading-relaxed">
               Confirm your offer to generate a secure deal link. Your specialist will review and
               prepare the documentation for signing.
             </p>
 
             {/* What happens next */}
-            <div className="flex-1 bg-mint-bg/40 rounded-xl border border-mint-light/40 p-4 mb-4">
-              <p className="text-xs uppercase tracking-wider text-muted font-semibold mb-3">What Happens Next</p>
-              <div className="space-y-3">
+            <div className="flex-1 bg-mint-bg/40 rounded-xl border border-mint-light/40 p-3 mb-3">
+              <p className="text-xs uppercase tracking-wider text-muted font-semibold mb-2">What Happens Next</p>
+              <div className="space-y-2">
                 {[
                   { step: "1", text: "Offer reviewed within 3-5 business days" },
                   { step: "2", text: "Dedicated Offer Manager assigned" },
@@ -585,7 +585,7 @@ export default function FinalOfferPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 shrink-0">
+            <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => { setDealRef(`NAMOU-${selectedPlot.name}-${Date.now().toString(36).toUpperCase()}`); setSubmitted(true); }}
                 className="px-8 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"

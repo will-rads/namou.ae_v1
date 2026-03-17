@@ -30,7 +30,7 @@ export default async function AreaPlotsPage({ params }: { params: Promise<{ type
   );
 
   return (
-    <div className="flex flex-col flex-1 gap-5 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
         <div className="flex items-center gap-2 text-sm text-muted mb-1">
           <Link href="/categories" className="hover:text-forest transition-colors">Categories</Link>
@@ -46,11 +46,11 @@ export default async function AreaPlotsPage({ params }: { params: Promise<{ type
       {categoryPlots.length === 0 ? (
         <p className="text-sm text-muted">No plots available in this area for this category.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 auto-rows-fr">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 auto-rows-fr">
           {categoryPlots.map((plot) => (
             <Link key={plot.id} href={`/assets/${plot.id}`} className="group flex">
               <ContentCard className="w-full flex flex-col transition-all group-hover:border-forest/30 group-hover:shadow-md">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-forest bg-mint-light/40 px-2 py-0.5 rounded">{plot.name}</span>
                   <span className="text-xs text-muted">{plot.plotType}</span>
                 </div>

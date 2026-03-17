@@ -343,13 +343,13 @@ export default function AgreementPage() {
   const showA2AForm = clientType === "Broker" || clientType === null;
 
   return (
-    <div className="flex flex-col flex-1 gap-2 lg:gap-4 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Agreement</h1>
         <p className="text-sm text-muted mt-1">Fill in the relevant form below.</p>
       </div>
 
-      <div className={`flex-1 min-h-0 ${showPropertyForm && showA2AForm ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col"}`}>
+      <div className={`flex-1 min-h-0 ${showPropertyForm && showA2AForm ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "flex flex-col"}`}>
         {/* Property Introduction Form — Developer / Investor */}
         {showPropertyForm && (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 flex flex-col overflow-y-auto min-h-0">

@@ -24,18 +24,18 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
         <span>/</span>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-3">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">{plot.name}</h1>
         <p className="text-sm text-muted mt-1">{plot.location}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Main info */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-3">
           {/* Plot overview */}
           <ContentCard>
-            <h2 className="text-base font-semibold text-deep-forest mb-4">Plot Overview</h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <h2 className="text-base font-semibold text-deep-forest mb-2">Plot Overview</h2>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
               <SpecRow label="Plot Area" value={`${formatNumber(plot.plotArea)} sq ft`} />
               <SpecRow label="Asking Price" value={formatAED(plot.askingPrice)} />
               <SpecRow label="Price / sq ft" value={`AED ${plot.pricePerSqFt}`} />
@@ -47,7 +47,7 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
 
           {/* Asset specifications — clean structured list per Jad */}
           <ContentCard>
-            <h2 className="text-base font-semibold text-deep-forest mb-4">Asset Specifications</h2>
+            <h2 className="text-base font-semibold text-deep-forest mb-2">Asset Specifications</h2>
             <div className="divide-y divide-mint-light/30">
               <SpecRow label="Plot Size" value={`${formatNumber(plot.plotArea)} sq ft`} />
               <SpecRow label="Max Height" value={plot.maxHeight || "—"} />
@@ -60,7 +60,7 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
 
           {/* Development potential */}
           <ContentCard>
-            <h2 className="text-base font-semibold text-deep-forest mb-3">Development Potential</h2>
+            <h2 className="text-base font-semibold text-deep-forest mb-2">Development Potential</h2>
             <p className="text-sm text-muted leading-relaxed">
               {plot.developmentPotential ||
                 `This ${plot.zoning || plot.landUse} zoned plot supports up to ${plot.maxHeight || "G+30"} construction with FAR of ${plot.far || "N/A"}. Total buildable GFA of ${plot.gfa ? formatNumber(plot.gfa) : "N/A"} sq ft makes it suitable for premium ${plot.landUse.toLowerCase()} development.`}
@@ -69,10 +69,10 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* Sidebar: location map + key metrics */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Location map placeholder */}
           <ContentCard>
-            <h2 className="text-base font-semibold text-deep-forest mb-3">Location</h2>
+            <h2 className="text-base font-semibold text-deep-forest mb-2">Location</h2>
             <div className="w-full h-48 rounded-xl bg-mint-bg flex items-center justify-center border border-mint-light/40">
               <div className="text-center text-deep-forest/40">
                 <svg className="w-10 h-10 mx-auto mb-1 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -85,8 +85,8 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
 
           {/* Key metrics */}
           <ContentCard>
-            <h2 className="text-base font-semibold text-deep-forest mb-3">Key Metrics</h2>
-            <div className="space-y-3">
+            <h2 className="text-base font-semibold text-deep-forest mb-2">Key Metrics</h2>
+            <div className="space-y-2">
               <MetricRow label="Airport ETA" value={plot.airportEta} />
               <MetricRow label="Wynn Casino ETA" value={plot.casinoEta} />
               {plot.dimensions && (

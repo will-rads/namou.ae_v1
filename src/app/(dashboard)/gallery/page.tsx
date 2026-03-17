@@ -17,7 +17,7 @@ export default function GalleryPage() {
   const selectedImage = filtered[selectedIndex] || filtered[0];
 
   return (
-    <div className="flex flex-col flex-1 gap-4 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Ras Al Khaimah at a Glance</h1>
         <p className="text-sm text-muted mt-1">
@@ -27,7 +27,7 @@ export default function GalleryPage() {
 
       <ContentCard className="flex flex-col flex-1 min-h-0">
         {/* Tabs + counter */}
-        <div className="flex items-center justify-between mb-4 shrink-0">
+        <div className="flex items-center justify-between mb-2 shrink-0">
           <div className="flex gap-2">
             {galleryTabs.map((tab) => (
               <button
@@ -49,7 +49,7 @@ export default function GalleryPage() {
         </div>
 
         {/* Hero image — fills available space */}
-        <div className="relative w-full flex-1 min-h-[280px] rounded-xl bg-gradient-to-br from-mint-light/30 to-mint/20 mb-4 overflow-hidden border border-mint-light/40 flex items-center justify-center">
+        <div className="relative w-full flex-1 min-h-[180px] rounded-xl bg-gradient-to-br from-mint-light/30 to-mint/20 mb-2 overflow-hidden border border-mint-light/40 flex items-center justify-center">
           {selectedImage ? (
             <div className="text-center text-deep-forest/40">
               <svg className="w-20 h-20 mx-auto mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>

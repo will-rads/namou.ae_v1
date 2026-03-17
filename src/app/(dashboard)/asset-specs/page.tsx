@@ -11,7 +11,7 @@ export default function AssetSpecsPage() {
   const [activeTab, setActiveTab] = useState(specTabs[0]);
 
   return (
-    <div className="flex flex-col flex-1 gap-3 lg:gap-5 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
+    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Asset Specifications</h1>
         <p className="text-sm text-muted mt-1">
@@ -21,7 +21,7 @@ export default function AssetSpecsPage() {
 
       <ContentCard className="flex-1 flex flex-col min-h-0">
         {/* Plot selector — horizontal scroll row */}
-        <div className="flex gap-3 overflow-x-auto pb-3 mb-5 -mx-2 px-2 shrink-0">
+        <div className="flex gap-3 overflow-x-auto pb-2 mb-3 -mx-2 px-2 shrink-0">
           {plots.map((plot) => (
             <button
               key={plot.id}
@@ -44,7 +44,7 @@ export default function AssetSpecsPage() {
         </div>
 
         {/* Spec tabs */}
-        <div className="flex gap-2 mb-5 shrink-0">
+        <div className="flex gap-2 mb-3 shrink-0">
           {specTabs.map((tab) => (
             <button
               key={tab}

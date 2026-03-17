@@ -24,19 +24,19 @@ export default function ROICalculatorPage() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-y-auto md:overflow-y-hidden">
-      <div className="mb-6">
+      <div className="mb-3">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Interactive ROI Tool</h1>
         <p className="text-sm text-muted mt-1">
           Adjust variables live to reverse-engineer the land price you&apos;re willing to offer.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Inputs column */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-3">
           {/* Plot selector */}
           <ContentCard>
-            <h2 className="text-sm font-semibold text-deep-forest mb-3">Select Plot</h2>
+            <h2 className="text-sm font-semibold text-deep-forest mb-2">Select Plot</h2>
             <div className="flex gap-2 flex-wrap">
               {plots.map((p) => (
                 <button
@@ -59,8 +59,8 @@ export default function ROICalculatorPage() {
 
           {/* Sliders */}
           <ContentCard>
-            <h2 className="text-sm font-semibold text-deep-forest mb-4">Adjustable Variables</h2>
-            <div className="space-y-5">
+            <h2 className="text-sm font-semibold text-deep-forest mb-2">Adjustable Variables</h2>
+            <div className="space-y-3">
               <SliderInput
                 label="Construction Cost per sq ft"
                 value={inputs.constructionCostPerSqFt}
@@ -102,10 +102,10 @@ export default function ROICalculatorPage() {
         </div>
 
         {/* Outputs column */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <ContentCard className="bg-forest text-white border-forest">
-            <h2 className="text-sm font-medium text-white/80 mb-4">Calculated Results</h2>
-            <div className="space-y-4">
+            <h2 className="text-sm font-medium text-white/80 mb-2">Calculated Results</h2>
+            <div className="space-y-3">
               <OutputMetric label="ROI" value={`${outputs.roi}%`} />
               <OutputMetric label="Total Development Value" value={`AED ${formatNumber(outputs.totalDevelopmentValue)}`} />
               <OutputMetric label="Maximum Land Price" value={`AED ${formatNumber(outputs.maximumLandPrice)}`} highlight />

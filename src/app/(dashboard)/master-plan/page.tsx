@@ -294,7 +294,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
   return (
     <div className="md:w-1/2 flex flex-col min-h-0">
     <ContentCard className="flex-1 min-h-0 overflow-y-auto flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <p className="text-sm font-bold text-deep-forest font-heading">Plot Comparison</p>
           <span className="text-[11px] font-medium text-muted bg-mint-bg border border-mint-light/60 px-2 py-0.5 rounded-full">
@@ -304,7 +304,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
       </div>
 
       {/* Column headers — plot cards */}
-      <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: `110px repeat(${cPlots.length}, 1fr)` }}>
+      <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: `110px repeat(${cPlots.length}, 1fr)` }}>
         <div />
         {cPlots.map(p => (
           <div key={p.id} className="bg-mint-bg/50 rounded-xl p-3 border border-mint-light/40">
@@ -353,7 +353,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
 
       {/* CTA — Compare ROI for both plots */}
       {cPlots.length === 2 && (
-        <div className="mt-4 pt-4 border-t border-mint-light/60 shrink-0">
+        <div className="mt-2 pt-2 border-t border-mint-light/60 shrink-0">
           <button
             onClick={handleCompareROI}
             className="w-full px-4 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors flex items-center justify-center gap-2"
@@ -425,7 +425,7 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
     <div className="md:w-1/2 flex flex-col min-h-0">
       <ContentCard className="flex-1 overflow-y-auto flex flex-col">
         {/* Header — plot name */}
-        <div className="flex items-start justify-between mb-4 shrink-0">
+        <div className="flex items-start justify-between mb-2 shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-forest font-heading">{plot.name}</h2>
             <p className="text-xs text-muted mt-0.5">{plot.area}</p>
@@ -497,7 +497,7 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
         </div>
 
         {/* CTAs */}
-        <div className="mt-4 pt-4 border-t border-mint-light/60 shrink-0">
+        <div className="mt-2 pt-2 border-t border-mint-light/60 shrink-0">
           <Link
             href="/roi"
             className="block w-full text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
@@ -519,7 +519,7 @@ function AccordionSection({
     <div className={`rounded-xl border transition-colors ${isOpen ? "border-forest/20 bg-mint-bg/30" : "border-mint-light/40 bg-white"}`}>
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        className="w-full flex items-center justify-between px-3 py-2 text-left"
       >
         <div className="flex items-center gap-2.5">
           <span className={`transition-colors ${isOpen ? "text-forest" : "text-muted"}`}>{icon}</span>
@@ -533,7 +533,7 @@ function AccordionSection({
         </svg>
       </button>
       {isOpen && (
-        <div className="px-4 pb-4">
+        <div className="px-3 pb-3">
           {children}
         </div>
       )}
