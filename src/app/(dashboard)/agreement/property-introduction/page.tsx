@@ -100,7 +100,7 @@ export default function PropertyIntroductionPage() {
 
         {/* Property Summary */}
         <div className="bg-mint-bg/50 border border-mint-light/60 rounded-2xl px-6 py-5">
-          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-3">Property Being Introduced</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-3">Property Being Introduced</p>
           {plot ? (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
@@ -123,7 +123,7 @@ export default function PropertyIntroductionPage() {
 
         {/* Investor Details (Second Party) */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 p-6">
-          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-5">Investor Details (Second Party)</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-5">Investor Details (Second Party)</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Full Name" required error={errors.fullName}>
@@ -175,7 +175,7 @@ function Field({ label, required, error, children }: { label: string; required?:
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </span>
       {children}
-      {error && <span className="text-[11px] text-red-500">This field is required</span>}
+      {error && <span className="text-xs text-red-500">This field is required</span>}
     </label>
   );
 }

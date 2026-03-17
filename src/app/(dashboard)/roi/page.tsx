@@ -304,21 +304,21 @@ export default function ROIPage() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted">Active:</span>
               <span className="text-sm font-bold text-forest">{SCENARIO_META[activeScenario].label}</span>
-              <span className={`text-[10px] font-semibold px-1.5 py-0 rounded-full ${SCENARIO_META[activeScenario].riskColor}`}>{SCENARIO_META[activeScenario].riskLevel}</span>
-              <span className="text-[10px] text-muted">— {SCENARIO_META[activeScenario].description}</span>
+              <span className={`text-[11px] font-semibold px-1.5 py-0 rounded-full ${SCENARIO_META[activeScenario].riskColor}`}>{SCENARIO_META[activeScenario].riskLevel}</span>
+              <span className="text-[11px] text-muted">— {SCENARIO_META[activeScenario].description}</span>
             </div>
             {isCompareMode && (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-forest" />
-                  <span className="text-[10px] font-semibold text-forest">{comparePlots[0].name}</span>
-                  <span className="text-[9px] text-muted">{comparePlots[0].area}</span>
+                  <span className="text-[11px] font-semibold text-forest">{comparePlots[0].name}</span>
+                  <span className="text-[10px] text-muted">{comparePlots[0].area}</span>
                 </div>
-                <span className="text-muted text-[9px]">vs</span>
+                <span className="text-muted text-[10px]">vs</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-compare-b" />
-                  <span className="text-[10px] font-semibold text-compare-b">{comparePlots[1].name}</span>
-                  <span className="text-[9px] text-muted">{comparePlots[1].area}</span>
+                  <span className="text-[11px] font-semibold text-compare-b">{comparePlots[1].name}</span>
+                  <span className="text-[10px] text-muted">{comparePlots[1].area}</span>
                 </div>
               </div>
             )}
@@ -433,7 +433,7 @@ export default function ROIPage() {
             <ContentCard className="flex-1 p-3 flex flex-col">
               <div className="flex-1 flex flex-col justify-evenly">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Land Acquisition</p>
+                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Land Acquisition</p>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted">Pricing Method</span>
                     <TogglePair
@@ -449,12 +449,12 @@ export default function ROIPage() {
                   }
                 </div>
                 <div className="pt-3 border-t border-mint-light/40">
-                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
+                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
                   <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
                   <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
                 </div>
                 <div className="pt-3 border-t border-mint-light/40">
-                  <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Sales</p>
+                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Sales</p>
                   <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
                 </div>
               </div>
@@ -641,7 +641,7 @@ export default function ROIPage() {
               {/* Detailed comparison table */}
               <ContentCard className="py-1 px-4">
                 <div className="grid gap-0" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-                  <div className="py-0.5 text-[11px] font-semibold text-muted">Metric</div>
+                  <div className="py-0.5 text-xs font-semibold text-muted">Metric</div>
                   <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-forest" /></div>
                   <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-compare-b" /></div>
 
@@ -653,7 +653,7 @@ export default function ROIPage() {
                   ].map((row, ri) => (
                     <React.Fragment key={row.label}>
                       {row.section && (
-                        <div className={`col-span-3 text-[9px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-1 pt-1 border-t border-mint-light/40" : ""} pb-0.5`}>
+                        <div className={`col-span-3 text-[10px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-1 pt-1 border-t border-mint-light/40" : ""} pb-0.5`}>
                           {row.section}
                         </div>
                       )}
@@ -732,24 +732,24 @@ function KPICard({
       onMouseLeave={() => setShow(false)}
     >
       <ContentCard className={`${cardBg} ${compareValues ? "py-1 px-2" : "py-2 px-3"} h-full flex flex-col justify-center`}>
-        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-[10px] mb-0.5" : "text-[11px] mb-1"}`}>{label}</p>
+        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-[11px] mb-0.5" : "text-xs mb-1"}`}>{label}</p>
         {compareValues ? (
           <div className="flex items-stretch gap-2">
             <div className="flex-1 text-center min-w-0">
-              <p className="text-[10px] font-medium text-forest leading-normal mb-0">{compareValues.label1}</p>
+              <p className="text-[11px] font-medium text-forest leading-normal mb-0">{compareValues.label1}</p>
               <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
               {compareValues.badge1 && (
-                <span className={`mt-0.5 inline-block text-[10px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
+                <span className={`mt-0.5 inline-block text-[11px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
                   {compareValues.badge1.label}
                 </span>
               )}
             </div>
             <div className="w-px shrink-0 bg-mint-light/60" />
             <div className="flex-1 text-center min-w-0">
-              <p className="text-[10px] font-medium text-compare-b leading-normal mb-0">{compareValues.label2}</p>
+              <p className="text-[11px] font-medium text-compare-b leading-normal mb-0">{compareValues.label2}</p>
               <p className={`${primary ? "text-lg" : "text-base"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
               {compareValues.badge2 && (
-                <span className={`mt-0.5 inline-block text-[10px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
+                <span className={`mt-0.5 inline-block text-[11px] font-semibold px-2 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
                   {compareValues.badge2.label}
                 </span>
               )}
@@ -868,7 +868,7 @@ function DualFixedRow({ label, v1, v2, computed }: { label: string; v1: string; 
   return (
     <div className="flex items-center justify-between py-1.5">
       <span className="text-xs text-muted flex items-center gap-1">
-        {computed && <span className="text-[10px] text-forest/50">=</span>}
+        {computed && <span className="text-[11px] text-forest/50">=</span>}
         {label}
       </span>
       <div className="flex items-center gap-6 text-xs">
@@ -883,7 +883,7 @@ function DualComputedRow({ label, v1, v2 }: { label: string; v1: string; v2: str
   return (
     <div className="flex items-center justify-between py-1 -mx-3 px-3 rounded-lg bg-mint-bg/40">
       <p className="text-xs text-muted flex items-center gap-1">
-        <span className="text-[10px] text-forest/50">=</span>
+        <span className="text-[11px] text-forest/50">=</span>
         {label}
       </p>
       <div className="flex items-center gap-4">

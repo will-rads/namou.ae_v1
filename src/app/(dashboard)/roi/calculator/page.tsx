@@ -159,7 +159,7 @@ function SliderInput({
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full h-2 bg-mint-light rounded-full appearance-none cursor-pointer accent-forest"
       />
-      <div className="flex justify-between text-[10px] text-muted mt-0.5">
+      <div className="flex justify-between text-[11px] text-muted mt-0.5">
         <span>{unit === "AED" ? `AED ${min}` : `${min}${unit}`}</span>
         <span>{unit === "AED" ? `AED ${formatNumber(max)}` : `${max}${unit}`}</span>
       </div>

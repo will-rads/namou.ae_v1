@@ -35,11 +35,11 @@ function getSelectedPlots() {
 function Field({ label, required, error, children }: { label: string; required?: boolean; error?: boolean; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-medium text-deep-forest">
+      <span className="text-xs font-medium text-deep-forest">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </span>
       {children}
-      {error && <span className="text-[10px] text-red-500">Required</span>}
+      {error && <span className="text-[11px] text-red-500">Required</span>}
     </label>
   );
 }
@@ -116,12 +116,12 @@ function PropertyIntroductionForm() {
 
       {/* Property Summary */}
       <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
-        <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Property Being Introduced</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Property Being Introduced</p>
         {plot ? (
           <div className="grid grid-cols-3 gap-3">
-            <div><p className="text-[10px] text-muted">Property</p><p className="text-xs font-semibold text-deep-forest">{plot.name}</p></div>
-            <div><p className="text-[10px] text-muted">Size</p><p className="text-xs font-semibold text-deep-forest">{plot.plotArea.toLocaleString()} sqft</p></div>
-            <div><p className="text-[10px] text-muted">Commission</p><p className="text-xs font-semibold text-deep-forest">2%</p></div>
+            <div><p className="text-[11px] text-muted">Property</p><p className="text-xs font-semibold text-deep-forest">{plot.name}</p></div>
+            <div><p className="text-[11px] text-muted">Size</p><p className="text-xs font-semibold text-deep-forest">{plot.plotArea.toLocaleString()} sqft</p></div>
+            <div><p className="text-[11px] text-muted">Commission</p><p className="text-xs font-semibold text-deep-forest">2%</p></div>
           </div>
         ) : (
           <p className="text-xs text-muted italic">No property selected. Select a plot from Master Plan first.</p>
@@ -153,7 +153,7 @@ function PropertyIntroductionForm() {
       {/* Date + Submit */}
       <div className="flex items-end justify-between mt-auto">
         <div>
-          <p className="text-[10px] text-muted mb-1">Date</p>
+          <p className="text-[11px] text-muted mb-1">Date</p>
           <p className="text-xs font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-lg px-3 py-1.5">{dateStr || "\u00A0"}</p>
         </div>
         <button type="submit" className="px-6 py-2.5 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors">
@@ -231,24 +231,24 @@ function A2AForm() {
 
       {/* Party A (read-only) */}
       <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
-        <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Party A (Namou Properties LLC)</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Party A (Namou Properties LLC)</p>
         <div className="grid grid-cols-3 gap-3">
-          <div><p className="text-[10px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>
-          <div><p className="text-[10px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>
-          <div><p className="text-[10px] text-muted">Contact</p><p className="text-xs font-semibold text-deep-forest">info@namou.ae</p></div>
+          <div><p className="text-[11px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>
+          <div><p className="text-[11px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>
+          <div><p className="text-[11px] text-muted">Contact</p><p className="text-xs font-semibold text-deep-forest">info@namou.ae</p></div>
         </div>
       </div>
 
       {/* Shared Properties */}
       <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
-        <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Shared Properties</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Shared Properties</p>
         {sharedPlots.length > 0 ? (
           <div className="space-y-2">
             {sharedPlots.map((plot) => (
               <div key={plot.id} className="grid grid-cols-3 gap-3">
-                <div><p className="text-[10px] text-muted">Property</p><p className="text-xs font-semibold text-deep-forest">{plot.name}</p></div>
-                <div><p className="text-[10px] text-muted">Size</p><p className="text-xs font-semibold text-deep-forest">{plot.plotArea.toLocaleString()} sqft</p></div>
-                <div><p className="text-[10px] text-muted">Price</p><p className="text-xs font-semibold text-deep-forest">AED {plot.askingPrice.toLocaleString()}</p></div>
+                <div><p className="text-[11px] text-muted">Property</p><p className="text-xs font-semibold text-deep-forest">{plot.name}</p></div>
+                <div><p className="text-[11px] text-muted">Size</p><p className="text-xs font-semibold text-deep-forest">{plot.plotArea.toLocaleString()} sqft</p></div>
+                <div><p className="text-[11px] text-muted">Price</p><p className="text-xs font-semibold text-deep-forest">AED {plot.askingPrice.toLocaleString()}</p></div>
               </div>
             ))}
           </div>
@@ -259,7 +259,7 @@ function A2AForm() {
 
       {/* Party B Fields */}
       <div>
-        <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Party B (Referring Agent)</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Party B (Referring Agent)</p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Company Name" required error={errors.companyName}>
             <input type="text" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} maxLength={100} className={inputCls(errors.companyName)} placeholder="ABC Real Estate" />
@@ -288,7 +288,7 @@ function A2AForm() {
 
       {/* Referred Investor */}
       <div>
-        <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-2">Referred Investor</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Referred Investor</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
             <Field label="Investor Full Name" required error={errors.investorName}>
@@ -307,7 +307,7 @@ function A2AForm() {
       {/* Date + Submit */}
       <div className="flex items-end justify-between mt-auto">
         <div>
-          <p className="text-[10px] text-muted mb-1">Date</p>
+          <p className="text-[11px] text-muted mb-1">Date</p>
           <p className="text-xs font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-lg px-3 py-1.5">{dateStr || "\u00A0"}</p>
         </div>
         <button type="submit" className="px-6 py-2.5 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors">

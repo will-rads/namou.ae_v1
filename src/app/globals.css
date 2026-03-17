@@ -54,13 +54,13 @@ aside:not(:hover) .nav-link:hover .nav-tooltip {
 
 /* Responsive base font scaling */
 html {
-  font-size: 14px;
+  font-size: 16px;
 }
 @media (min-width: 768px) {
-  html { font-size: clamp(12px, 1.1vw, 16px); }
+  html { font-size: clamp(15px, 1.4vw, 19px); }
 }
 @media (min-width: 1440px) {
-  html { font-size: 16px; }
+  html { font-size: 19px; }
 }
 
 /* Page fade-in animation */

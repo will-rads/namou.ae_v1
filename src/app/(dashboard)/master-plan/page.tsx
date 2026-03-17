@@ -184,7 +184,7 @@ function MasterPlanContent() {
             <div className="absolute top-3 left-3 z-[800]">
               <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-mint-light/40 shadow-sm overflow-hidden">
                 <div className="px-3 pt-2.5 pb-1">
-                  <p className="text-[9px] uppercase tracking-wider text-muted font-semibold">
+                  <p className="text-[10px] uppercase tracking-wider text-muted font-semibold">
                     {compareMode ? `Select Plots (${comparePlots.length}/2)` : "Available Plots"}
                   </p>
                 </div>
@@ -204,7 +204,7 @@ function MasterPlanContent() {
                         <p className={`text-xs font-semibold ${active ? "text-white" : "text-deep-forest"}`}>
                           {plot.name}
                         </p>
-                        <p className={`text-[10px] mt-0.5 ${active ? "text-white/70" : "text-muted"}`}>
+                        <p className={`text-[11px] mt-0.5 ${active ? "text-white/70" : "text-muted"}`}>
                           {formatNumber(plot.plotArea)} sqft
                         </p>
                       </button>
@@ -224,7 +224,7 @@ function MasterPlanContent() {
                 : filteredPlots;
             return (
               <div className="absolute top-3 right-3 z-[800] bg-white/90 backdrop-blur-sm rounded-xl p-4 text-xs text-deep-forest shadow-sm min-w-[220px]">
-                <p className="text-[10px] uppercase tracking-wider text-muted font-semibold mb-2">Area Summary</p>
+                <p className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2">Area Summary</p>
                 <div className="space-y-2">
                   <div className="flex justify-between gap-4">
                     <span className="text-muted shrink-0">Plots Shown</span>
@@ -297,7 +297,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <p className="text-sm font-bold text-deep-forest font-heading">Plot Comparison</p>
-          <span className="text-[10px] font-medium text-muted bg-mint-bg border border-mint-light/60 px-2 py-0.5 rounded-full">
+          <span className="text-[11px] font-medium text-muted bg-mint-bg border border-mint-light/60 px-2 py-0.5 rounded-full">
             {cPlots.length}/2 selected
           </span>
         </div>
@@ -311,7 +311,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-bold text-forest">{p.name}</p>
-                <p className="text-[10px] text-muted mt-0.5">{p.area}</p>
+                <p className="text-[11px] text-muted mt-0.5">{p.area}</p>
               </div>
               <button onClick={() => onRemove(p.id)} className="text-muted hover:text-red-500 transition-colors p-0.5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -322,10 +322,10 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
             <p className="text-lg font-bold text-forest font-heading mt-1">AED {formatNumber(p.askingPrice)}</p>
             <div className="flex gap-1 mt-1.5 flex-wrap">
               {p.askingPrice === lowestPrice && cPlots.length > 1 && (
-                <span className="text-[9px] font-semibold text-forest bg-forest/10 px-1.5 py-0.5 rounded">Best Price</span>
+                <span className="text-[10px] font-semibold text-forest bg-forest/10 px-1.5 py-0.5 rounded">Best Price</span>
               )}
               {p.pricePerSqFt === lowestPriceSqft && cPlots.length > 1 && (
-                <span className="text-[9px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">Best /sqft</span>
+                <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">Best /sqft</span>
               )}
             </div>
           </div>
@@ -337,7 +337,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
         {rows.map((row, ri) => (
           <React.Fragment key={row.label}>
             {row.section && (
-              <div className={`col-span-full text-[10px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-3 pt-3 border-t border-mint-light/40" : ""} pb-1.5`}>
+              <div className={`col-span-full text-[11px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-3 pt-3 border-t border-mint-light/40" : ""} pb-1.5`}>
                 {row.section}
               </div>
             )}
@@ -487,7 +487,7 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
                     </svg>
-                    <p className="text-[9px]">{plot.name} — View {i}</p>
+                    <p className="text-[10px]">{plot.name} — View {i}</p>
                   </div>
                 </div>
               ))}

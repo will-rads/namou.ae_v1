@@ -106,7 +106,7 @@ export default function A2APage() {
 
         {/* Party A — pre-filled, read-only */}
         <div className="bg-mint-bg/50 border border-mint-light/60 rounded-2xl px-6 py-5">
-          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-3">Party A (Namou Properties LLC)</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-3">Party A (Namou Properties LLC)</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <p className="text-xs text-muted">Company</p>
@@ -125,7 +125,7 @@ export default function A2APage() {
 
         {/* Shared Properties Summary */}
         <div className="bg-mint-bg/50 border border-mint-light/60 rounded-2xl px-6 py-5">
-          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-3">Shared Properties</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-3">Shared Properties</p>
           {sharedPlots.length > 0 ? (
             <div className="space-y-3">
               {sharedPlots.map((plot) => (
@@ -152,7 +152,7 @@ export default function A2APage() {
 
         {/* Party B Details */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 p-6">
-          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-5">Party B (Referring Agent)</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-5">Party B (Referring Agent)</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Company Name" required error={errors.companyName}>
@@ -182,7 +182,7 @@ export default function A2APage() {
 
         {/* Referred Investor */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-mint-light/30 p-6">
-          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-5">Referred Investor</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-5">Referred Investor</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
@@ -227,7 +227,7 @@ function Field({ label, required, error, children }: { label: string; required?:
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </span>
       {children}
-      {error && <span className="text-[11px] text-red-500">This field is required</span>}
+      {error && <span className="text-xs text-red-500">This field is required</span>}
     </label>
   );
 }

@@ -80,7 +80,7 @@ function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navI
 
       {/* Resources separator */}
       <div className="mx-2 my-2 border-t border-white/10" />
-      <p className="px-2 text-[10px] uppercase tracking-widest text-white/30 mb-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">Resources</p>
+      <p className="px-2 text-[11px] uppercase tracking-widest text-white/30 mb-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">Resources</p>
       {resourceNavItems.map((item) => {
         const active = pathname.startsWith(item.baseHref);
         return (

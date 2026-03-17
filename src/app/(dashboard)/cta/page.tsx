@@ -212,11 +212,11 @@ export default function CTAPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                   {action.timeline}
                 </span>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-deep-forest bg-mint-bg border border-mint-light/60 px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-deep-forest bg-mint-bg border border-mint-light/60 px-2.5 py-1 rounded-full">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
                   {action.prep}
                 </span>
@@ -456,25 +456,25 @@ export default function CTAPage() {
                   <label className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-deep-forest">First Name<span className="text-red-400 ml-0.5">*</span></span>
                     <input type="text" value={brochureForm.firstName} onChange={(e) => setBF("firstName", e.target.value)} maxLength={80} placeholder="John" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.firstName ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
-                    {brochureErrors.firstName && <span className="text-[10px] text-red-500">Required</span>}
+                    {brochureErrors.firstName && <span className="text-[11px] text-red-500">Required</span>}
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-deep-forest">Last Name<span className="text-red-400 ml-0.5">*</span></span>
                     <input type="text" value={brochureForm.lastName} onChange={(e) => setBF("lastName", e.target.value)} maxLength={80} placeholder="Doe" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.lastName ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
-                    {brochureErrors.lastName && <span className="text-[10px] text-red-500">Required</span>}
+                    {brochureErrors.lastName && <span className="text-[11px] text-red-500">Required</span>}
                   </label>
                 </div>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-xs font-medium text-deep-forest">Email<span className="text-red-400 ml-0.5">*</span></span>
                   <input type="email" value={brochureForm.email} onChange={(e) => setBF("email", e.target.value)} maxLength={254} placeholder="john@email.com" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.email ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
-                  {brochureErrors.email && <span className="text-[10px] text-red-500">Valid email required</span>}
+                  {brochureErrors.email && <span className="text-[11px] text-red-500">Valid email required</span>}
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-xs font-medium text-deep-forest">Phone Number<span className="text-red-400 ml-0.5">*</span></span>
                   <input type="tel" value={brochureForm.phone} onChange={(e) => setBF("phone", e.target.value)} maxLength={20} placeholder="+971 50 000 0000" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.phone ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />
-                  {brochureErrors.phone && <span className="text-[10px] text-red-500">Required</span>}
+                  {brochureErrors.phone && <span className="text-[11px] text-red-500">Required</span>}
                 </label>
 
                 <button type="submit" className="w-full py-3 bg-forest text-white rounded-xl text-sm font-semibold hover:bg-deep-forest transition-colors mt-2">

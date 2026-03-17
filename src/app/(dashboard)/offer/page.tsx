@@ -44,11 +44,11 @@ function fmtAED(n: number): string {
 function Field({ label, required, error, children }: { label: string; required?: boolean; error?: boolean; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-medium text-deep-forest">
+      <span className="text-xs font-medium text-deep-forest">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </span>
       {children}
-      {error && <span className="text-[10px] text-red-500">Required</span>}
+      {error && <span className="text-[11px] text-red-500">Required</span>}
     </label>
   );
 }
@@ -299,10 +299,10 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             {/* Property / context summary */}
             <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-2">
               <div className={`grid gap-2 ${isBroker ? "grid-cols-4" : "grid-cols-2"}`}>
-                <div><p className="text-[10px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
-                {isBroker && <div><p className="text-[10px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>}
-                {isBroker && <div><p className="text-[10px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>}
-                <div><p className="text-[10px] text-muted">{isBroker ? "Contact" : "Commission"}</p><p className="text-xs font-semibold text-deep-forest">{isBroker ? "info@namou.ae" : "2%"}</p></div>
+                <div><p className="text-[11px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
+                {isBroker && <div><p className="text-[11px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>}
+                {isBroker && <div><p className="text-[11px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>}
+                <div><p className="text-[11px] text-muted">{isBroker ? "Contact" : "Commission"}</p><p className="text-xs font-semibold text-deep-forest">{isBroker ? "info@namou.ae" : "2%"}</p></div>
               </div>
             </div>
 
@@ -331,7 +331,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             {/* A2A Broker fields — visible always, disabled/greyed when Investor */}
             <div className={!isBroker ? "opacity-40 pointer-events-none" : ""}>
               <div>
-                <p className="text-[9px] uppercase tracking-widest text-muted font-semibold mb-1.5">Broker Details (A2A)</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">Broker Details (A2A)</p>
                 <div className="grid grid-cols-2 gap-2.5">
                   <Field label="Company Name" required={isBroker} error={isBroker ? errors.companyName : false}>
                     <input type="text" value={a2aForm.companyName} onChange={(e) => setA2a("companyName", e.target.value)} disabled={!isBroker} maxLength={100} className={inputCls(isBroker ? errors.companyName : false)} placeholder="ABC Real Estate" />
@@ -365,7 +365,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             {/* Date + Submit */}
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-[10px] text-muted mb-1">Date</p>
+                <p className="text-[11px] text-muted mb-1">Date</p>
                 <p className="text-xs font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-lg px-3 py-1.5">{dateStr}</p>
               </div>
               <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -538,7 +538,7 @@ export default function FinalOfferPage() {
                     <span className="w-7 h-7 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                     <div>
                       <p className="text-lg font-bold text-deep-forest">{stage.pct}% <span className="text-base font-bold text-muted">– {stage.label}</span></p>
-                      {stage.sub && <p className="text-[11px] text-muted">{stage.sub}</p>}
+                      {stage.sub && <p className="text-xs text-muted">{stage.sub}</p>}
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-3">
