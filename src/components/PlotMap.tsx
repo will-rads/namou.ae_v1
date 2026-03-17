@@ -46,9 +46,7 @@ export default function PlotMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<L.Map | null>(null);
   const markersRef   = useRef<Map<string, L.Marker>>(new Map());
-  const labelsRef    = useRef<L.TileLayer | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const [hybrid, setHybrid]     = useState(false);
 
   const onSelectRef = useRef(onSelectPlot);
   useEffect(() => { onSelectRef.current = onSelectPlot; }, [onSelectPlot]);
@@ -79,12 +77,6 @@ export default function PlotMap({
       }
     ).addTo(map);
 
-    // ── Esri Reference Overlay — road/place labels for hybrid mode ──────────
-    labelsRef.current = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-      { maxNativeZoom: 19, maxZoom: 22, pane: "overlayPane" }
-    );
-
     mapRef.current = map;
     setMapReady(true);
 
@@ -100,16 +92,6 @@ export default function PlotMap({
       markersRef.current.clear();
     };
   }, []);
-
-  // ── Toggle labels overlay for hybrid mode ─────────────────────────────────
-  useEffect(() => {
-    if (!mapReady || !mapRef.current || !labelsRef.current) return;
-    if (hybrid) {
-      labelsRef.current.addTo(mapRef.current);
-    } else {
-      labelsRef.current.remove();
-    }
-  }, [mapReady, hybrid]);
 
   // ── Rebuild markers whenever plots or selection state changes ────────────
   useEffect(() => {
@@ -166,15 +148,5 @@ export default function PlotMap({
     }
   }, [mapReady, selectedPlot, compareMode]);
 
-  return (
-    <div className="absolute inset-0">
-      <div ref={containerRef} className="absolute inset-0" />
-      <button
-        onClick={() => setHybrid((h) => !h)}
-        className="absolute top-3 right-3 z-[1000] bg-white/90 hover:bg-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-md border border-gray-200 text-gray-700 backdrop-blur-sm transition-colors"
-      >
-        {hybrid ? "Satellite" : "Hybrid"}
-      </button>
-    </div>
-  );
+  return <div ref={containerRef} className="absolute inset-0" />;
 }
