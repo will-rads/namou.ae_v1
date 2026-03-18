@@ -171,8 +171,8 @@ export default function BackendPage() {
           <div id="backend-table-end" />
         </div>
 
-        {/* Add row button */}
-        <div className="border-t border-mint-light/40 px-4 py-2 shrink-0">
+        {/* Bottom bar — Add Row + Apply/Reset */}
+        <div className="border-t border-mint-light/40 px-4 py-2 shrink-0 flex items-center justify-between">
           <button
             onClick={addRow}
             className="flex items-center gap-2 px-4 py-2 border border-dashed border-forest/30 text-forest rounded-xl text-sm font-medium hover:bg-mint-bg/50 transition-colors"
@@ -183,25 +183,23 @@ export default function BackendPage() {
             </svg>
             Add Row
           </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={resetToDefault}
+              className="px-5 py-2 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors"
+            >
+              Reset to Default
+            </button>
+            <button
+              onClick={applyChanges}
+              disabled={!isDirty}
+              className="px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Apply Changes
+            </button>
+          </div>
         </div>
       </ContentCard>
-
-      {/* Footer bar — Apply + Reset */}
-      <div className="flex items-center justify-end gap-3 shrink-0 py-1">
-        <button
-          onClick={resetToDefault}
-          className="px-5 py-2 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors"
-        >
-          Reset to Default
-        </button>
-        <button
-          onClick={applyChanges}
-          disabled={!isDirty}
-          className="px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Apply Changes
-        </button>
-      </div>
 
       {/* Toast */}
       {toast && (
