@@ -25,6 +25,7 @@ export interface Plot {
   paymentPlan?: string;
   lat?: number; // WGS84 latitude (decimal degrees)
   lng?: number; // WGS84 longitude (decimal degrees)
+  googleMapsUrl?: string;
 }
 
 export interface Landmark {
@@ -105,6 +106,7 @@ export const plots: Plot[] = [
     paymentPlan: "10% down payment — within 30 days to close the remaining amount",
     lat: 25.673117,
     lng: 55.739483,
+    googleMapsUrl: "https://maps.app.goo.gl/vPwinu7hV9rF8MkE9",
   },
   {
     id: "beach-d01-009",
@@ -127,6 +129,7 @@ export const plots: Plot[] = [
     paymentPlan: "5% Booking / 15% within 30 days SPA / 20% end of each year 1, 2, 3 & 4 from signing SPA",
     lat: 25.6655,
     lng: 55.7605,
+    googleMapsUrl: "https://maps.app.goo.gl/sM9dApPNbQnR1RtC6",
   },
   {
     id: "beach-d01-010",
@@ -149,6 +152,7 @@ export const plots: Plot[] = [
     paymentPlan: "5% Booking / 15% within 30 days SPA / 20% end of each year 1, 2, 3 & 4 from signing SPA",
     lat: 25.6648,
     lng: 55.7612,
+    googleMapsUrl: "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
   },
   {
     id: "beach-d01-011",
@@ -171,6 +175,7 @@ export const plots: Plot[] = [
     paymentPlan: "5% Booking / 15% within 30 days SPA / 20% end of each year 1, 2, 3 & 4 from signing SPA",
     lat: 25.6641,
     lng: 55.7601,
+    googleMapsUrl: "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
   },
   {
     id: "ambd-d02-014",
@@ -193,6 +198,7 @@ export const plots: Plot[] = [
     paymentPlan: "5% Booking / 15% within 30 days SPA / 20% end of each year 1, 2, 3 & 4 from signing SPA",
     lat: 25.6660,
     lng: 55.7618,
+    googleMapsUrl: "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
   },
   {
     id: "ambd-d02-015",
@@ -215,6 +221,7 @@ export const plots: Plot[] = [
     paymentPlan: "5% Booking / 15% within 30 days SPA / 20% end of each year 1, 2, 3 & 4 from signing SPA",
     lat: 25.6653,
     lng: 55.7624,
+    googleMapsUrl: "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
   },
   {
     id: "ambd-d02-016",
@@ -237,6 +244,7 @@ export const plots: Plot[] = [
     paymentPlan: "5% Booking / 15% within 30 days SPA / 20% end of each year 1, 2, 3 & 4 from signing SPA",
     lat: 25.6646,
     lng: 55.7628,
+    googleMapsUrl: "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
   },
   {
     id: "ambd-d02-017",
@@ -259,6 +267,7 @@ export const plots: Plot[] = [
     paymentPlan: "5% Booking / 15% within 30 days SPA / 20% end of each year 1, 2, 3 & 4 from signing SPA",
     lat: 25.6639,
     lng: 55.7614,
+    googleMapsUrl: "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
   },
   // ── Al Nakheel ────────────────────────────────────────────────────────────
   {
@@ -281,6 +290,7 @@ export const plots: Plot[] = [
     infrastructure: "Full road + utilities",
     lat: 25.796857,
     lng: 55.969447,
+    googleMapsUrl: "https://maps.app.goo.gl/abZacusdbfBoV9PYA",
   },
   {
     id: "nakheel-hotel",
@@ -300,6 +310,7 @@ export const plots: Plot[] = [
     infrastructure: "Full road + utilities",
     lat: 25.772931,
     lng: 55.965119,
+    googleMapsUrl: "https://maps.app.goo.gl/khYWFNE4mAzD1wej6",
   },
   // ── RAK Central ───────────────────────────────────────────────────────────
   {
@@ -322,6 +333,7 @@ export const plots: Plot[] = [
     infrastructure: "Full road + utilities",
     lat: 25.789835,
     lng: 55.949638,
+    googleMapsUrl: "https://maps.app.goo.gl/riqob5Gi94PtmHkr9",
   },
   // ── Al Maireed ────────────────────────────────────────────────────────────
   {
@@ -345,6 +357,7 @@ export const plots: Plot[] = [
     paymentPlan: "10% Booking / 10% within 30 days SPA — 15 instalment payment every 3 months",
     lat: 25.821900,
     lng: 55.966300,
+    googleMapsUrl: "https://maps.app.goo.gl/NKxDnTc9cTqZer8H7",
   },
   {
     id: "maireed-309010790",
@@ -367,6 +380,7 @@ export const plots: Plot[] = [
     paymentPlan: "10% Booking / 10% within 30 days SPA — 15 instalment payment every 3 months",
     lat: 25.821688,
     lng: 55.966080,
+    googleMapsUrl: "https://maps.app.goo.gl/ufdYaZDxBmtDvYEg8",
   },
   {
     id: "maireed-309010791",
@@ -389,6 +403,7 @@ export const plots: Plot[] = [
     paymentPlan: "10% Booking / 10% within 30 days SPA — 15 instalment payment every 3 months",
     lat: 25.822100,
     lng: 55.966500,
+    googleMapsUrl: "https://maps.app.goo.gl/gTZvGKwurvzrFw1K8",
   },
   {
     id: "maireed-rp-02",
@@ -411,6 +426,7 @@ export const plots: Plot[] = [
     paymentPlan: "10% Booking / 10% within 30 days SPA — 15 instalment payment every 3 months",
     lat: 25.827286,
     lng: 55.971158,
+    googleMapsUrl: "https://maps.app.goo.gl/R2ybkxnradSzyrPUA",
   },
   {
     id: "maireed-rp-22",
@@ -433,6 +449,7 @@ export const plots: Plot[] = [
     paymentPlan: "10% Booking / 10% within 30 days SPA — 15 instalment payment every 3 months",
     lat: 25.827500,
     lng: 55.971358,
+    googleMapsUrl: "https://maps.app.goo.gl/vtJstHfUZupxpVUq9",
   },
   {
     id: "maireed-rp-23",
@@ -455,6 +472,7 @@ export const plots: Plot[] = [
     paymentPlan: "10% Booking / 10% within 30 days SPA — 15 instalment payment every 3 months",
     lat: 25.828874,
     lng: 55.972228,
+    googleMapsUrl: "https://maps.app.goo.gl/6EdvXei2fo3NQx3RA",
   },
 ];
 

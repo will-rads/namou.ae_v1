@@ -71,8 +71,7 @@ const COLUMNS: Col[] = [
   { key: "zoning", label: "Zoning", type: "text", width: "min-w-[260px]", optional: true },
   { key: "infrastructure", label: "Infrastructure", type: "text", width: "min-w-[200px]", optional: true },
   { key: "paymentPlan", label: "Payment Plan", type: "text", width: "min-w-[380px]", optional: true },
-  { key: "lat", label: "Lat", type: "number", width: "min-w-[120px]", step: 0.000001, optional: true },
-  { key: "lng", label: "Lng", type: "number", width: "min-w-[120px]", step: 0.000001, optional: true },
+  { key: "googleMapsUrl", label: "Google Maps Location", type: "text", width: "min-w-[340px]", optional: true },
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
