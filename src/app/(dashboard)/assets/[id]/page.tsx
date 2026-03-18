@@ -35,7 +35,7 @@ export default async function AssetPage({ params }: { params: Promise<{ id: stri
           {/* Plot overview */}
           <ContentCard>
             <h2 className="text-base font-semibold text-deep-forest mb-2">Plot Overview</h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               <SpecRow label="Plot Area" value={`${formatNumber(plot.plotArea)} sq ft`} />
               <SpecRow label="Asking Price" value={formatAED(plot.askingPrice)} />
               <SpecRow label="Price / sq ft" value={`AED ${plot.pricePerSqFt}`} />
