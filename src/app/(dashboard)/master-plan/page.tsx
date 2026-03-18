@@ -543,9 +543,9 @@ function AccordionSection({
 
 function PlotRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1.5">
-      <p className="text-xs text-muted">{label}</p>
-      <p className={`text-sm font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <p className="text-xs text-muted shrink-0">{label}</p>
+      <p className={`text-sm font-bold text-right ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
     </div>
   );
 }

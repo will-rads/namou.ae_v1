@@ -466,8 +466,8 @@ export default function FinalOfferPage() {
 
       {/* Source info bar */}
       {hasROI && (
-        <div className="flex items-center justify-between bg-mint-bg/50 rounded-xl px-4 py-2 border border-mint-light/40 shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-mint-bg/50 rounded-xl px-4 py-2 border border-mint-light/40 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {sourcePlot && (
               <span className="text-sm font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1 rounded-full">
                 {sourcePlot.name}
@@ -585,7 +585,7 @@ export default function FinalOfferPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 shrink-0">
+            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
               <button
                 onClick={() => { setDealRef(`NAMOU-${selectedPlot.name}-${Date.now().toString(36).toUpperCase()}`); setSubmitted(true); }}
                 className="px-8 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"

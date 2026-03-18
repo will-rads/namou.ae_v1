@@ -225,7 +225,7 @@ export default function ROIPage() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 mb-1 lg:mb-1">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">ROI Simulator</h1>
             {isCompareMode ? (
               <>
@@ -300,25 +300,25 @@ export default function ROIPage() {
         <div className={`flex flex-col ${isCompareMode ? "gap-0.5 min-h-0" : "gap-1 shrink-0"}`}>
 
           {/* Active scenario info */}
-          <div className="bg-mint-bg/50 rounded-lg px-4 py-0.5 border border-mint-light/40 shrink-0 flex items-center justify-between gap-4">
+          <div className="bg-mint-bg/50 rounded-lg px-3 sm:px-4 py-1 sm:py-0.5 border border-mint-light/40 shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted">Active:</span>
               <span className="text-sm font-bold text-forest">{SCENARIO_META[activeScenario].label}</span>
               <span className={`text-[11px] font-semibold px-1.5 py-0 rounded-full ${SCENARIO_META[activeScenario].riskColor}`}>{SCENARIO_META[activeScenario].riskLevel}</span>
-              <span className="text-[11px] text-muted">— {SCENARIO_META[activeScenario].description}</span>
+              <span className="text-[11px] text-muted hidden sm:inline">— {SCENARIO_META[activeScenario].description}</span>
             </div>
             {isCompareMode && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-forest" />
                   <span className="text-[11px] font-semibold text-forest">{comparePlots[0].name}</span>
-                  <span className="text-[10px] text-muted">{comparePlots[0].area}</span>
+                  <span className="text-[10px] text-muted hidden sm:inline">{comparePlots[0].area}</span>
                 </div>
                 <span className="text-muted text-[10px]">vs</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-compare-b" />
                   <span className="text-[11px] font-semibold text-compare-b">{comparePlots[1].name}</span>
-                  <span className="text-[10px] text-muted">{comparePlots[1].area}</span>
+                  <span className="text-[10px] text-muted hidden sm:inline">{comparePlots[1].area}</span>
                 </div>
               </div>
             )}
@@ -326,7 +326,7 @@ export default function ROIPage() {
 
           {/* Input variables */}
           {isCompareMode && inputs2 && results2 ? (
-          <div className="grid grid-cols-[2fr_3fr] gap-2 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-2 min-h-0">
             {/* Left: Variables — own frame */}
             <ContentCard className="flex flex-col py-1.5 px-4">
               <div className="flex flex-col justify-between flex-1">
@@ -428,7 +428,7 @@ export default function ROIPage() {
             </ContentCard>
           </div>
           ) : (
-          <div className="flex gap-2 lg:gap-3">
+          <div className="flex flex-col md:flex-row gap-2 lg:gap-3">
             {/* Left: Variables — own frame */}
             <ContentCard className="flex-1 p-3 flex flex-col">
               <div className="flex-1 flex flex-col justify-evenly">
@@ -538,7 +538,7 @@ export default function ROIPage() {
           {!isCompareMode && (
             <div className="flex flex-col gap-1 lg:gap-1.5 h-full">
               {/* Investor Metrics + Sensitivity — side by side */}
-              <div className="flex gap-2 lg:gap-3 flex-1 min-h-0">
+              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
                 <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Investor Metrics</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
