@@ -87,7 +87,7 @@ export default function BackendPage() {
     "w-full px-2 py-1.5 rounded-lg border border-mint-light/60 bg-white text-sm text-deep-forest focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none transition-colors";
 
   return (
-    <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto">
+    <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <div>
