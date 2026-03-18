@@ -864,21 +864,6 @@ function MetricRow({ label, value, sub, highlight }: { label: string; value: str
   );
 }
 
-function DualFixedRow({ label, v1, v2, computed }: { label: string; v1: string; v2: string; computed?: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-1.5">
-      <span className="text-xs text-muted flex items-center gap-1">
-        {computed && <span className="text-[11px] text-forest/50">=</span>}
-        {label}
-      </span>
-      <div className="flex items-center gap-6 text-xs">
-        <span className="font-semibold text-forest">{v1}</span>
-        <span className="font-semibold text-compare-b">{v2}</span>
-      </div>
-    </div>
-  );
-}
-
 function DualComputedRow({ label, v1, v2 }: { label: string; v1: string; v2: string }) {
   return (
     <div className="flex items-center justify-between py-1 -mx-3 px-3 rounded-lg bg-mint-bg/40">

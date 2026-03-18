@@ -18,10 +18,15 @@ export default function LandingPage() {
 
   return (
     <div className="relative flex flex-col min-h-screen overflow-x-hidden">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/rak-hero.jpg')" }}
+      {/* Background image — uses next/image for automatic WebP/AVIF + resize */}
+      <Image
+        src="/rak-hero.jpg"
+        alt=""
+        fill
+        priority
+        className="object-cover"
+        sizes="100vw"
+        quality={75}
       />
       {/* Dark overlay for readability */}
       <div className="absolute inset-0 bg-deep-forest/40" />
