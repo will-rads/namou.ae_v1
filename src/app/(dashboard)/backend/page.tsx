@@ -3,86 +3,29 @@
 import { useState, useEffect, useCallback } from "react";
 import ContentCard from "@/components/ContentCard";
 import {
-  plots,
-  landCategories,
-  ORIGINAL_PLOTS,
-  areas,
-  type Plot,
-  type LandCategory,
-} from "@/data/mock";
-import { savePlots, clearPlots } from "@/data/plotsStore";
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function generateId(): string {
-  return `plot-${Date.now().toString(36)}`;
-}
-
-function newPlot(): Plot {
-  return {
-    id: generateId(),
-    name: "New Plot",
-    area: areas[0],
-    category: "residential",
-    plotArea: 0,
-    askingPrice: 0,
-    pricePerSqFt: 0,
-    landUse: "Residential",
-    location: "",
-    plotType: "Single",
-    airportEta: "",
-    casinoEta: "",
-  };
-}
-
-const CATEGORY_OPTIONS: LandCategory[] = [
-  "residential",
-  "commercial",
-  "industrial",
-  "mixed-use",
-];
-
-// ── Column definitions ───────────────────────────────────────────────────────
-
-interface Col {
-  key: keyof Plot;
-  label: string;
-  type: "text" | "number" | "select-area" | "select-category";
-  width: string;
-  step?: number;
-  optional?: boolean;
-}
-
-const COLUMNS: Col[] = [
-  { key: "name", label: "Name", type: "text", width: "min-w-[140px]" },
-  { key: "area", label: "Area", type: "select-area", width: "min-w-[170px]" },
-  { key: "category", label: "Category", type: "select-category", width: "min-w-[120px]" },
-  { key: "plotArea", label: "Plot Area (sqft)", type: "number", width: "min-w-[120px]" },
-  { key: "askingPrice", label: "Asking Price (AED)", type: "number", width: "min-w-[130px]" },
-  { key: "pricePerSqFt", label: "Price/sqft", type: "number", width: "min-w-[100px]" },
-  { key: "landUse", label: "Land Use", type: "text", width: "min-w-[180px]" },
-  { key: "location", label: "Location", type: "text", width: "min-w-[220px]" },
-  { key: "plotType", label: "Plot Type", type: "text", width: "min-w-[90px]" },
-  { key: "airportEta", label: "Airport ETA", type: "text", width: "min-w-[90px]" },
-  { key: "casinoEta", label: "Casino ETA", type: "text", width: "min-w-[90px]" },
-  { key: "maxHeight", label: "Max Height", type: "text", width: "min-w-[100px]", optional: true },
-  { key: "far", label: "FAR", type: "number", width: "min-w-[70px]", step: 0.01, optional: true },
-  { key: "gfa", label: "GFA", type: "number", width: "min-w-[100px]", optional: true },
-  { key: "zoning", label: "Zoning", type: "text", width: "min-w-[180px]", optional: true },
-  { key: "infrastructure", label: "Infrastructure", type: "text", width: "min-w-[150px]", optional: true },
-  { key: "paymentPlan", label: "Payment Plan", type: "text", width: "min-w-[260px]", optional: true },
-  { key: "googleMapsUrl", label: "Google Maps Location", type: "text", width: "min-w-[240px]", optional: true },
-];
+  SPREADSHEET_COLUMNS,
+  ORIGINAL_SPREADSHEET_ROWS,
+  newSpreadsheetRow,
+  saveSpreadsheetRows,
+  loadSpreadsheetRows,
+  clearSpreadsheetRows,
+  type SpreadsheetRow,
+} from "@/data/spreadsheetData";
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BackendPage() {
-  const [editablePlots, setEditablePlots] = useState<Plot[]>([]);
+  const [rows, setRows] = useState<SpreadsheetRow[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
-    setEditablePlots(JSON.parse(JSON.stringify(plots)));
+    const stored = loadSpreadsheetRows();
+    if (stored) {
+      setRows(stored);
+    } else {
+      setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
+    }
   }, []);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
@@ -91,24 +34,10 @@ export default function BackendPage() {
 
   // ── Field update ──
 
-  function updateField(index: number, field: keyof Plot, raw: string) {
-    setEditablePlots((prev) => {
+  function updateField(index: number, key: string, value: string) {
+    setRows((prev) => {
       const next = [...prev];
-      const col = COLUMNS.find((c) => c.key === field);
-      let value: string | number | undefined;
-
-      if (col?.type === "number") {
-        if (raw === "") {
-          value = col.optional ? undefined : 0;
-        } else {
-          value = parseFloat(raw);
-          if (isNaN(value as number)) value = col.optional ? undefined : 0;
-        }
-      } else {
-        value = raw === "" && col?.optional ? undefined : raw;
-      }
-
-      next[index] = { ...next[index], [field]: value };
+      next[index] = { ...next[index], [key]: value };
       return next;
     });
     setIsDirty(true);
@@ -117,9 +46,8 @@ export default function BackendPage() {
   // ── Row operations ──
 
   function addRow() {
-    setEditablePlots((prev) => [...prev, newPlot()]);
+    setRows((prev) => [...prev, newSpreadsheetRow()]);
     setIsDirty(true);
-    // Scroll to bottom after render
     setTimeout(() => {
       const el = document.getElementById("backend-table-end");
       el?.scrollIntoView({ behavior: "smooth" });
@@ -127,116 +55,36 @@ export default function BackendPage() {
   }
 
   function removeRow(index: number) {
-    const plot = editablePlots[index];
-    if (!window.confirm(`Remove "${plot.name}"? This cannot be undone.`)) return;
-    setEditablePlots((prev) => prev.filter((_, i) => i !== index));
+    const row = rows[index];
+    const name = row.plotName || `Row ${index + 1}`;
+    if (!window.confirm(`Remove "${name}"? This cannot be undone.`)) return;
+    setRows((prev) => prev.filter((_, i) => i !== index));
     setIsDirty(true);
   }
 
   // ── Apply changes ──
 
   function applyChanges() {
-    // Save to localStorage
-    savePlots(editablePlots);
-
-    // Mutate the module-level plots array in-place
-    plots.length = 0;
-    plots.push(...editablePlots);
-
-    // Recompute landCategories plotCounts
-    for (const cat of landCategories) {
-      cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
-    }
-
+    saveSpreadsheetRows(rows);
     setIsDirty(false);
-    showToast("Changes saved. Other pages will reflect the updates.", "success");
+    showToast("Changes saved to browser storage.", "success");
   }
 
   // ── Reset to default ──
 
   function resetToDefault() {
-    if (!window.confirm("Reset all plots to the original default data? This will discard all your edits.")) return;
-
-    clearPlots();
-
-    const original: Plot[] = JSON.parse(JSON.stringify(ORIGINAL_PLOTS));
-    setEditablePlots(original);
-
-    plots.length = 0;
-    plots.push(...original);
-
-    for (const cat of landCategories) {
-      cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
-    }
-
+    if (!window.confirm("Reset all data to the original spreadsheet? This will discard all your edits.")) return;
+    clearSpreadsheetRows();
+    const original: SpreadsheetRow[] = JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS));
+    setRows(original);
     setIsDirty(false);
     showToast("Data reset to defaults.", "success");
   }
 
   // ── Cell renderer ──
 
-  function renderCell(plot: Plot, index: number, col: Col) {
-    const val = plot[col.key];
-    const strVal = val === undefined || val === null ? "" : String(val);
-
-    const inputCls =
-      "w-full px-3 py-1.5 rounded-lg border border-mint-light/60 bg-white text-sm text-deep-forest focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none transition-colors";
-
-    if (col.type === "select-area") {
-      return (
-        <select
-          value={strVal}
-          onChange={(e) => updateField(index, col.key, e.target.value)}
-          className={inputCls}
-        >
-          {areas.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-      );
-    }
-
-    if (col.type === "select-category") {
-      return (
-        <select
-          value={strVal}
-          onChange={(e) => updateField(index, col.key, e.target.value)}
-          className={inputCls}
-        >
-          {CATEGORY_OPTIONS.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      );
-    }
-
-    if (col.type === "number") {
-      return (
-        <input
-          type="number"
-          step={col.step ?? 1}
-          value={strVal}
-          onChange={(e) => updateField(index, col.key, e.target.value)}
-          className={inputCls + " text-right"}
-          placeholder={col.optional ? "—" : "0"}
-        />
-      );
-    }
-
-    return (
-      <input
-        type="text"
-        value={strVal}
-        onChange={(e) => updateField(index, col.key, e.target.value)}
-        className={inputCls}
-        placeholder={col.optional ? "—" : ""}
-      />
-    );
-  }
+  const inputCls =
+    "w-full px-2 py-1.5 rounded-lg border border-mint-light/60 bg-white text-sm text-deep-forest focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none transition-colors";
 
   return (
     <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto">
@@ -247,12 +95,12 @@ export default function BackendPage() {
             Backend Admin
           </h1>
           <p className="text-sm text-muted mt-0.5">
-            Manage land plot data. Edits are saved to browser storage and reflected across the app.
+            Full spreadsheet data. Edits are saved to browser storage.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted">
           <span className="bg-mint-bg border border-mint-light/60 px-2.5 py-1 rounded-full font-medium">
-            {editablePlots.length} plots
+            {rows.length} rows &middot; {SPREADSHEET_COLUMNS.length} columns
           </span>
           {isDirty && (
             <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-semibold">
@@ -271,10 +119,7 @@ export default function BackendPage() {
                 <th className="px-2 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[44px] sticky left-0 bg-mint-bg z-20">
                   #
                 </th>
-                <th className="px-3 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[130px]">
-                  ID
-                </th>
-                {COLUMNS.map((col) => (
+                {SPREADSHEET_COLUMNS.map((col) => (
                   <th
                     key={col.key}
                     className={`px-2 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold ${col.width}`}
@@ -286,25 +131,25 @@ export default function BackendPage() {
               </tr>
             </thead>
             <tbody>
-              {editablePlots.map((plot, i) => (
+              {rows.map((row, i) => (
                 <tr
-                  key={plot.id + "-" + i}
+                  key={i}
                   className="border-b border-mint-light/30 hover:bg-mint-bg/20 transition-colors"
                 >
                   {/* Row number */}
                   <td className="px-2 py-1.5 text-xs text-muted font-mono sticky left-0 bg-white/90 backdrop-blur-sm z-10">
                     {i + 1}
                   </td>
-                  {/* ID (read-only) */}
-                  <td className="px-3 py-1.5">
-                    <span className="text-xs text-muted font-mono whitespace-nowrap" title={plot.id}>
-                      {plot.id}
-                    </span>
-                  </td>
                   {/* Editable columns */}
-                  {COLUMNS.map((col) => (
+                  {SPREADSHEET_COLUMNS.map((col) => (
                     <td key={col.key} className="px-2 py-1.5">
-                      {renderCell(plot, i, col)}
+                      <input
+                        type="text"
+                        value={row[col.key] ?? ""}
+                        onChange={(e) => updateField(i, col.key, e.target.value)}
+                        className={inputCls}
+                        title={row[col.key] ?? ""}
+                      />
                     </td>
                   ))}
                   {/* Delete button */}
