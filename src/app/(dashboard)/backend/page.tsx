@@ -54,25 +54,25 @@ interface Col {
 }
 
 const COLUMNS: Col[] = [
-  { key: "name", label: "Name", type: "text", width: "min-w-[150px]" },
-  { key: "area", label: "Area", type: "select-area", width: "min-w-[170px]" },
-  { key: "category", label: "Category", type: "select-category", width: "min-w-[120px]" },
-  { key: "plotArea", label: "Plot Area (sqft)", type: "number", width: "min-w-[120px]" },
-  { key: "askingPrice", label: "Asking Price (AED)", type: "number", width: "min-w-[140px]" },
-  { key: "pricePerSqFt", label: "Price/sqft", type: "number", width: "min-w-[100px]" },
-  { key: "landUse", label: "Land Use", type: "text", width: "min-w-[160px]" },
-  { key: "location", label: "Location", type: "text", width: "min-w-[200px]" },
-  { key: "plotType", label: "Plot Type", type: "text", width: "min-w-[90px]" },
-  { key: "airportEta", label: "Airport ETA", type: "text", width: "min-w-[90px]" },
-  { key: "casinoEta", label: "Casino ETA", type: "text", width: "min-w-[90px]" },
-  { key: "maxHeight", label: "Max Height", type: "text", width: "min-w-[90px]", optional: true },
-  { key: "far", label: "FAR", type: "number", width: "min-w-[70px]", step: 0.01, optional: true },
-  { key: "gfa", label: "GFA", type: "number", width: "min-w-[100px]", optional: true },
-  { key: "zoning", label: "Zoning", type: "text", width: "min-w-[150px]", optional: true },
-  { key: "infrastructure", label: "Infrastructure", type: "text", width: "min-w-[150px]", optional: true },
-  { key: "paymentPlan", label: "Payment Plan", type: "text", width: "min-w-[220px]", optional: true },
-  { key: "lat", label: "Lat", type: "number", width: "min-w-[100px]", step: 0.000001, optional: true },
-  { key: "lng", label: "Lng", type: "number", width: "min-w-[100px]", step: 0.000001, optional: true },
+  { key: "name", label: "Name", type: "text", width: "min-w-[200px]" },
+  { key: "area", label: "Area", type: "select-area", width: "min-w-[240px]" },
+  { key: "category", label: "Category", type: "select-category", width: "min-w-[140px]" },
+  { key: "plotArea", label: "Plot Area (sqft)", type: "number", width: "min-w-[140px]" },
+  { key: "askingPrice", label: "Asking Price (AED)", type: "number", width: "min-w-[160px]" },
+  { key: "pricePerSqFt", label: "Price/sqft", type: "number", width: "min-w-[120px]" },
+  { key: "landUse", label: "Land Use", type: "text", width: "min-w-[260px]" },
+  { key: "location", label: "Location", type: "text", width: "min-w-[320px]" },
+  { key: "plotType", label: "Plot Type", type: "text", width: "min-w-[110px]" },
+  { key: "airportEta", label: "Airport ETA", type: "text", width: "min-w-[110px]" },
+  { key: "casinoEta", label: "Casino ETA", type: "text", width: "min-w-[110px]" },
+  { key: "maxHeight", label: "Max Height", type: "text", width: "min-w-[120px]", optional: true },
+  { key: "far", label: "FAR", type: "number", width: "min-w-[80px]", step: 0.01, optional: true },
+  { key: "gfa", label: "GFA", type: "number", width: "min-w-[120px]", optional: true },
+  { key: "zoning", label: "Zoning", type: "text", width: "min-w-[260px]", optional: true },
+  { key: "infrastructure", label: "Infrastructure", type: "text", width: "min-w-[200px]", optional: true },
+  { key: "paymentPlan", label: "Payment Plan", type: "text", width: "min-w-[380px]", optional: true },
+  { key: "lat", label: "Lat", type: "number", width: "min-w-[120px]", step: 0.000001, optional: true },
+  { key: "lng", label: "Lng", type: "number", width: "min-w-[120px]", step: 0.000001, optional: true },
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -181,7 +181,7 @@ export default function BackendPage() {
     const strVal = val === undefined || val === null ? "" : String(val);
 
     const inputCls =
-      "w-full px-2 py-1 rounded-lg border border-mint-light/60 bg-white text-sm text-deep-forest focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none transition-colors";
+      "w-full px-3 py-1.5 rounded-lg border border-mint-light/60 bg-white text-sm text-deep-forest focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none transition-colors";
 
     if (col.type === "select-area") {
       return (
@@ -272,7 +272,7 @@ export default function BackendPage() {
                 <th className="px-2 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[44px] sticky left-0 bg-mint-bg z-20">
                   #
                 </th>
-                <th className="px-2 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[120px]">
+                <th className="px-3 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[180px]">
                   ID
                 </th>
                 {COLUMNS.map((col) => (
@@ -297,14 +297,14 @@ export default function BackendPage() {
                     {i + 1}
                   </td>
                   {/* ID (read-only) */}
-                  <td className="px-2 py-1.5">
-                    <span className="text-xs text-muted font-mono truncate block max-w-[120px]" title={plot.id}>
+                  <td className="px-3 py-1.5">
+                    <span className="text-xs text-muted font-mono whitespace-nowrap" title={plot.id}>
                       {plot.id}
                     </span>
                   </td>
                   {/* Editable columns */}
                   {COLUMNS.map((col) => (
-                    <td key={col.key} className="px-1.5 py-1">
+                    <td key={col.key} className="px-2 py-1.5">
                       {renderCell(plot, i, col)}
                     </td>
                   ))}
