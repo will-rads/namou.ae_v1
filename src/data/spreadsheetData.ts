@@ -1,6 +1,8 @@
 // Full spreadsheet data from Google Sheets
 // Source: https://docs.google.com/spreadsheets/d/1LINJWklrDjCwBT48dt09SGZwpATeaaEXSaRS0TwSYTI
 
+import { type Plot, type LandCategory } from "./mock";
+
 export interface SpreadsheetColumn {
   key: string;
   label: string;
@@ -38,6 +40,12 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { key: "adminFee", label: "Admin Fee", width: "min-w-[130px]" },
   { key: "adminFeePct", label: "Admin Fee %", width: "min-w-[100px]" },
   { key: "annualServiceCharge", label: "Annual Service/Community Charge", width: "min-w-[180px]" },
+  // ── Site-essential fields (used by the frontend Plot model) ──
+  { key: "category", label: "Category", width: "min-w-[140px]" },
+  { key: "airportEta", label: "Airport ETA", width: "min-w-[120px]" },
+  { key: "casinoEta", label: "Casino ETA", width: "min-w-[120px]" },
+  { key: "lat", label: "Latitude", width: "min-w-[120px]" },
+  { key: "lng", label: "Longitude", width: "min-w-[120px]" },
 ];
 
 export type SpreadsheetRow = Record<string, string>;
@@ -387,6 +395,97 @@ export const ORIGINAL_SPREADSHEET_ROWS: SpreadsheetRow[] = RAW.map(row => {
   KEYS.forEach((key, i) => { obj[key] = row[i] ?? ""; });
   return obj;
 });
+
+// ── Derive defaults for the new site-essential columns ──────────────────────
+
+const AREA_ETAS: Record<string, { airport: string; casino: string }> = {
+  "Al Marjan Beach District": { airport: "~20 min", casino: "~5 min" },
+  "Al Maireed": { airport: "~10 min", casino: "~20 min" },
+  "Al Nakheel": { airport: "~15 min", casino: "~15 min" },
+  "RAK Central": { airport: "~15 min", casino: "~15 min" },
+};
+
+function deriveCategoryFromLandUse(landUse: string): LandCategory {
+  const lu = landUse.toLowerCase();
+  if (lu.includes("industrial")) return "industrial";
+  if (lu.includes("mixed") || lu.includes("c+r") || lu.includes("c + r")) return "mixed-use";
+  if (lu.includes("hospitality")) return "commercial";
+  if (lu.includes("commercial") && lu.includes("residential")) return "mixed-use";
+  if (lu.includes("residential") && lu.includes("commercial")) return "mixed-use";
+  if (lu.includes("commercial") || lu.includes("retail") || lu.includes("hotel")) return "commercial";
+  if (lu.includes("residential")) return "residential";
+  return "mixed-use";
+}
+
+for (const row of ORIGINAL_SPREADSHEET_ROWS) {
+  if (!row.category) row.category = deriveCategoryFromLandUse(row.landUse || "");
+  const etas = AREA_ETAS[row.area];
+  if (etas) {
+    if (!row.airportEta) row.airportEta = etas.airport;
+    if (!row.casinoEta) row.casinoEta = etas.casino;
+  }
+}
+
+// ── Convert spreadsheet rows → Plot[] for the rest of the site ──────────────
+
+function parseNum(s: string): number {
+  if (!s) return 0;
+  return parseFloat(s.replace(/[^0-9.-]/g, "")) || 0;
+}
+
+const VALID_CATEGORIES = new Set<string>(["residential", "commercial", "industrial", "mixed-use"]);
+
+export function spreadsheetRowsToPlots(rows: SpreadsheetRow[]): Plot[] {
+  const seenIds = new Set<string>();
+  return rows
+    .filter((row) => row.plotName?.trim())
+    .map((row, index) => {
+      // Stable ID from plot name
+      let id = row.plotName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+        .slice(0, 60);
+      if (!id) id = `plot-${index}`;
+      if (seenIds.has(id)) id = `${id}-${index}`;
+      seenIds.add(id);
+
+      // Category: explicit column first, fallback to derivation from landUse
+      const catRaw = (row.category || "").toLowerCase().trim();
+      const category: LandCategory = VALID_CATEGORIES.has(catRaw)
+        ? (catRaw as LandCategory)
+        : deriveCategoryFromLandUse(row.landUse || "");
+
+      const farVal = row.far ? parseNum(row.far) : undefined;
+      const gfaVal = row.gfa ? parseNum(row.gfa) : undefined;
+      const latVal = row.lat ? parseNum(row.lat) : undefined;
+      const lngVal = row.lng ? parseNum(row.lng) : undefined;
+
+      return {
+        id,
+        name: row.plotName.trim(),
+        area: row.area || "Unknown",
+        category,
+        plotArea: parseNum(row.plotArea),
+        askingPrice: parseNum(row.askingPrice),
+        pricePerSqFt: parseNum(row.pricePerSqFt),
+        landUse: row.landUse || "",
+        location: row.area ? `${row.area}, Ras Al Khaimah` : "Ras Al Khaimah",
+        plotType: row.plotType || "",
+        airportEta: row.airportEta || "",
+        casinoEta: row.casinoEta || "",
+        ...(row.maxHeight ? { maxHeight: row.maxHeight } : {}),
+        ...(farVal != null ? { far: farVal } : {}),
+        ...(gfaVal != null ? { gfa: gfaVal } : {}),
+        ...(row.zoning ? { zoning: row.zoning } : {}),
+        ...(row.infrastructure ? { infrastructure: row.infrastructure } : {}),
+        ...(row.paymentPlan ? { paymentPlan: row.paymentPlan } : {}),
+        ...(latVal != null ? { lat: latVal } : {}),
+        ...(lngVal != null ? { lng: lngVal } : {}),
+        ...(row.locationPin ? { googleMapsUrl: row.locationPin } : {}),
+      } satisfies Plot;
+    });
+}
 
 // ── localStorage persistence ────────────────────────────────────────────────
 

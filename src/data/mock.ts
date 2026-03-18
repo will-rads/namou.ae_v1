@@ -82,6 +82,9 @@ export const areas = [
   "Sajna",
 ];
 
+/* ── Frozen copy of original areas (before any localStorage overrides) ── */
+const ORIGINAL_AREAS: readonly string[] = Object.freeze([...areas]);
+
 /* ── Plots ── */
 export const plots: Plot[] = [
   // ── Al Marjan Beach District ──────────────────────────────────────────────
@@ -631,18 +634,55 @@ export const exampleDealDefaults: ROIInputs = {
 
 export const exampleDealGFA = 2_000_000; // sq ft — RAK Central tower
 
+// ── Apply a Plot[] override to the in-memory data (plots, areas, category counts) ──
+function applyPlotsOverride(parsed: Plot[]): void {
+  plots.length = 0;
+  plots.push(...parsed);
+  // Rebuild areas from actual plot data
+  const plotAreas = [...new Set(parsed.map((p) => p.area).filter(Boolean))];
+  areas.length = 0;
+  areas.push(...plotAreas);
+  // Update category counts
+  for (const cat of landCategories) {
+    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
+  }
+}
+
+function restoreDefaults(): void {
+  plots.length = 0;
+  plots.push(...JSON.parse(JSON.stringify(ORIGINAL_PLOTS)));
+  areas.length = 0;
+  areas.push(...ORIGINAL_AREAS);
+  for (const cat of landCategories) {
+    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
+  }
+}
+
+/** Re-read localStorage and update the in-memory plots/areas/categories.
+ *  Call after saving or clearing the plots override from /backend. */
+export function reloadPlotsFromStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const stored = localStorage.getItem("namou_plots_override");
+    if (stored) {
+      const parsed: Plot[] = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        applyPlotsOverride(parsed);
+        return;
+      }
+    }
+  } catch { /* ignore */ }
+  restoreDefaults();
+}
+
 // ── Client-side: apply localStorage overrides if present ──────────────────────
 if (typeof window !== "undefined") {
   try {
     const stored = localStorage.getItem("namou_plots_override");
     if (stored) {
       const parsed: Plot[] = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        plots.length = 0;
-        plots.push(...parsed);
-        for (const cat of landCategories) {
-          cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
-        }
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        applyPlotsOverride(parsed);
       }
     }
   } catch { /* SSR or parse error — use defaults */ }

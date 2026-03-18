@@ -9,8 +9,11 @@ import {
   saveSpreadsheetRows,
   loadSpreadsheetRows,
   clearSpreadsheetRows,
+  spreadsheetRowsToPlots,
   type SpreadsheetRow,
 } from "@/data/spreadsheetData";
+import { savePlots, clearPlots } from "@/data/plotsStore";
+import { reloadPlotsFromStorage } from "@/data/mock";
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -66,8 +69,10 @@ export default function BackendPage() {
 
   function applyChanges() {
     saveSpreadsheetRows(rows);
+    savePlots(spreadsheetRowsToPlots(rows));
+    reloadPlotsFromStorage();
     setIsDirty(false);
-    showToast("Changes saved to browser storage.", "success");
+    showToast("Changes saved and published to website.", "success");
   }
 
   // ── Reset to default ──
@@ -75,6 +80,8 @@ export default function BackendPage() {
   function resetToDefault() {
     if (!window.confirm("Reset all data to the original spreadsheet? This will discard all your edits.")) return;
     clearSpreadsheetRows();
+    clearPlots();
+    reloadPlotsFromStorage();
     const original: SpreadsheetRow[] = JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS));
     setRows(original);
     setIsDirty(false);
