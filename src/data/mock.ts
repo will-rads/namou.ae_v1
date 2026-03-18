@@ -458,6 +458,9 @@ export const plots: Plot[] = [
   },
 ];
 
+/* ── Frozen copy of the original hardcoded plots (before any localStorage overrides) ── */
+export const ORIGINAL_PLOTS: readonly Plot[] = JSON.parse(JSON.stringify(plots));
+
 /* ── Filter categories for Master Plan ── */
 export const masterPlanFilters = [
   "Master Plan",
@@ -609,3 +612,20 @@ export const exampleDealDefaults: ROIInputs = {
 };
 
 export const exampleDealGFA = 2_000_000; // sq ft — RAK Central tower
+
+// ── Client-side: apply localStorage overrides if present ──────────────────────
+if (typeof window !== "undefined") {
+  try {
+    const stored = localStorage.getItem("namou_plots_override");
+    if (stored) {
+      const parsed: Plot[] = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        plots.length = 0;
+        plots.push(...parsed);
+        for (const cat of landCategories) {
+          cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
+        }
+      }
+    }
+  } catch { /* SSR or parse error — use defaults */ }
+}
