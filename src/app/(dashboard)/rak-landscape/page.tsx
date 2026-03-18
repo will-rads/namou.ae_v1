@@ -81,7 +81,7 @@ export default function RakLandscapePage() {
 
         {/* Gallery overlay */}
         {selectedLandmark && (
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
             {selectedLandmark.images.map((img, i) => (
               <div
                 key={i}

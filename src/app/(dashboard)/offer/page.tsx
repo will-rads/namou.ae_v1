@@ -298,7 +298,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
 
             {/* Property / context summary */}
             <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-2">
-              <div className={`grid gap-2 ${isBroker ? "grid-cols-4" : "grid-cols-2"}`}>
+              <div className={`grid gap-2 ${isBroker ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
                 <div><p className="text-[11px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
                 {isBroker && <div><p className="text-[11px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>}
                 {isBroker && <div><p className="text-[11px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>}
@@ -307,7 +307,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             </div>
 
             {/* Investor fields — always shown */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Full Name" required error={errors.fullName}>
                 <input type="text" value={piForm.fullName} onChange={(e) => setPi("fullName", e.target.value)} maxLength={100} className={inputCls(errors.fullName)} placeholder="John Doe" />
               </Field>
@@ -332,7 +332,7 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
             <div className={!isBroker ? "opacity-40 pointer-events-none" : ""}>
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">Broker Details (Agent to Agent)</p>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <Field label="Company Name" required={isBroker} error={isBroker ? errors.companyName : false}>
                     <input type="text" value={a2aForm.companyName} onChange={(e) => setA2a("companyName", e.target.value)} disabled={!isBroker} maxLength={100} className={inputCls(isBroker ? errors.companyName : false)} placeholder="ABC Real Estate" />
                   </Field>

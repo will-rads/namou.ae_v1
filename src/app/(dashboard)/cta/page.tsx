@@ -381,7 +381,7 @@ export default function CTAPage() {
                     </p>
                     <p className="text-sm sm:text-base text-muted mt-1">Pick a time</p>
                   </div>
-                  <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3 sm:py-5 grid grid-cols-3 md:grid-cols-1 gap-2 md:gap-0 md:space-y-2.5 md:block">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3 sm:py-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-2 md:gap-0 md:space-y-2.5 md:block">
                     {TIME_SLOTS.map(time => (
                       <button
                         key={time}
@@ -452,7 +452,7 @@ export default function CTAPage() {
               <form onSubmit={submitBrochure} className="px-6 py-6 flex flex-col gap-4">
                 <p className="text-xs text-muted leading-relaxed">Enter your details below and we&apos;ll send you detailed property brochures and personalised ROI calculations.</p>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-deep-forest">First Name<span className="text-red-400 ml-0.5">*</span></span>
                     <input type="text" value={brochureForm.firstName} onChange={(e) => setBF("firstName", e.target.value)} maxLength={80} placeholder="John" className={`w-full px-4 py-2.5 rounded-xl border text-sm text-deep-forest placeholder:text-muted/50 outline-none transition-colors ${brochureErrors.firstName ? "border-red-400 bg-red-50/30" : "border-mint-light/60 bg-white focus:border-forest/40 focus:ring-1 focus:ring-forest/10"}`} />

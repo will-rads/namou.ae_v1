@@ -54,24 +54,24 @@ interface Col {
 }
 
 const COLUMNS: Col[] = [
-  { key: "name", label: "Name", type: "text", width: "min-w-[200px]" },
-  { key: "area", label: "Area", type: "select-area", width: "min-w-[240px]" },
-  { key: "category", label: "Category", type: "select-category", width: "min-w-[140px]" },
-  { key: "plotArea", label: "Plot Area (sqft)", type: "number", width: "min-w-[140px]" },
-  { key: "askingPrice", label: "Asking Price (AED)", type: "number", width: "min-w-[160px]" },
-  { key: "pricePerSqFt", label: "Price/sqft", type: "number", width: "min-w-[120px]" },
-  { key: "landUse", label: "Land Use", type: "text", width: "min-w-[260px]" },
-  { key: "location", label: "Location", type: "text", width: "min-w-[320px]" },
-  { key: "plotType", label: "Plot Type", type: "text", width: "min-w-[110px]" },
-  { key: "airportEta", label: "Airport ETA", type: "text", width: "min-w-[110px]" },
-  { key: "casinoEta", label: "Casino ETA", type: "text", width: "min-w-[110px]" },
-  { key: "maxHeight", label: "Max Height", type: "text", width: "min-w-[120px]", optional: true },
-  { key: "far", label: "FAR", type: "number", width: "min-w-[80px]", step: 0.01, optional: true },
-  { key: "gfa", label: "GFA", type: "number", width: "min-w-[120px]", optional: true },
-  { key: "zoning", label: "Zoning", type: "text", width: "min-w-[260px]", optional: true },
-  { key: "infrastructure", label: "Infrastructure", type: "text", width: "min-w-[200px]", optional: true },
-  { key: "paymentPlan", label: "Payment Plan", type: "text", width: "min-w-[380px]", optional: true },
-  { key: "googleMapsUrl", label: "Google Maps Location", type: "text", width: "min-w-[340px]", optional: true },
+  { key: "name", label: "Name", type: "text", width: "min-w-[140px]" },
+  { key: "area", label: "Area", type: "select-area", width: "min-w-[170px]" },
+  { key: "category", label: "Category", type: "select-category", width: "min-w-[120px]" },
+  { key: "plotArea", label: "Plot Area (sqft)", type: "number", width: "min-w-[120px]" },
+  { key: "askingPrice", label: "Asking Price (AED)", type: "number", width: "min-w-[130px]" },
+  { key: "pricePerSqFt", label: "Price/sqft", type: "number", width: "min-w-[100px]" },
+  { key: "landUse", label: "Land Use", type: "text", width: "min-w-[180px]" },
+  { key: "location", label: "Location", type: "text", width: "min-w-[220px]" },
+  { key: "plotType", label: "Plot Type", type: "text", width: "min-w-[90px]" },
+  { key: "airportEta", label: "Airport ETA", type: "text", width: "min-w-[90px]" },
+  { key: "casinoEta", label: "Casino ETA", type: "text", width: "min-w-[90px]" },
+  { key: "maxHeight", label: "Max Height", type: "text", width: "min-w-[100px]", optional: true },
+  { key: "far", label: "FAR", type: "number", width: "min-w-[70px]", step: 0.01, optional: true },
+  { key: "gfa", label: "GFA", type: "number", width: "min-w-[100px]", optional: true },
+  { key: "zoning", label: "Zoning", type: "text", width: "min-w-[180px]", optional: true },
+  { key: "infrastructure", label: "Infrastructure", type: "text", width: "min-w-[150px]", optional: true },
+  { key: "paymentPlan", label: "Payment Plan", type: "text", width: "min-w-[260px]", optional: true },
+  { key: "googleMapsUrl", label: "Google Maps Location", type: "text", width: "min-w-[240px]", optional: true },
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -271,7 +271,7 @@ export default function BackendPage() {
                 <th className="px-2 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[44px] sticky left-0 bg-mint-bg z-20">
                   #
                 </th>
-                <th className="px-3 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[180px]">
+                <th className="px-3 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[130px]">
                   ID
                 </th>
                 {COLUMNS.map((col) => (

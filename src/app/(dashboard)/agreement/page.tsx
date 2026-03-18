@@ -118,7 +118,7 @@ function PropertyIntroductionForm() {
       <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
         <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Property Being Introduced</p>
         {plot ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div><p className="text-[11px] text-muted">Property</p><p className="text-xs font-semibold text-deep-forest">{plot.name}</p></div>
             <div><p className="text-[11px] text-muted">Size</p><p className="text-xs font-semibold text-deep-forest">{plot.plotArea.toLocaleString()} sqft</p></div>
             <div><p className="text-[11px] text-muted">Commission</p><p className="text-xs font-semibold text-deep-forest">2%</p></div>
@@ -129,7 +129,7 @@ function PropertyIntroductionForm() {
       </div>
 
       {/* Fields */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Full Name" required error={errors.fullName}>
           <input type="text" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} maxLength={100} className={inputCls(errors.fullName)} placeholder="John Doe" />
         </Field>
@@ -232,7 +232,7 @@ function A2AForm() {
       {/* Party A (read-only) */}
       <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-3">
         <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Party A (Namou Properties LLC)</p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div><p className="text-[11px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>
           <div><p className="text-[11px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>
           <div><p className="text-[11px] text-muted">Contact</p><p className="text-xs font-semibold text-deep-forest">info@namou.ae</p></div>
@@ -245,7 +245,7 @@ function A2AForm() {
         {sharedPlots.length > 0 ? (
           <div className="space-y-2">
             {sharedPlots.map((plot) => (
-              <div key={plot.id} className="grid grid-cols-3 gap-3">
+              <div key={plot.id} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div><p className="text-[11px] text-muted">Property</p><p className="text-xs font-semibold text-deep-forest">{plot.name}</p></div>
                 <div><p className="text-[11px] text-muted">Size</p><p className="text-xs font-semibold text-deep-forest">{plot.plotArea.toLocaleString()} sqft</p></div>
                 <div><p className="text-[11px] text-muted">Price</p><p className="text-xs font-semibold text-deep-forest">AED {plot.askingPrice.toLocaleString()}</p></div>
@@ -260,7 +260,7 @@ function A2AForm() {
       {/* Party B Fields */}
       <div>
         <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Party B (Referring Agent)</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Company Name" required error={errors.companyName}>
             <input type="text" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} maxLength={100} className={inputCls(errors.companyName)} placeholder="ABC Real Estate" />
           </Field>
@@ -289,7 +289,7 @@ function A2AForm() {
       {/* Referred Investor */}
       <div>
         <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">Referred Investor</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="col-span-2">
             <Field label="Investor Full Name" required error={errors.investorName}>
               <input type="text" value={form.investorName} onChange={(e) => set("investorName", e.target.value)} maxLength={100} className={inputCls(errors.investorName)} placeholder="John Doe" />

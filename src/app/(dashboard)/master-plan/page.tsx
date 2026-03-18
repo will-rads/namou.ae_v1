@@ -181,14 +181,14 @@ function MasterPlanContent() {
 
           {/* Available Plots panel — top-left overlay; click to select + zoom */}
           {filteredPlots.length > 0 && (
-            <div className="absolute top-3 left-3 z-[800]">
+            <div className="absolute top-3 left-3 z-[800] max-w-[calc(100%-24px)] sm:max-w-none">
               <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-mint-light/40 shadow-sm overflow-hidden">
                 <div className="px-3 pt-2.5 pb-1">
                   <p className="text-[10px] uppercase tracking-wider text-muted font-semibold">
                     {compareMode ? `Select Plots (${comparePlots.length}/2)` : "Available Plots"}
                   </p>
                 </div>
-                <div className="flex flex-col divide-y divide-mint-light/40 max-h-[260px] overflow-y-auto">
+                <div className="flex flex-col divide-y divide-mint-light/40 max-h-[160px] sm:max-h-[260px] overflow-y-auto">
                   {filteredPlots.map(plot => {
                     const isSelected = selectedPlot?.id === plot.id;
                     const isCompared = comparePlots.some(p => p.id === plot.id);
@@ -215,7 +215,7 @@ function MasterPlanContent() {
             </div>
           )}
 
-          {/* Area summary stats — top-right overlay, always visible, context-aware */}
+          {/* Area summary stats — bottom-right on mobile, top-right on sm+, always visible, context-aware */}
           {(() => {
             const summaryPlots = compareMode && comparePlots.length > 0
               ? comparePlots
@@ -223,7 +223,7 @@ function MasterPlanContent() {
                 ? [selectedPlot]
                 : filteredPlots;
             return (
-              <div className="absolute top-3 right-3 z-[800] bg-white/90 backdrop-blur-sm rounded-xl p-4 text-xs text-deep-forest shadow-sm min-w-[220px]">
+              <div className="absolute bottom-3 right-3 sm:bottom-auto sm:top-3 z-[800] bg-white/90 backdrop-blur-sm rounded-xl p-3 sm:p-4 text-xs text-deep-forest shadow-sm min-w-[180px] sm:min-w-[220px]">
                 <p className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2">Area Summary</p>
                 <div className="space-y-2">
                   <div className="flex justify-between gap-4">
@@ -475,7 +475,7 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
             isOpen={openSection === "gallery"}
             onToggle={() => toggle("gallery")}
           >
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[1, 2, 3, 4].map(i => (
                 <div
                   key={i}

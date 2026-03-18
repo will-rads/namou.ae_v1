@@ -178,7 +178,7 @@ export default function ROIPage() {
     setShowPlotPicker(v => {
       if (!v && compareBtnRef.current) {
         const rect = compareBtnRef.current.getBoundingClientRect();
-        setPickerPos({ left: rect.left, bottom: window.innerHeight - rect.top + 8 });
+        setPickerPos({ left: Math.min(rect.left, window.innerWidth - 280), bottom: window.innerHeight - rect.top + 8 });
       }
       return !v;
     });
@@ -272,7 +272,7 @@ export default function ROIPage() {
         </div>
 
         {/* Scenario buttons */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
           {(["conservative", "base", "optimistic"] as Scenario[]).map(s => {
             const meta = SCENARIO_META[s];
             const isActive = activeScenario === s;
@@ -280,7 +280,7 @@ export default function ROIPage() {
               <button
                 key={s}
                 onClick={() => applyScenario(s)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-forest text-white shadow-sm"
                     : "bg-white border border-mint-light text-muted hover:border-forest/30 hover:text-forest"
