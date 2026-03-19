@@ -78,18 +78,20 @@ export default function PlotMap({
     ).addTo(map);
 
     mapRef.current = map;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing state after Leaflet map init (external system)
     setMapReady(true);
 
     const ro = new ResizeObserver(() => {
       if (mapRef.current) mapRef.current.invalidateSize();
     });
     ro.observe(containerRef.current);
+    const markers = markersRef.current;
 
     return () => {
       ro.disconnect();
       map.remove();
       mapRef.current = null;
-      markersRef.current.clear();
+      markers.clear();
     };
   }, []);
 

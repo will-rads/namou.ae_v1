@@ -25,6 +25,7 @@ export default function BackendPage() {
   useEffect(() => {
     const stored = loadSpreadsheetRows();
     if (stored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration (SSR-safe)
       setRows(stored);
     } else {
       setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));

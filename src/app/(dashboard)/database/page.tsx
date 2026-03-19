@@ -135,6 +135,7 @@ export default function DatabasePage() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration (SSR-safe)
           setRows(parsed);
           return;
         }
