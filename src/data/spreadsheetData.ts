@@ -426,6 +426,64 @@ for (const row of ORIGINAL_SPREADSHEET_ROWS) {
   }
 }
 
+// ── Derive map coordinates from Google Maps location URLs ─────────────────────
+
+// Pre-resolved coordinates from shortened Google Maps URLs (maps.app.goo.gl).
+// Each key is the short code at the end of the URL; value is [lat, lng].
+const URL_COORDS: Record<string, [number, number]> = {
+  "vPwinu7hV9rF8MkE9": [25.823206, 55.968924],
+  "sM9dApPNbQnR1RtC6": [25.829107, 55.972191],
+  "RAeiRMiTebWebxHV6": [25.665357, 55.760766],
+  "abZacusdbfBoV9PYA": [25.6653611, 55.7607778],
+  "khYWFNE4mAzD1wej6": [25.6653611, 55.7607778],
+  "riqob5Gi94PtmHkr9": [25.661685, 55.750762],
+  "NKxDnTc9cTqZer8H7": [25.681053, 55.767013],
+  "ufdYaZDxBmtDvYEg8": [25.6870833, 55.7964444],
+  "gTZvGKwurvzrFw1K8": [24.93988, 55.687134],
+  "R2ybkxnradSzyrPUA": [24.93988, 55.687134],
+  "vtJstHfUZupxpVUq9": [24.93988, 55.687134],
+  "6EdvXei2fo3NQx3RA": [24.93988, 55.687134],
+  "u8uKNe6AirHU7MbcA": [24.93988, 55.687134],
+  "VD4UwzJ19xDBZ7kNA": [24.93988, 55.687134],
+  "nQoo6yyejomYH4by6": [24.93988, 55.687134],
+  "u6bM12RoepRbik8s7": [24.93988, 55.687134],
+  "Y78mMJdYmQ177FX76": [24.93988, 55.687134],
+  "v4BndhFxPhr75Y3bA": [25.359556, 55.6687485],
+  "7DA4FVkgtZydCM196": [25.359556, 55.6687485],
+  "6yhPYL6urqD9ffjk6": [25.359556, 55.6687485],
+  "XtJWRFH79YKBAiEW9": [25.359556, 55.6687485],
+  "VEFPGenqGgcjVK4S6": [25.344303, 55.638806],
+  "Voyp1kRJ4ZKJkUn17": [25.344303, 55.638806],
+  "RAb3Vabv2pNu4PBY8": [25.344303, 55.638806],
+  "HqjyFFc3PU1HuH1s9": [25.344303, 55.638806],
+};
+
+/** Try to extract lat/lng from a Google Maps URL.
+ *  Supports full URLs (@lat,lng or !3d/!4d patterns) and
+ *  falls back to the pre-resolved lookup for shortened maps.app.goo.gl links. */
+function coordsFromUrl(url: string): [number, number] | null {
+  if (!url) return null;
+  // Full URL: @lat,lng pattern
+  const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (atMatch) {
+    const lat = parseFloat(atMatch[1]);
+    const lng = parseFloat(atMatch[2]);
+    if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
+  }
+  // Full URL: !3d...!4d... pattern
+  const d3 = url.match(/!3d(-?\d+\.?\d*)/);
+  const d4 = url.match(/!4d(-?\d+\.?\d*)/);
+  if (d3 && d4) {
+    const lat = parseFloat(d3[1]);
+    const lng = parseFloat(d4[1]);
+    if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
+  }
+  // Shortened URL: look up by short code
+  const shortMatch = url.match(/maps\.app\.goo\.gl\/([A-Za-z0-9]+)/);
+  if (shortMatch && URL_COORDS[shortMatch[1]]) return URL_COORDS[shortMatch[1]];
+  return null;
+}
+
 // ── Convert spreadsheet rows → Plot[] for the rest of the site ──────────────
 
 function parseNum(s: string): number {
@@ -458,8 +516,14 @@ export function spreadsheetRowsToPlots(rows: SpreadsheetRow[]): Plot[] {
 
       const farVal = row.far ? parseNum(row.far) : undefined;
       const gfaVal = row.gfa ? parseNum(row.gfa) : undefined;
-      const latVal = row.lat ? parseNum(row.lat) : undefined;
-      const lngVal = row.lng ? parseNum(row.lng) : undefined;
+      let latVal = row.lat ? parseNum(row.lat) : undefined;
+      let lngVal = row.lng ? parseNum(row.lng) : undefined;
+
+      // Derive coordinates from location URL when lat/lng are not provided
+      if (latVal == null && lngVal == null && row.locationPin) {
+        const coords = coordsFromUrl(row.locationPin);
+        if (coords) { latVal = coords[0]; lngVal = coords[1]; }
+      }
 
       return {
         id,
