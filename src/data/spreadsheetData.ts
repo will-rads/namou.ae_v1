@@ -63,8 +63,8 @@ export function newSpreadsheetRow(): SpreadsheetRow {
 const RAW: string[][] = [
   // Row 1: Al Maireed Mixed-Use
   [
-    "L-COM-F-20034-Al Mairid-309010475-309010476", "Al Maireed", "C+R (Mixed-Use)", "", "Mixed-Use Freehold Plot",
-    "", "350 AED", "", "3", "Basement + Ground + 4 Floors",
+    "L-COM-F-20034-Al Mairid-309010475-309010476", "Al Maireed", "C+R (Mixed-Use)", "20,034.20 sq.ft", "Mixed-Use Freehold Plot",
+    "7,200,000 AED", "350 AED", "60,102.60 sq.ft", "3", "Basement + Ground + 4 Floors",
     "Mixed-use (Commercial + Residential)", "Fully serviced urban plot", "https://maps.app.goo.gl/vPwinu7hV9rF8MkE9",
     "", "",
     "100% Payable immediately", "7,200,000.00", "100%", "0.00", "0%",
@@ -73,8 +73,8 @@ const RAW: string[][] = [
   ],
   // Row 2: Al Maireed Residential
   [
-    "L-RES-F-110100-Al Maireed-RP-22_ RP-44", "Al Maireed", "Residential", "", "Master Residential Plot",
-    "", "350 AED", "", "2.75", "Basement + Ground + 1 + Roof",
+    "L-RES-F-110100-Al Maireed-RP-22_ RP-44", "Al Maireed", "Residential", "110,100 sq.ft", "Master Residential Plot",
+    "38,500,000 AED", "350 AED", "302,775 sq.ft", "2.75", "Basement + Ground + 1 + Roof",
     "Residential (Townhouses / Villas)", "Fully serviced plot", "https://maps.app.goo.gl/sM9dApPNbQnR1RtC6",
     "", "",
     "10% Booking/ 10% within 30 days SPA-15 instalment payment every 3 months", "7,700,000", "20%", "0", "0%",
@@ -83,8 +83,8 @@ const RAW: string[][] = [
   ],
   // Row 3: D01-009
   [
-    "L-RES-F-116065.95-Al Marjan Beach District-D01-009", "Al Marjan Beach District", "Residential", "", "Inner Plot",
-    "", "500 AED", "", "4.72", "2B + G + 19",
+    "L-RES-F-116065.95-Al Marjan Beach District-D01-009", "Al Marjan Beach District", "Residential", "116,066 sq.ft", "Inner Plot",
+    "274,177,955 AED", "500 AED", "548,356 sq.ft", "4.72", "2B + G + 19",
     "Residential High-Rise Zoning", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
     "", "",
     "5% Booking/15% within 30 days SPA/ 20%End of each year 1,2,3 & 4 from signing SPA", "13,708,898", "5%", "41,126,693", "15%",
@@ -93,8 +93,8 @@ const RAW: string[][] = [
   ],
   // Row 4: D02-014
   [
-    "L-RES-F-121550.8-Al Marjan Beach District-D02-014", "Al Marjan Beach District", "Residential", "", "Beachfront Residential Plot",
-    "", "500 AED", "", "4.36", "2B + G + 19",
+    "L-RES-F-121550.8-Al Marjan Beach District-D02-014", "Al Marjan Beach District", "Residential", "121,551 sq.ft", "Beachfront Residential Plot",
+    "264,981,275 AED", "500 AED", "529,963 sq.ft", "4.36", "2B + G + 19",
     "Residential High-Rise Zoning", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
     "", "",
     "5% Booking/15% within 30 days SPA/ 20%End of each year 1,2,3 & 4 from signing SPA", "13,249,064", "5%", "39,747,191", "15%",
@@ -103,8 +103,8 @@ const RAW: string[][] = [
   ],
   // Row 5: D02-016
   [
-    "L-RES-F-124861.99-Al Marjan Beach District-D02-016", "Al Marjan Beach District", "Residential", "", "Inner Plot",
-    "", "500 AED", "", "3.59", "2B + G + 11",
+    "L-RES-F-124861.99-Al Marjan Beach District-D02-016", "Al Marjan Beach District", "Residential", "124,862 sq.ft", "Inner Plot",
+    "AED 223,892,065", "500 AED", "447,964 sq.ft", "3.59", "2B + G + 11",
     "Residential High-Rise Zoning", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
     "", "",
     "5% Booking/15% within 30 days SPA/ 20%End of each year 1,2,3 & 4 from signing SPA", "11,194,603", "5%", "33,583,810", "15%",
@@ -113,8 +113,8 @@ const RAW: string[][] = [
   ],
   // Row 6: D02-015
   [
-    "L-RES-F-128225.2-Al Marjan Beach District-D02-015", "Al Marjan Beach District", "Residential", "", "Inner Plot",
-    "224,480,000", "500 AED", "", "3.5", "2B + G + 11",
+    "L-RES-F-128225.2-Al Marjan Beach District-D02-015", "Al Marjan Beach District", "Residential", "128,225 sq.ft", "Inner Plot",
+    "224,480,000", "500 AED", "448,959 sq.ft", "3.5", "2B + G + 11",
     "Residential High-Rise Zoning", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
     "", "",
     "5% Booking/15% within 30 days SPA/ 20%End of each year 1,2,3 & 4 from signing SPA", "11,224,000", "5%", "33,672,000", "15%",
@@ -123,8 +123,8 @@ const RAW: string[][] = [
   ],
   // Row 7: D02-017
   [
-    "L-RES-F-129827.27-Al Marjan Beach District-D02-017", "Al Marjan Beach District", "Residential", "", "Inner Plot",
-    "", "500 AED", "", "3.59", "2B + G + 11",
+    "L-RES-F-129827.27-Al Marjan Beach District-D02-017", "Al Marjan Beach District", "Residential", "129,287 sq.ft", "Inner Plot",
+    "AED 232,793,930", "500 AED", "465,588 sq.ft", "3.59", "2B + G + 11",
     "Residential High-Rise Zoning", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/RAeiRMiTebWebxHV6",
     "", "",
     "5% Booking/15% within 30 days SPA/ 20%End of each year 1,2,3 & 4 from signing SPA", "11,639,697", "5%", "34,919,089", "15%",
@@ -170,8 +170,8 @@ const RAW: string[][] = [
     "Residential / Mixed Use Development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/riqob5Gi94PtmHkr9",
     "", "",
     "100% Payable immediately",
-    "1,592,019,300", "100%", "To be signed and delivered within 30 days", "",
-    "", "", "Upfront payment (100% at booking)",
+    "1,592,019,300", "100%", "To be signed and delivered within 30 days", "N/A",
+    "N/A", "N/A", "Upfront payment (100% at booking)",
     "31,840,386", "2%", "31,840,386", "2%", "23,880,290", "1.50%", "3,980,048",
   ],
   // Row 12: D08-001 Hospitality Beachfront
@@ -188,7 +188,7 @@ const RAW: string[][] = [
   // Row 13: RAK Central Commercial
   [
     "L-COM-F-134548.75-Ras al Khaimah-C-03 and C-04", "RAK Central", "Commercial", "134,548.75", "Commercial (Offices / Retail)",
-    "541,343,600", "700 AED", "", "", "Plot C-03: 386,424 sq.ft / Plot C-04: 386,924 sq.ft",
+    "541,343,600", "700 AED", "Plot C-03: 386,424 sq.ft / Plot C-04: 386,924 sq.ft", "Plot C-03: 5.20 / Plot C-04: 5.10", "Plot C-03: 386,424 sq.ft / Plot C-04: 386,924 sq.ft",
     "Commercial / Offices / Retail", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/ufdYaZDxBmtDvYEg8",
     "", "",
     "5% Booking / 15% SPA within 30 days / 80% over 4 years (20% annually)",
@@ -203,8 +203,8 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/gTZvGKwurvzrFw1K8",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 135,000 / Option 2: 270,000 / Option 3: 405,000", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 1,215,000 / Option 2: 1,080,000 / Option 3: 945,000", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 15: Al Qasimiyah 2 - Commercial 19
@@ -214,8 +214,8 @@ const RAW: string[][] = [
     "Commercial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/R2ybkxnradSzyrPUA",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 145,000 / Option 2: 290,000 / Option 3: 435,000", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 1,305,000 / Option 2: 1,160,000 / Option 3: 1,015,000", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 16: Al Qasimiyah 2 - Industrial 742
@@ -225,8 +225,8 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/vtJstHfUZupxpVUq9",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 174,500 / Option 2: 349,000 / Option 3: 523,500", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 1,570,500 / Option 2: 1,396,000 / Option 3: 1,221,500", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 17: Al Qasimiyah 2 - Commercial 1622
@@ -236,8 +236,8 @@ const RAW: string[][] = [
     "Commercial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/6EdvXei2fo3NQx3RA",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 269,000 / Option 2: 538,000 / Option 3: 807,000", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 2,421,000 / Option 2: 2,152,000 / Option 3: 1,883,000", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 18: Al Qasimiyah 2 - Commercial 735
@@ -247,8 +247,8 @@ const RAW: string[][] = [
     "Commercial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/u8uKNe6AirHU7MbcA",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 286,000 / Option 2: 572,000 / Option 3: 858,000", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 2,574,000 / Option 2: 2,288,000 / Option 3: 2,002,000", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 19: Al Qasimiyah 6 - Industrial 142
@@ -258,8 +258,8 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/VD4UwzJ19xDBZ7kNA",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 111,282.80 / Option 2: 222,565.60 / Option 3: 333,848.40", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 1,001,545.20 / Option 2: 890,262.40 / Option 3: 778,979.60", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 20: Al Qasimiyah 6 - Industrial 300
@@ -269,8 +269,8 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/nQoo6yyejomYH4by6",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 114,182.80 / Option 2: 228,365.60 / Option 3: 342,548.40", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 1,027,645.20 / Option 2: 913,462.40 / Option 3: 799,279.60", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 21: Al Qasimiyah 6 - Industrial 229
@@ -280,8 +280,8 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/u6bM12RoepRbik8s7",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 136,382.80 / Option 2: 272,765.60 / Option 3: 409,148.40", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 1,227,445.20 / Option 2: 1,091,062.40 / Option 3: 954,679.60", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 22: Al Qasimiyah 6 - Industrial 30
@@ -291,8 +291,8 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/Y78mMJdYmQ177FX76",
     "", "",
     "Option 1: 10% down \u2013 balance over 1 year (monthly/quarterly). Option 2: 20% down \u2013 balance over 2 years (monthly/quarterly). Option 3: 30% down \u2013 balance over 3 years (monthly/quarterly).",
-    "", "", "Included in down payment (due at booking)", "",
-    "", "", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
+    "Option 1: 319,682.80 / Option 2: 639,365.60 / Option 3: 959,048.40", "Option 1: 10% / Option 2: 20% / Option 3: 30%", "Included in down payment (due at booking)", "Included in booking",
+    "Option 1: 2,877,145.20 / Option 2: 2,557,462.40 / Option 3: 2,237,779.60", "Option 1: 90% / Option 2: 80% / Option 3: 70%", "Option 1: Over 12 months / Option 2: Over 24 months / Option 3: Over 36 months",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 23: Sajaa Namuzajiah - Industrial 20897
@@ -302,7 +302,7 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/v4BndhFxPhr75Y3bA",
     "", "",
     "20% Down Payment / 80% in Installments per year (Monthly or Quarterly options)",
-    "498,000", "20%", "N/A", "",
+    "498,000", "20%", "N/A", "N/A",
     "1,992,000", "80%", "12 months",
     "Monthly Payment: AED 166,000 / Quarterly Payment: AED 498,000", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
@@ -313,7 +313,7 @@ const RAW: string[][] = [
     "Commercial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/7DA4FVkgtZydCM196",
     "", "",
     "20% Down Payment / 80% in Installments per year (Monthly or Quarterly options)",
-    "678,000", "20%", "N/A", "",
+    "678,000", "20%", "N/A", "N/A",
     "2,712,000", "80%", "12 months",
     "Monthly Payment: AED 226,000 / Quarterly Payment: AED 678,000", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
@@ -324,7 +324,7 @@ const RAW: string[][] = [
     "Industrial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/6yhPYL6urqD9ffjk6",
     "", "",
     "20% Down Payment / 80% in Installments per year (Monthly or Quarterly options)",
-    "1,004,000", "20%", "N/A", "",
+    "1,004,000", "20%", "N/A", "N/A",
     "4,016,000", "80%", "12 months",
     "Monthly Payment: AED 334,666.67 / Quarterly Payment: AED 1,004,000", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
@@ -335,7 +335,7 @@ const RAW: string[][] = [
     "Commercial development", "Fully Serviced Infrastructure", "https://maps.app.goo.gl/XtJWRFH79YKBAiEW9",
     "", "",
     "20% Down Payment / 80% in Installments per year (Monthly or Quarterly options)",
-    "4,840,000", "20%", "N/A", "",
+    "4,840,000", "20%", "N/A", "N/A",
     "3,872,000", "80%", "12 months",
     "Monthly Payment: AED 322,666.67 / Quarterly Payment: AED 968,000", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
@@ -347,7 +347,7 @@ const RAW: string[][] = [
     "", "",
     "100% Upfront Payment (No Down Payment Required)",
     "4,840,000", "100%", "included in booking", "0%",
-    "", "0%", "Full upfront payment",
+    "N/A", "0%", "Full upfront payment",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 28: Sajaa Line - Industrial 20727
@@ -358,7 +358,7 @@ const RAW: string[][] = [
     "", "",
     "100% Upfront Payment (No Down Payment Required)",
     "5,135,000", "100%", "included in booking", "0%",
-    "", "0%", "Full upfront payment",
+    "N/A", "0%", "Full upfront payment",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 29: Sajaa Line - Industrial 20789
@@ -369,7 +369,7 @@ const RAW: string[][] = [
     "", "",
     "100% Upfront Payment (No Down Payment Required)",
     "7,975,000", "100%", "included in booking", "0%",
-    "", "0%", "Full upfront payment",
+    "N/A", "0%", "Full upfront payment",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
   // Row 30: Sajaa Line - Industrial 20786
@@ -380,7 +380,7 @@ const RAW: string[][] = [
     "", "",
     "100% Upfront Payment (No Down Payment Required)",
     "8,140,000", "100%", "included in booking", "0%",
-    "", "0%", "Full upfront payment",
+    "N/A", "0%", "Full upfront payment",
     "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
   ],
 ];
