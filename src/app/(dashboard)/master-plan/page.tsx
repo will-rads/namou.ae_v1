@@ -24,9 +24,9 @@ function areaSlug(area: string) {
 
 const typeToLandUse: Record<string, string[]> = {
   residential: ["Residential"],
-  commercial:  ["Commercial"],
+  commercial:  ["Commercial", "Hospitality"],
   "mixed-use": ["Mixed", "Residential / Commercial", "Commercial / Residential"],
-  industrial:  [],
+  industrial:  ["Industrial"],
 };
 
 export default function MasterPlanPage() {
