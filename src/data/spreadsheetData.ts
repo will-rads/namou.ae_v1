@@ -42,10 +42,6 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { key: "annualServiceCharge", label: "Annual Service/Community Charge", width: "min-w-[180px]" },
   // ── Site-essential fields (used by the frontend Plot model) ──
   { key: "category", label: "Category", width: "min-w-[140px]" },
-  { key: "airportEta", label: "Airport ETA", width: "min-w-[120px]" },
-  { key: "casinoEta", label: "Casino ETA", width: "min-w-[120px]" },
-  { key: "lat", label: "Latitude", width: "min-w-[120px]" },
-  { key: "lng", label: "Longitude", width: "min-w-[120px]" },
 ];
 
 export type SpreadsheetRow = Record<string, string>;
@@ -516,11 +512,10 @@ export function spreadsheetRowsToPlots(rows: SpreadsheetRow[]): Plot[] {
 
       const farVal = row.far ? parseNum(row.far) : undefined;
       const gfaVal = row.gfa ? parseNum(row.gfa) : undefined;
-      let latVal = row.lat ? parseNum(row.lat) : undefined;
-      let lngVal = row.lng ? parseNum(row.lng) : undefined;
-
-      // Derive coordinates from location URL when lat/lng are not provided
-      if (latVal == null && lngVal == null && row.locationPin) {
+      // Derive coordinates from Location Pin (single source of truth)
+      let latVal: number | undefined;
+      let lngVal: number | undefined;
+      if (row.locationPin) {
         const coords = coordsFromUrl(row.locationPin);
         if (coords) { latVal = coords[0]; lngVal = coords[1]; }
       }
