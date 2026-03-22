@@ -1,15 +1,12 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
 
-type InvestmentModel = "build-sell" | "build-lease" | "build-hotel";
-
-const MODELS: { id: InvestmentModel; label: string; tag: string; description: string }[] = [
+const MODELS = [
   {
     id: "build-sell",
     label: "Build & Sell",
     tag: "Developer Exit",
+    href: "/JV/build-sell",
     description:
       "Develop the land and sell completed units. The landowner contributes the plot, the investor funds construction, and both share proceeds from unit sales based on the agreed JV split.",
   },
@@ -17,6 +14,7 @@ const MODELS: { id: InvestmentModel; label: string; tag: string; description: st
     id: "build-lease",
     label: "Build & Lease",
     tag: "Tenants",
+    href: "/JV/build-lease",
     description:
       "Build residential or commercial units and lease them to tenants. Revenue is generated through recurring rental income, distributed between the landowner and investor over the hold period.",
   },
@@ -24,14 +22,13 @@ const MODELS: { id: InvestmentModel; label: string; tag: string; description: st
     id: "build-hotel",
     label: "Build & Hotel",
     tag: "Operator Model",
+    href: "/JV/build-hotel",
     description:
       "Develop a hospitality asset and appoint a hotel operator. Returns are driven by room revenue and occupancy rates, shared between the landowner and the investor under the JV terms.",
   },
 ];
 
 export default function JVPage() {
-  const [selected, setSelected] = useState<InvestmentModel | null>(null);
-
   return (
     <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       {/* Header */}
@@ -75,38 +72,25 @@ export default function JVPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 auto-rows-fr">
-            {MODELS.map((m) => {
-              const isActive = selected === m.id;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => setSelected(m.id)}
-                  className={`flex flex-col items-start text-left p-4 rounded-xl border transition-all ${
-                    isActive
-                      ? "bg-forest text-white border-forest shadow-sm"
-                      : "bg-white border-mint-light hover:border-forest/30 hover:shadow-md"
-                  }`}
-                >
-                  <span
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-full mb-2 ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-forest/10 text-forest"
-                    }`}
-                  >
-                    {m.tag}
-                  </span>
-                  <span className="text-base font-bold mb-1">{m.label}</span>
-                  <span
-                    className={`text-xs leading-relaxed ${
-                      isActive ? "text-white/80" : "text-muted"
-                    }`}
-                  >
-                    {m.description}
-                  </span>
-                </button>
-              );
-            })}
+            {MODELS.map((m) => (
+              <Link
+                key={m.id}
+                href={m.href}
+                className="group flex flex-col items-start text-left p-4 rounded-xl border transition-all bg-white border-mint-light hover:bg-forest hover:text-white hover:border-forest hover:shadow-md"
+              >
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full mb-2 bg-forest/10 text-forest group-hover:bg-white/20 group-hover:text-white transition-colors">
+                  {m.tag}
+                </span>
+                <span className="text-base font-bold mb-1">{m.label}</span>
+                <span className="text-xs leading-relaxed text-muted group-hover:text-white/80 transition-colors">
+                  {m.description}
+                </span>
+                <span className="mt-auto pt-3 text-xs font-medium text-forest group-hover:text-white/90 flex items-center gap-1 transition-colors">
+                  Open simulator
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </span>
+              </Link>
+            ))}
           </div>
 
           <p className="text-xs text-muted mt-3">
