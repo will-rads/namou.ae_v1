@@ -151,13 +151,27 @@ export default function BackendPage() {
                   {/* Editable columns */}
                   {SPREADSHEET_COLUMNS.map((col) => (
                     <td key={col.key} className="px-2 py-1.5">
-                      <input
-                        type="text"
-                        value={row[col.key] ?? ""}
-                        onChange={(e) => updateField(i, col.key, e.target.value)}
-                        className={inputCls}
-                        title={row[col.key] ?? ""}
-                      />
+                      {col.key === "jv" ? (
+                        <select
+                          value={row[col.key] ?? ""}
+                          onChange={(e) => updateField(i, col.key, e.target.value)}
+                          className={inputCls}
+                          title={row[col.key] ?? ""}
+                        >
+                          <option value="">—</option>
+                          <option value="JV Only">JV Only</option>
+                          <option value="Sale Only">Sale Only</option>
+                          <option value="Sale + JV">Sale + JV</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={row[col.key] ?? ""}
+                          onChange={(e) => updateField(i, col.key, e.target.value)}
+                          className={inputCls}
+                          title={row[col.key] ?? ""}
+                        />
+                      )}
                     </td>
                   ))}
                   {/* Delete button */}
