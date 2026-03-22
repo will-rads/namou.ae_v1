@@ -1,33 +1,44 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
+import type { Plot } from "@/data/mock";
+import { ORIGINAL_SPREADSHEET_ROWS, loadSpreadsheetRows } from "@/data/spreadsheetData";
 
-// ── Types & Mock Data ────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface PlotInfo {
+  name: string;
+  plotSize: number;
+  landValue: number;
+  location: string;
+  zoning: string;
+  dealType: string;
+}
 
 interface Inputs {
   // Development
   plotSize: number;
   landValue: number;
-  constructionCostTotal: number;  // AED total
-  ffePlusPreOpening: number;      // AED — FF&E + pre-opening
+  constructionCostTotal: number;
+  ffePlusPreOpening: number;
 
   // Hotel operations
   numberOfKeys: number;
-  adr: number;                    // AED — average daily rate
-  occupancy: number;              // %
-  fbRevenueAnnual: number;        // AED — food & beverage annual
+  adr: number;
+  occupancy: number;
+  fbRevenueAnnual: number;
 
   // Operator fees
-  baseFeeRevenuePct: number;      // % of total revenue
-  incentiveFeeProfitPct: number;  // % of gross operating profit
+  baseFeeRevenuePct: number;
+  incentiveFeeProfitPct: number;
 
   // Operating costs
-  operatingCostPct: number;       // % of total revenue (rooms + F&B)
+  operatingCostPct: number;
 
   // JV structure
-  landOwnerSplit: number;         // %
+  landOwnerSplit: number;
 }
 
 const DEFAULTS: Inputs = {
@@ -49,22 +60,52 @@ const DEFAULTS: Inputs = {
   landOwnerSplit: 40,
 };
 
+// ── Session + backend helpers ────────────────────────────────────────────────
+
+function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inputs> } {
+  if (typeof window === "undefined") return { plotInfo: null, inputs: {} };
+  try {
+    const stored = sessionStorage.getItem("selected_plot");
+    if (!stored) return { plotInfo: null, inputs: {} };
+    const plot: Plot = JSON.parse(stored);
+
+    const rows = loadSpreadsheetRows() ?? ORIGINAL_SPREADSHEET_ROWS;
+    const matchRow = rows.find(r => r.plotName?.trim() === plot.name);
+    const dealType = matchRow?.jv || "—";
+
+    const plotInfo: PlotInfo = {
+      name: plot.name,
+      plotSize: plot.plotArea,
+      landValue: plot.askingPrice,
+      location: plot.location || plot.area || "Ras Al Khaimah",
+      zoning: plot.zoning || "—",
+      dealType,
+    };
+
+    const inputs: Partial<Inputs> = {
+      plotSize: plot.plotArea,
+      landValue: plot.askingPrice,
+    };
+
+    return { plotInfo, inputs };
+  } catch {
+    return { plotInfo: null, inputs: {} };
+  }
+}
+
 // ── Calculations ─────────────────────────────────────────────────────────────
 
 function compute(inp: Inputs) {
-  // Development cost
   const totalDevelopmentCost = inp.landValue + inp.constructionCostTotal + inp.ffePlusPreOpening;
 
-  // Revenue
   const roomNightsPerYear = inp.numberOfKeys * 365;
   const occupiedNights = roomNightsPerYear * (inp.occupancy / 100);
   const roomRevenue = occupiedNights * inp.adr;
   const totalRevenue = roomRevenue + inp.fbRevenueAnnual;
 
-  // Operating costs
   const operatingCosts = totalRevenue * (inp.operatingCostPct / 100);
 
-  // Gross Operating Profit (GOP) — before operator fees
+  // GOP — before operator fees
   const gop = totalRevenue - operatingCosts;
 
   // Operator fees — deducted BEFORE profit split
@@ -79,18 +120,14 @@ function compute(inp: Inputs) {
   const landOwnerIncome = netIncomeAfterOperator * (inp.landOwnerSplit / 100);
   const investorIncome = netIncomeAfterOperator * ((100 - inp.landOwnerSplit) / 100);
 
-  // Contributions
   const landOwnerContribution = inp.landValue;
   const investorContribution = inp.constructionCostTotal + inp.ffePlusPreOpening;
 
-  // ROI per stakeholder (annual)
   const landOwnerROI = landOwnerContribution > 0 ? (landOwnerIncome / landOwnerContribution) * 100 : 0;
   const investorROI = investorContribution > 0 ? (investorIncome / investorContribution) * 100 : 0;
 
-  // Yield
   const yieldPct = totalDevelopmentCost > 0 ? (netIncomeAfterOperator / totalDevelopmentCost) * 100 : 0;
 
-  // RevPAR
   const revpar = inp.numberOfKeys > 0 ? roomRevenue / roomNightsPerYear : 0;
 
   return {
@@ -132,7 +169,17 @@ function InputRow({ label, value, unit, onChange }: { label: string; value: numb
         />
         {unit === "%" && <span className="text-xs text-muted">%</span>}
         {unit === "keys" && <span className="text-xs text-muted">keys</span>}
+        {unit === "sqft" && <span className="text-xs text-muted">sqft</span>}
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <span className="text-xs text-muted">{label}</span>
+      <span className="text-sm font-semibold text-deep-forest">{value}</span>
     </div>
   );
 }
@@ -150,8 +197,17 @@ function KPI({ label, value, sub, primary, warn }: { label: string; value: strin
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BuildHotelPage() {
+  const [plotInfo, setPlotInfo] = useState<PlotInfo | null>(null);
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const r = useMemo(() => compute(inputs), [inputs]);
+
+  useEffect(() => {
+    const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
+    if (info) {
+      setPlotInfo(info);
+      setInputs(prev => ({ ...prev, ...plotInputs }));
+    }
+  }, []);
 
   function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
@@ -176,7 +232,27 @@ export default function BuildHotelPage() {
       <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
         {/* Left: Inputs */}
         <ContentCard className="flex-1 flex flex-col md:max-w-md">
-          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">Assumptions</h2>
+          {/* Pre-filled land info */}
+          {plotInfo && (
+            <div className="mb-2 pb-2 border-b border-mint-light/40">
+              <div className="flex items-center gap-2 mb-1.5">
+                <svg className="w-3.5 h-3.5 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                <span className="text-sm font-bold text-forest">{plotInfo.name}</span>
+              </div>
+              <div className="bg-mint-bg/50 rounded-lg px-3 py-1.5 border border-mint-light/30">
+                <InfoRow label="Plot Size" value={`${formatNumber(plotInfo.plotSize)} sqft`} />
+                <InfoRow label="Land Value" value={fmtAED(plotInfo.landValue)} />
+                <InfoRow label="Location" value={plotInfo.location} />
+                <InfoRow label="Zoning" value={plotInfo.zoning} />
+                <InfoRow label="Deal Type" value={plotInfo.dealType} />
+              </div>
+              <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs below are editable.</p>
+            </div>
+          )}
+
+          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">
+            {plotInfo ? "Simulation Inputs" : "Assumptions"}
+          </h2>
 
           <div className="divide-y divide-mint-light/40 flex-1 flex flex-col justify-evenly">
             <div>
@@ -226,7 +302,7 @@ export default function BuildHotelPage() {
             </div>
           </ContentCard>
 
-          {/* Waterfall: Revenue → GOP → After Operator */}
+          {/* Waterfall */}
           <ContentCard>
             <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">P&amp;L Waterfall</h2>
             <div className="space-y-1">

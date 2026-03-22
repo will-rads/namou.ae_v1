@@ -1,10 +1,22 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
+import type { Plot } from "@/data/mock";
+import { ORIGINAL_SPREADSHEET_ROWS, loadSpreadsheetRows } from "@/data/spreadsheetData";
 
-// ── Types & Mock Data ────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface PlotInfo {
+  name: string;
+  plotSize: number;
+  landValue: number;
+  location: string;
+  zoning: string;
+  dealType: string;
+  far: number;
+}
 
 interface Inputs {
   plotSize: number;
@@ -13,14 +25,14 @@ interface Inputs {
   efficiency: number;
   constructionPerGFA: number;
   softCostPct: number;
-  rentalPerNSA: number;       // AED / sqft / year
-  occupancy: number;           // %
-  operatingCostPct: number;    // % of gross rental
-  maintenancePct: number;      // % of gross rental
-  propertyMgmtFeePct: number;  // % of gross rental
+  rentalPerNSA: number;
+  occupancy: number;
+  operatingCostPct: number;
+  maintenancePct: number;
+  propertyMgmtFeePct: number;
   holdYears: number;
-  capRate: number;             // % — for optional exit valuation
-  landOwnerSplit: number;      // %
+  capRate: number;
+  landOwnerSplit: number;
 }
 
 const DEFAULTS: Inputs = {
@@ -40,6 +52,43 @@ const DEFAULTS: Inputs = {
   landOwnerSplit: 40,
 };
 
+// ── Session + backend helpers ────────────────────────────────────────────────
+
+function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inputs> } {
+  if (typeof window === "undefined") return { plotInfo: null, inputs: {} };
+  try {
+    const stored = sessionStorage.getItem("selected_plot");
+    if (!stored) return { plotInfo: null, inputs: {} };
+    const plot: Plot = JSON.parse(stored);
+
+    const rows = loadSpreadsheetRows() ?? ORIGINAL_SPREADSHEET_ROWS;
+    const matchRow = rows.find(r => r.plotName?.trim() === plot.name);
+    const dealType = matchRow?.jv || "—";
+
+    const far = plot.far ?? (plot.gfa && plot.plotArea ? plot.gfa / plot.plotArea : DEFAULTS.farRatio);
+
+    const plotInfo: PlotInfo = {
+      name: plot.name,
+      plotSize: plot.plotArea,
+      landValue: plot.askingPrice,
+      location: plot.location || plot.area || "Ras Al Khaimah",
+      zoning: plot.zoning || "—",
+      dealType,
+      far,
+    };
+
+    const inputs: Partial<Inputs> = {
+      plotSize: plot.plotArea,
+      landValue: plot.askingPrice,
+      farRatio: parseFloat(far.toFixed(2)),
+    };
+
+    return { plotInfo, inputs };
+  } catch {
+    return { plotInfo: null, inputs: {} };
+  }
+}
+
 // ── Calculations ─────────────────────────────────────────────────────────────
 
 function compute(inp: Inputs) {
@@ -48,7 +97,6 @@ function compute(inp: Inputs) {
   const constructionCost = gfa * inp.constructionPerGFA * (1 + inp.softCostPct / 100);
   const totalDevelopmentCost = inp.landValue + constructionCost;
 
-  // Annual income
   const grossRentalIncome = nsa * inp.rentalPerNSA * (inp.occupancy / 100);
   const operatingCosts = grossRentalIncome * (inp.operatingCostPct / 100);
   const maintenance = grossRentalIncome * (inp.maintenancePct / 100);
@@ -56,23 +104,15 @@ function compute(inp: Inputs) {
   const totalExpenses = operatingCosts + maintenance + propertyMgmtFee;
   const noi = grossRentalIncome - totalExpenses;
 
-  // Cash flow over hold period
   const totalNOI = noi * inp.holdYears;
 
-  // Yield
   const yieldPct = totalDevelopmentCost > 0 ? (noi / totalDevelopmentCost) * 100 : 0;
-
-  // ROI over hold period
   const totalROI = totalDevelopmentCost > 0 ? (totalNOI / totalDevelopmentCost) * 100 : 0;
-
-  // Payback
   const paybackYears = noi > 0 ? totalDevelopmentCost / noi : Infinity;
 
-  // Exit valuation (cap-rate based)
   const exitValuation = inp.capRate > 0 ? noi / (inp.capRate / 100) : 0;
   const exitProfit = exitValuation - totalDevelopmentCost;
 
-  // Profit split (on total NOI over hold period)
   const landOwnerIncome = totalNOI * (inp.landOwnerSplit / 100);
   const investorIncome = totalNOI * ((100 - inp.landOwnerSplit) / 100);
 
@@ -126,6 +166,15 @@ function InputRow({ label, value, unit, onChange }: { label: string; value: numb
   );
 }
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <span className="text-xs text-muted">{label}</span>
+      <span className="text-sm font-semibold text-deep-forest">{value}</span>
+    </div>
+  );
+}
+
 function KPI({ label, value, sub, primary }: { label: string; value: string; sub?: string; primary?: boolean }) {
   return (
     <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
@@ -139,8 +188,17 @@ function KPI({ label, value, sub, primary }: { label: string; value: string; sub
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BuildLeasePage() {
+  const [plotInfo, setPlotInfo] = useState<PlotInfo | null>(null);
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const r = useMemo(() => compute(inputs), [inputs]);
+
+  useEffect(() => {
+    const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
+    if (info) {
+      setPlotInfo(info);
+      setInputs(prev => ({ ...prev, ...plotInputs }));
+    }
+  }, []);
 
   function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
@@ -165,7 +223,27 @@ export default function BuildLeasePage() {
       <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
         {/* Left: Inputs */}
         <ContentCard className="flex-1 flex flex-col md:max-w-md">
-          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">Assumptions</h2>
+          {/* Pre-filled land info */}
+          {plotInfo && (
+            <div className="mb-2 pb-2 border-b border-mint-light/40">
+              <div className="flex items-center gap-2 mb-1.5">
+                <svg className="w-3.5 h-3.5 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                <span className="text-sm font-bold text-forest">{plotInfo.name}</span>
+              </div>
+              <div className="bg-mint-bg/50 rounded-lg px-3 py-1.5 border border-mint-light/30">
+                <InfoRow label="Plot Size" value={`${formatNumber(plotInfo.plotSize)} sqft`} />
+                <InfoRow label="Land Value" value={fmtAED(plotInfo.landValue)} />
+                <InfoRow label="Location" value={plotInfo.location} />
+                <InfoRow label="Zoning" value={plotInfo.zoning} />
+                <InfoRow label="Deal Type" value={plotInfo.dealType} />
+              </div>
+              <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs below are editable.</p>
+            </div>
+          )}
+
+          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">
+            {plotInfo ? "Simulation Inputs" : "Assumptions"}
+          </h2>
 
           <div className="divide-y divide-mint-light/40 flex-1 flex flex-col justify-evenly">
             <div>
