@@ -13,6 +13,7 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { key: "plotName", label: "Plot Name", width: "min-w-[300px]" },
   { key: "area", label: "Area", width: "min-w-[200px]" },
   { key: "landUse", label: "Land Use", width: "min-w-[150px]" },
+  { key: "jv", label: "JV", width: "min-w-[120px]" },
   { key: "plotArea", label: "Plot Area", width: "min-w-[120px]" },
   { key: "plotType", label: "Plot Type", width: "min-w-[200px]" },
   { key: "askingPrice", label: "Asking Price", width: "min-w-[150px]" },
@@ -47,6 +48,8 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
 export type SpreadsheetRow = Record<string, string>;
 
 const KEYS = SPREADSHEET_COLUMNS.map(c => c.key);
+// Keys present in the RAW arrays (excludes columns added after initial data import)
+const RAW_KEYS = KEYS.filter(k => k !== "jv");
 
 function emptyRow(): SpreadsheetRow {
   const r: SpreadsheetRow = {};
@@ -388,7 +391,8 @@ const RAW: string[][] = [
 // Convert raw arrays to keyed objects
 export const ORIGINAL_SPREADSHEET_ROWS: SpreadsheetRow[] = RAW.map(row => {
   const obj: SpreadsheetRow = {};
-  KEYS.forEach((key, i) => { obj[key] = row[i] ?? ""; });
+  RAW_KEYS.forEach((key, i) => { obj[key] = row[i] ?? ""; });
+  for (const k of KEYS) if (!(k in obj)) obj[k] = "";
   return obj;
 });
 
