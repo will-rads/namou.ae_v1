@@ -173,7 +173,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function KPI({ label, value, sub, primary }: { label: string; value: string; sub?: string; primary?: boolean }) {
   return (
-    <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+    <div className={`rounded-xl p-2 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
       <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
       <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
       {sub && <span className="text-[11px] text-muted mt-0.5">{sub}</span>}
@@ -189,7 +189,7 @@ function Section({ title, defaultOpen = true, className, children }: { title: st
         <h2 className="text-xs uppercase tracking-widest text-muted font-semibold">{title}</h2>
         <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
       </button>
-      <div className={`mt-2 flex-1 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
+      <div className={`mt-1 flex-1 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
     </ContentCard>
   );
 }
@@ -231,10 +231,10 @@ export default function BuildLeasePage() {
       {/* Main: Inputs left, Metrics right */}
       <div className="flex flex-col md:flex-row gap-2 flex-1 min-h-0">
         {/* Left: Inputs */}
-        <ContentCard className="flex flex-col md:w-[55%] md:overflow-y-auto">
+        <div className="flex flex-col gap-2 md:w-[55%] md:overflow-y-auto">
           {/* Pre-filled land info */}
           {plotInfo && (
-            <div className="mb-2 pb-2 border-b border-mint-light/40">
+            <ContentCard>
               <div className="flex items-center gap-2 mb-1.5">
                 <svg className="w-3.5 h-3.5 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 <span className="text-sm font-bold text-forest">{plotInfo.name}</span>
@@ -247,8 +247,9 @@ export default function BuildLeasePage() {
                 <InfoRow label="Deal Type" value={plotInfo.dealType} />
               </div>
               <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs below are editable.</p>
-            </div>
+            </ContentCard>
           )}
+          <ContentCard className="flex flex-col flex-1">
 
           {/* Mobile key results snapshot */}
           <div className="md:hidden mb-2 pb-2 border-b border-mint-light/40">
@@ -278,9 +279,11 @@ export default function BuildLeasePage() {
             {/* Column 1: Land & Construction + Rental */}
             <div className="divide-y divide-mint-light/40 flex flex-col justify-between">
               <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Land &amp; Construction</p>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">{plotInfo ? "Construction" : "Land & Construction"}</p>
+              {!plotInfo && (<>
               <InputRow label="Plot Size" value={inputs.plotSize} unit="sqft" onChange={v => update("plotSize", v)} />
               <InputRow label="Land Value" value={inputs.landValue} unit="AED" onChange={v => update("landValue", v)} />
+              </>)}
               <InputRow label="FAR" value={inputs.farRatio} unit="x" onChange={v => update("farRatio", v)} />
               <InputRow label="Efficiency" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
               <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
@@ -316,11 +319,12 @@ export default function BuildLeasePage() {
             </div>
           </div>
         </ContentCard>
+        </div>
 
         {/* Right: Outputs */}
-        <div className="flex flex-col gap-2 md:w-[45%] md:overflow-y-auto">
+        <div className="flex flex-col gap-1 md:w-[45%]">
           {/* Annual Income */}
-          <Section title="Annual Income" className="md:flex-[3] flex flex-col">
+          <Section title="Annual Income">
             <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Gross Rental Income" value={fmtAED(r.grossRentalIncome)} sub={`${formatNumber(Math.round(r.nsa))} NSA × AED ${inputs.rentalPerNSA} × ${inputs.occupancy}%`} />
               <KPI label="Total Expenses" value={fmtAED(r.totalExpenses)} sub={`Ops ${fmtAED(r.operatingCosts)} + Maint ${fmtAED(r.maintenance)} + Mgmt ${fmtAED(r.propertyMgmtFee)}`} />
@@ -330,7 +334,7 @@ export default function BuildLeasePage() {
           </Section>
 
           {/* Returns */}
-          <Section title="Returns" className="md:flex-1 flex flex-col">
+          <Section title="Returns">
             <div className="grid grid-cols-3 gap-1.5">
               <KPI label="Yield" value={`${r.yieldPct.toFixed(1)}%`} sub="NOI ÷ Dev. Cost" primary />
               <KPI label={`ROI (${inputs.holdYears} yrs)`} value={`${r.totalROI.toFixed(1)}%`} sub="Total NOI ÷ Dev. Cost" />
@@ -339,15 +343,15 @@ export default function BuildLeasePage() {
           </Section>
 
           {/* Profit Split */}
-          <Section title={`Profit Split (${inputs.holdYears}-Year Income)`} className="md:flex-1 flex flex-col">
+          <Section title={`Profit Split (${inputs.holdYears}-Year Income)`}>
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
                 <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
                 <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
                 <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
                 <p className="text-[11px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
               </div>
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
                 <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
                 <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
                 <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
@@ -357,7 +361,7 @@ export default function BuildLeasePage() {
           </Section>
 
           {/* Optional Exit */}
-          <Section title="Exit Valuation (Optional)" className="md:flex-1 flex flex-col">
+          <Section title="Exit Valuation (Optional)">
             <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${inputs.capRate}% cap rate`} primary />
               <KPI label="Exit Profit" value={fmtAED(r.exitProfit)} sub="Exit Value − Dev. Cost" primary={r.exitProfit >= 0} />

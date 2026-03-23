@@ -241,10 +241,10 @@ export default function BuildHotelPage() {
       {/* Main: Inputs left, Metrics right */}
       <div className="flex flex-col md:flex-row gap-2 flex-1 min-h-0">
         {/* Left: Inputs */}
-        <ContentCard className="flex flex-col md:w-[55%] md:overflow-y-auto">
+        <div className="flex flex-col gap-2 md:w-[55%] md:overflow-y-auto">
           {/* Pre-filled land info */}
           {plotInfo && (
-            <div className="mb-2 pb-2 border-b border-mint-light/40">
+            <ContentCard>
               <div className="flex items-center gap-2 mb-1.5">
                 <svg className="w-3.5 h-3.5 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 <span className="text-sm font-bold text-forest">{plotInfo.name}</span>
@@ -257,8 +257,9 @@ export default function BuildHotelPage() {
                 <InfoRow label="Deal Type" value={plotInfo.dealType} />
               </div>
               <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs below are editable.</p>
-            </div>
+            </ContentCard>
           )}
+          <ContentCard className="flex flex-col flex-1">
 
           {/* Mobile key results snapshot */}
           <div className="md:hidden mb-2 pb-2 border-b border-mint-light/40">
@@ -289,8 +290,10 @@ export default function BuildHotelPage() {
             <div className="divide-y divide-mint-light/40 flex flex-col justify-between">
               <div>
                 <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Development</p>
+              {!plotInfo && (<>
               <InputRow label="Plot Size" value={inputs.plotSize} unit="sqft" onChange={v => update("plotSize", v)} />
               <InputRow label="Land Value" value={inputs.landValue} unit="AED" onChange={v => update("landValue", v)} />
+              </>)}
               <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} />
               <InputRow label="FF&E + Pre-Opening" value={inputs.ffePlusPreOpening} unit="AED" onChange={v => update("ffePlusPreOpening", v)} />
             </div>
@@ -324,6 +327,7 @@ export default function BuildHotelPage() {
             </div>
           </div>
         </ContentCard>
+        </div>
 
         {/* Right: Outputs */}
         <div className="flex flex-col gap-2 md:w-[45%] md:overflow-y-auto">
