@@ -207,9 +207,6 @@ export default function BuildSellPage() {
           <span className="text-deep-forest font-medium">Build &amp; Sell</span>
         </div>
         <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Sell Model</h1>
-        <p className="text-sm text-muted mt-0.5">
-          Develop the land and sell completed units — profit is split between landowner and investor.
-        </p>
       </div>
 
       {/* Mobile key results snapshot */}
