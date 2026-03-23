@@ -458,28 +458,36 @@ const URL_COORDS: Record<string, [number, number]> = {
   "HqjyFFc3PU1HuH1s9": [25.344303, 55.638806],
 };
 
-/** Try to extract lat/lng from a Google Maps URL.
- *  Supports full URLs (@lat,lng or !3d/!4d patterns) and
- *  falls back to the pre-resolved lookup for shortened maps.app.goo.gl links. */
+/** Try to extract lat/lng from a Google Maps URL or raw "lat,lng" string.
+ *  Supports: raw coords ("25.665,55.760"), full URLs (@lat,lng or !3d/!4d),
+ *  and pre-resolved shortened maps.app.goo.gl links. */
 function coordsFromUrl(url: string): [number, number] | null {
   if (!url) return null;
+  const trimmed = url.trim();
+  // Raw coordinates: "25.665,55.760" or "25.665, 55.760"
+  const rawMatch = trimmed.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+  if (rawMatch) {
+    const lat = parseFloat(rawMatch[1]);
+    const lng = parseFloat(rawMatch[2]);
+    if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
+  }
   // Full URL: @lat,lng pattern
-  const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  const atMatch = trimmed.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (atMatch) {
     const lat = parseFloat(atMatch[1]);
     const lng = parseFloat(atMatch[2]);
     if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
   }
   // Full URL: !3d...!4d... pattern
-  const d3 = url.match(/!3d(-?\d+\.?\d*)/);
-  const d4 = url.match(/!4d(-?\d+\.?\d*)/);
+  const d3 = trimmed.match(/!3d(-?\d+\.?\d*)/);
+  const d4 = trimmed.match(/!4d(-?\d+\.?\d*)/);
   if (d3 && d4) {
     const lat = parseFloat(d3[1]);
     const lng = parseFloat(d4[1]);
     if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
   }
   // Shortened URL: look up by short code
-  const shortMatch = url.match(/maps\.app\.goo\.gl\/([A-Za-z0-9]+)/);
+  const shortMatch = trimmed.match(/maps\.app\.goo\.gl\/([A-Za-z0-9]+)/);
   if (shortMatch && URL_COORDS[shortMatch[1]]) return URL_COORDS[shortMatch[1]];
   return null;
 }
