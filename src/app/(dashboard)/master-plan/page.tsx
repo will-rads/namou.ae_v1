@@ -22,12 +22,7 @@ function areaSlug(area: string) {
   return area.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-const typeToLandUse: Record<string, string[]> = {
-  residential: ["Residential"],
-  commercial:  ["Commercial", "Hospitality"],
-  "mixed-use": ["Mixed", "Residential / Commercial", "Commercial / Residential"],
-  industrial:  ["Industrial"],
-};
+// No longer needed — filtering uses p.category directly (same as categories pages)
 
 export default function MasterPlanPage() {
   return (
@@ -90,8 +85,7 @@ function MasterPlanContent() {
   useEffect(() => { setSelectedPlot(null); setComparePlots([]); }, [ctxType, ctxArea]);
 
   const filteredPlots = plots.filter((p) => {
-    const matchesType = !ctxType || !typeToLandUse[ctxType]?.length
-      || typeToLandUse[ctxType].some(f => p.landUse.includes(f));
+    const matchesType = !ctxType || p.category === ctxType;
     const matchesArea = !areaName || p.area === areaName;
     return matchesType && matchesArea;
   });
