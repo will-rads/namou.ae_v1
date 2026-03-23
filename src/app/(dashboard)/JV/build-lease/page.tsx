@@ -228,103 +228,91 @@ export default function BuildLeasePage() {
         </p>
       </div>
 
-      {/* Main: Inputs left, Metrics right */}
-      <div className="flex flex-col md:flex-row gap-2 flex-1 min-h-0">
-        {/* Left: Inputs */}
-        <div className="flex flex-col gap-2 md:w-[55%] md:overflow-y-auto">
-          {/* Pre-filled land info */}
-          {plotInfo && (
-            <ContentCard>
-              <div className="flex items-center gap-2 mb-1.5">
-                <svg className="w-3.5 h-3.5 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                <span className="text-sm font-bold text-forest">{plotInfo.name}</span>
-              </div>
-              <div className="bg-mint-bg/50 rounded-lg px-3 py-1.5 border border-mint-light/30">
-                <InfoRow label="Plot Size" value={`${formatNumber(plotInfo.plotSize)} sqft`} />
-                <InfoRow label="Land Value" value={fmtAED(plotInfo.landValue)} />
-                <InfoRow label="Location" value={plotInfo.location} />
-                <InfoRow label="Zoning" value={plotInfo.zoning} />
-                <InfoRow label="Deal Type" value={plotInfo.dealType} />
-              </div>
-              <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs below are editable.</p>
-            </ContentCard>
-          )}
-          <ContentCard className="flex flex-col flex-1">
-
-          {/* Mobile key results snapshot */}
-          <div className="md:hidden mb-2 pb-2 border-b border-mint-light/40">
-            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">Key Results</p>
-            <div className="grid grid-cols-3 gap-1.5">
-              <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
-                <p className="text-[10px] text-muted uppercase tracking-wider">NOI</p>
-                <p className="text-sm font-bold text-forest">{fmtAED(r.noi)}</p>
-              </div>
-              <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
-                <p className="text-[10px] text-muted uppercase tracking-wider">Yield</p>
-                <p className="text-sm font-bold text-deep-forest">{r.yieldPct.toFixed(1)}%</p>
-              </div>
-              <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
-                <p className="text-[10px] text-muted uppercase tracking-wider">ROI ({inputs.holdYears}yr)</p>
-                <p className="text-sm font-bold text-deep-forest">{r.totalROI.toFixed(1)}%</p>
-              </div>
-            </div>
+      {/* Mobile key results snapshot */}
+      <div className="md:hidden shrink-0">
+        <div className="grid grid-cols-3 gap-1.5">
+          <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
+            <p className="text-[10px] text-muted uppercase tracking-wider">NOI</p>
+            <p className="text-sm font-bold text-forest">{fmtAED(r.noi)}</p>
           </div>
+          <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
+            <p className="text-[10px] text-muted uppercase tracking-wider">Yield</p>
+            <p className="text-sm font-bold text-deep-forest">{r.yieldPct.toFixed(1)}%</p>
+          </div>
+          <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
+            <p className="text-[10px] text-muted uppercase tracking-wider">ROI ({inputs.holdYears}yr)</p>
+            <p className="text-sm font-bold text-deep-forest">{r.totalROI.toFixed(1)}%</p>
+          </div>
+        </div>
+      </div>
 
-          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">
-            {plotInfo ? "Simulation Inputs" : "Assumptions"}
+      {/* 2×2 Quadrant Grid */}
+      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-2 gap-2 flex-1 min-h-0">
+        {/* TOP-LEFT: Plot Info (green card) */}
+        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-4 md:p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
+            <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
+          </div>
+          <div className="bg-white/60 rounded-lg px-4 py-3 border border-mint-light/30">
+            <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
+            <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
+            <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
+            <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
+            <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
+          </div>
+          <p className="text-[10px] text-muted mt-3">Pre-filled from selected plot. Simulation inputs are editable.</p>
+        </div>
+
+        {/* TOP-RIGHT: Simulation Inputs */}
+        <ContentCard className="flex flex-col">
+          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
+            Simulation Inputs
           </h2>
-
-          {/* Inner 2-col on lg for compact desktop */}
-          <div className="flex-1 flex flex-col lg:grid lg:grid-cols-2 lg:gap-x-4">
-            {/* Column 1: Land & Construction + Rental */}
-            <div className="divide-y divide-mint-light/40 flex flex-col justify-between">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
+            {/* Inner left: Construction + Rental */}
+            <div className="flex flex-col justify-between">
               <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">{plotInfo ? "Construction" : "Land & Construction"}</p>
-              {!plotInfo && (<>
-              <InputRow label="Plot Size" value={inputs.plotSize} unit="sqft" onChange={v => update("plotSize", v)} />
-              <InputRow label="Land Value" value={inputs.landValue} unit="AED" onChange={v => update("landValue", v)} />
-              </>)}
-              <InputRow label="FAR" value={inputs.farRatio} unit="x" onChange={v => update("farRatio", v)} />
-              <InputRow label="Efficiency" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
-              <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
-              <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Rental</p>
-              <InputRow label="Rent / NSA sqft / yr" value={inputs.rentalPerNSA} unit="AED" onChange={v => update("rentalPerNSA", v)} />
-              <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
-            </div>
-            </div>
-            {/* Column 2: Expenses + Hold & Exit + JV Split */}
-            <div className="divide-y divide-mint-light/40 border-t border-mint-light/40 lg:border-t-0 flex flex-col justify-between">
+                <p className="text-xs font-semibold text-deep-forest pb-1">Construction</p>
+                <InputRow label="FAR" value={inputs.farRatio} unit="x" onChange={v => update("farRatio", v)} />
+                <InputRow label="Efficiency" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
+                <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
+                <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
+              </div>
               <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Expenses (% of Gross Rent)</p>
-              <InputRow label="Operating Costs" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
-              <InputRow label="Maintenance" value={inputs.maintenancePct} unit="%" onChange={v => update("maintenancePct", v)} />
-              <InputRow label="Property Mgmt Fee" value={inputs.propertyMgmtFeePct} unit="%" onChange={v => update("propertyMgmtFeePct", v)} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hold &amp; Exit</p>
-              <InputRow label="Hold Period" value={inputs.holdYears} unit="yrs" onChange={v => update("holdYears", v)} />
-              <InputRow label="Exit Cap Rate" value={inputs.capRate} unit="%" onChange={v => update("capRate", v)} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
-              <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
-              <div className="flex items-center justify-between py-1">
-                <span className="text-xs text-muted">Investor Share</span>
-                <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Rental</p>
+                <InputRow label="Rent / NSA sqft / yr" value={inputs.rentalPerNSA} unit="AED" onChange={v => update("rentalPerNSA", v)} />
+                <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
               </div>
             </div>
+            {/* Inner right: Expenses + Hold & Exit + JV Split */}
+            <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pb-1">Expenses (% of Gross Rent)</p>
+                <InputRow label="Operating Costs" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
+                <InputRow label="Maintenance" value={inputs.maintenancePct} unit="%" onChange={v => update("maintenancePct", v)} />
+                <InputRow label="Property Mgmt Fee" value={inputs.propertyMgmtFeePct} unit="%" onChange={v => update("propertyMgmtFeePct", v)} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hold &amp; Exit</p>
+                <InputRow label="Hold Period" value={inputs.holdYears} unit="yrs" onChange={v => update("holdYears", v)} />
+                <InputRow label="Exit Cap Rate" value={inputs.capRate} unit="%" onChange={v => update("capRate", v)} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
+                <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-muted">Investor Share</span>
+                  <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
+                </div>
+              </div>
             </div>
           </div>
         </ContentCard>
-        </div>
 
-        {/* Right: Outputs */}
-        <div className="flex flex-col gap-1 md:w-[45%]">
-          {/* Annual Income */}
-          <Section title="Annual Income">
+        {/* BOTTOM-LEFT: Annual Income + Returns */}
+        <div className="flex flex-col gap-2">
+          <Section title="Annual Income" className="flex-1 flex flex-col">
             <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Gross Rental Income" value={fmtAED(r.grossRentalIncome)} sub={`${formatNumber(Math.round(r.nsa))} NSA × AED ${inputs.rentalPerNSA} × ${inputs.occupancy}%`} />
               <KPI label="Total Expenses" value={fmtAED(r.totalExpenses)} sub={`Ops ${fmtAED(r.operatingCosts)} + Maint ${fmtAED(r.maintenance)} + Mgmt ${fmtAED(r.propertyMgmtFee)}`} />
@@ -333,17 +321,18 @@ export default function BuildLeasePage() {
             </div>
           </Section>
 
-          {/* Returns */}
-          <Section title="Returns">
+          <Section title="Returns" className="flex-1 flex flex-col">
             <div className="grid grid-cols-3 gap-1.5">
               <KPI label="Yield" value={`${r.yieldPct.toFixed(1)}%`} sub="NOI ÷ Dev. Cost" primary />
               <KPI label={`ROI (${inputs.holdYears} yrs)`} value={`${r.totalROI.toFixed(1)}%`} sub="Total NOI ÷ Dev. Cost" />
               <KPI label="Payback Period" value={r.paybackYears === Infinity ? "N/A" : `${r.paybackYears.toFixed(1)} yrs`} sub="Dev. Cost ÷ NOI" />
             </div>
           </Section>
+        </div>
 
-          {/* Profit Split */}
-          <Section title={`Profit Split (${inputs.holdYears}-Year Income)`}>
+        {/* BOTTOM-RIGHT: Profit Split + Exit Valuation */}
+        <div className="flex flex-col gap-2">
+          <Section title={`Profit Split (${inputs.holdYears}-Year Income)`} className="flex-1 flex flex-col">
             <div className="grid grid-cols-2 gap-1.5">
               <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
                 <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
@@ -360,8 +349,7 @@ export default function BuildLeasePage() {
             </div>
           </Section>
 
-          {/* Optional Exit */}
-          <Section title="Exit Valuation (Optional)">
+          <Section title="Exit Valuation (Optional)" className="flex-1 flex flex-col">
             <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${inputs.capRate}% cap rate`} primary />
               <KPI label="Exit Profit" value={fmtAED(r.exitProfit)} sub="Exit Value − Dev. Cost" primary={r.exitProfit >= 0} />
