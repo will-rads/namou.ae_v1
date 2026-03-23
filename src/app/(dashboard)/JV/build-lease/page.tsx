@@ -223,9 +223,6 @@ export default function BuildLeasePage() {
           <span className="text-deep-forest font-medium">Build &amp; Lease</span>
         </div>
         <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Lease Model</h1>
-        <p className="text-sm text-muted mt-0.5">
-          Build and lease to tenants — recurring rental income split between landowner and investor.
-        </p>
       </div>
 
       {/* Mobile key results snapshot */}
@@ -271,16 +268,15 @@ export default function BuildLeasePage() {
           </h2>
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
             {/* Inner left: Construction + Rental */}
-            <div className="flex flex-col justify-between">
+            <div className="flex flex-col">
               <div>
                 <p className="text-xs font-semibold text-deep-forest pb-1">Construction</p>
-                <InputRow label="FAR" value={inputs.farRatio} unit="x" onChange={v => update("farRatio", v)} />
                 <InputRow label="Efficiency" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
                 <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
                 <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Rental</p>
+                <p className="text-xs font-semibold text-deep-forest pt-1 pb-1">Rental</p>
                 <InputRow label="Rent / NSA sqft / yr" value={inputs.rentalPerNSA} unit="AED" onChange={v => update("rentalPerNSA", v)} />
                 <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
               </div>
@@ -298,13 +294,16 @@ export default function BuildLeasePage() {
                 <InputRow label="Hold Period" value={inputs.holdYears} unit="yrs" onChange={v => update("holdYears", v)} />
                 <InputRow label="Exit Cap Rate" value={inputs.capRate} unit="%" onChange={v => update("capRate", v)} />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
-                <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-xs text-muted">Investor Share</span>
-                  <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
-                </div>
+            </div>
+          </div>
+          {/* Joint-Venture Split — horizontal */}
+          <div className="border-t border-mint-light/40 pt-2 mt-1">
+            <p className="text-xs font-semibold text-deep-forest text-center pb-1">Joint-Venture Split</p>
+            <div className="grid grid-cols-2 gap-x-4">
+              <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
+              <div className="flex items-center justify-between py-1.5 lg:py-1">
+                <span className="text-sm text-muted">Investor Share</span>
+                <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
               </div>
             </div>
           </div>
