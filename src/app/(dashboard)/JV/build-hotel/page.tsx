@@ -257,72 +257,28 @@ export default function BuildHotelPage() {
         </div>
       </div>
 
-      {/* 2×2 Quadrant Grid */}
-      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[auto_1fr] gap-x-2 gap-y-0 flex-1 min-h-0">
-        {/* TOP-LEFT: Plot Info (green card) */}
-        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 px-3 py-1 md:px-4 md:py-1.5 flex flex-col justify-center md:self-start">
-          <div className="flex items-center gap-2 mb-1">
-            <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
-            <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
-          </div>
-          <div className="bg-white/60 rounded-lg px-3 py-1 border border-mint-light/30">
-            <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
-            <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
-            <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
-            <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
-            <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
-            <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
-          </div>
-          <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs are editable.</p>
-        </div>
-
-        {/* TOP-RIGHT: Simulation Inputs */}
-        <ContentCard className="flex flex-col">
-          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
-            Simulation Inputs
-          </h2>
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
-            {/* Inner left: Development + Hotel Operations */}
-            <div className="flex flex-col justify-between">
-              <div>
-                <p className="text-xs font-semibold text-deep-forest pb-1">Development</p>
-                <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} />
-                <InputRow label="FF&E + Pre-Opening" value={inputs.ffePlusPreOpening} unit="AED" onChange={v => update("ffePlusPreOpening", v)} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hotel Operations</p>
-                <InputRow label="Number of Keys" value={inputs.numberOfKeys} unit="keys" onChange={v => update("numberOfKeys", v)} />
-                <InputRow label="ADR" value={inputs.adr} unit="AED" onChange={v => update("adr", v)} />
-                <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
-                <InputRow label="F&B Revenue (Annual)" value={inputs.fbRevenueAnnual} unit="AED" onChange={v => update("fbRevenueAnnual", v)} />
-              </div>
-            </div>
-            {/* Inner right: Operator Fees + Operating Costs + JV Split */}
-            <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
-              <div>
-                <p className="text-xs font-semibold text-deep-forest pb-1">Operator Fees</p>
-                <InputRow label="Base Fee (% of Revenue)" value={inputs.baseFeeRevenuePct} unit="%" onChange={v => update("baseFeeRevenuePct", v)} />
-                <InputRow label="Incentive Fee (% of GOP)" value={inputs.incentiveFeeProfitPct} unit="%" onChange={v => update("incentiveFeeProfitPct", v)} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Operating Costs</p>
-                <InputRow label="Total OpEx (% of Revenue)" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
-                <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-xs text-muted">Investor Share</span>
-                  <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ContentCard>
-
-        {/* BOTTOM-LEFT: Revenue + P&L Waterfall */}
+      {/* Two-column layout — each column stacks independently */}
+      <div className="flex flex-col md:grid md:grid-cols-2 gap-2 flex-1 min-h-0">
+        {/* LEFT COLUMN: Green card → Revenue → P&L Waterfall */}
         <div className="flex flex-col gap-2">
-          <Section title="Revenue (Annual)" className="flex-1 flex flex-col">
+          {/* Plot Info (green card) */}
+          <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 px-3 py-1 md:px-4 md:py-1.5 flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-1">
+              <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
+              <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
+            </div>
+            <div className="bg-white/60 rounded-lg px-3 py-1 border border-mint-light/30">
+              <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
+              <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
+              <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
+              <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
+              <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
+              <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
+            </div>
+            <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs are editable.</p>
+          </div>
+
+          <Section title="Revenue (Annual)" className="flex flex-col">
             <div className="grid grid-cols-4 gap-1.5">
               <KPI label="Room Revenue" value={fmtAED(r.roomRevenue)} sub={`${formatNumber(Math.round(r.occupiedNights))} nights × AED ${formatNumber(inputs.adr)}`} />
               <KPI label="F&B Revenue" value={fmtAED(inputs.fbRevenueAnnual)} />
@@ -365,9 +321,52 @@ export default function BuildHotelPage() {
           </Section>
         </div>
 
-        {/* BOTTOM-RIGHT: JV Profit Split + Key Metrics */}
-        <div className="flex flex-col gap-2">
-          <Section title="Joint-Venture Profit Split (Annual)" className="flex-1 flex flex-col">
+        {/* RIGHT COLUMN: Simulation Inputs → JV Profit Split → Key Metrics */}
+        <div className="flex flex-col gap-1.5">
+          <ContentCard className="flex flex-col">
+            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
+              Simulation Inputs
+            </h2>
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
+              {/* Inner left: Development + Hotel Operations */}
+              <div className="flex flex-col justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-deep-forest pb-1">Development</p>
+                  <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} />
+                  <InputRow label="FF&E + Pre-Opening" value={inputs.ffePlusPreOpening} unit="AED" onChange={v => update("ffePlusPreOpening", v)} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hotel Operations</p>
+                  <InputRow label="Number of Keys" value={inputs.numberOfKeys} unit="keys" onChange={v => update("numberOfKeys", v)} />
+                  <InputRow label="ADR" value={inputs.adr} unit="AED" onChange={v => update("adr", v)} />
+                  <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
+                  <InputRow label="F&B Revenue (Annual)" value={inputs.fbRevenueAnnual} unit="AED" onChange={v => update("fbRevenueAnnual", v)} />
+                </div>
+              </div>
+              {/* Inner right: Operator Fees + Operating Costs + JV Split */}
+              <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
+                <div>
+                  <p className="text-xs font-semibold text-deep-forest pb-1">Operator Fees</p>
+                  <InputRow label="Base Fee (% of Revenue)" value={inputs.baseFeeRevenuePct} unit="%" onChange={v => update("baseFeeRevenuePct", v)} />
+                  <InputRow label="Incentive Fee (% of GOP)" value={inputs.incentiveFeeProfitPct} unit="%" onChange={v => update("incentiveFeeProfitPct", v)} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Operating Costs</p>
+                  <InputRow label="Total OpEx (% of Revenue)" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
+                  <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-xs text-muted">Investor Share</span>
+                    <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ContentCard>
+
+          <Section title="Joint-Venture Profit Split (Annual)" className="flex flex-col">
             <div className="grid grid-cols-2 gap-1.5">
               <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
                 <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
@@ -384,7 +383,7 @@ export default function BuildHotelPage() {
             </div>
           </Section>
 
-          <Section title="Key Metrics" className="flex-1 flex flex-col">
+          <Section title="Key Metrics" className="flex flex-col">
             <div className="grid grid-cols-3 gap-1.5">
               <KPI label="Development Cost" value={fmtAED(r.totalDevelopmentCost)} sub={`Land ${fmtAED(inputs.landValue)} + Build ${fmtAED(inputs.constructionCostTotal)} + FF&E ${fmtAED(inputs.ffePlusPreOpening)}`} />
               <KPI label="Yield on Cost" value={`${r.yieldPct.toFixed(1)}%`} sub="Net Income ÷ Dev. Cost" primary />
