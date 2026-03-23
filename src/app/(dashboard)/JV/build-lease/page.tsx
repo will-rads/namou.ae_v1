@@ -155,7 +155,7 @@ function InputRow({ label, value, unit, onChange }: { label: string; value: numb
           type="number"
           value={value}
           onChange={e => onChange(Number(e.target.value))}
-          className="w-28 text-right text-sm font-semibold text-deep-forest bg-mint-white/60 border border-mint-light/60 rounded-lg px-2 py-1 focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none"
+          className="w-36 text-right text-sm font-semibold text-deep-forest bg-mint-white/60 border border-mint-light/60 rounded-lg px-2 py-1 focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none"
         />
         {unit === "%" && <span className="text-xs text-muted">%</span>}
         {unit === "x" && <span className="text-xs text-muted">×</span>}
