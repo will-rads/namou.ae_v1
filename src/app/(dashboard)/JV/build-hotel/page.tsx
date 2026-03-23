@@ -15,6 +15,7 @@ interface PlotInfo {
   location: string;
   zoning: string;
   dealType: string;
+  far: number;
 }
 
 interface Inputs {
@@ -73,6 +74,8 @@ function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inp
     const matchRow = rows.find(r => r.plotName?.trim() === plot.name);
     const dealType = matchRow?.jv || "—";
 
+    const far = plot.far ?? (plot.gfa && plot.plotArea ? plot.gfa / plot.plotArea : 0);
+
     const plotInfo: PlotInfo = {
       name: plot.name,
       plotSize: plot.plotArea,
@@ -80,6 +83,7 @@ function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inp
       location: plot.location || plot.area || "Ras Al Khaimah",
       zoning: plot.zoning || "—",
       dealType,
+      far,
     };
 
     const inputs: Partial<Inputs> = {
@@ -267,6 +271,7 @@ export default function BuildHotelPage() {
           <div className="bg-white/60 rounded-lg px-4 py-3 border border-mint-light/30">
             <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
             <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
+            <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
             <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
             <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
             <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
@@ -321,7 +326,7 @@ export default function BuildHotelPage() {
         {/* BOTTOM-LEFT: Revenue + P&L Waterfall */}
         <div className="flex flex-col gap-2">
           <Section title="Revenue (Annual)" className="flex-1 flex flex-col">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               <KPI label="Room Revenue" value={fmtAED(r.roomRevenue)} sub={`${formatNumber(Math.round(r.occupiedNights))} nights × AED ${formatNumber(inputs.adr)}`} />
               <KPI label="F&B Revenue" value={fmtAED(inputs.fbRevenueAnnual)} />
               <KPI label="Total Revenue" value={fmtAED(r.totalRevenue)} primary />

@@ -254,6 +254,7 @@ export default function BuildLeasePage() {
           <div className="bg-white/60 rounded-lg px-4 py-3 border border-mint-light/30">
             <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
             <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
+            <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
             <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
             <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
             <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />

@@ -241,6 +241,7 @@ export default function BuildSellPage() {
           <div className="bg-white/60 rounded-lg px-4 py-3 border border-mint-light/30">
             <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
             <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
+            <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
             <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
             <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
             <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
@@ -257,7 +258,6 @@ export default function BuildSellPage() {
             {/* Inner left: Construction */}
             <div className="flex flex-col">
               <p className="text-sm font-semibold text-deep-forest pb-1.5">Construction</p>
-              <InputRow label="FAR" value={inputs.farRatio} unit="x" onChange={v => update("farRatio", v)} />
               <InputRow label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
               <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
               <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
