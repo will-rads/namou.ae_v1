@@ -209,7 +209,7 @@ export default function BuildLeasePage() {
       {/* Header */}
       <div className="shrink-0">
         <div className="flex items-center gap-2 text-sm text-muted mb-1">
-          <Link href="/JV" className="hover:text-forest transition-colors">JV Simulator</Link>
+          <Link href="/JV" className="hover:text-forest transition-colors">Joint-Venture Simulator</Link>
           <span>/</span>
           <span className="text-deep-forest font-medium">Build &amp; Lease</span>
         </div>
@@ -272,7 +272,7 @@ export default function BuildLeasePage() {
               <InputRow label="Exit Cap Rate" value={inputs.capRate} unit="%" onChange={v => update("capRate", v)} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">JV Split</p>
+              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
               <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
               <div className="flex items-center justify-between py-1">
                 <span className="text-xs text-muted">Investor Share</span>

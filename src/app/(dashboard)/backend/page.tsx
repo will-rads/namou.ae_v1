@@ -159,9 +159,9 @@ export default function BackendPage() {
                           title={row[col.key] ?? ""}
                         >
                           <option value="">—</option>
-                          <option value="JV Only">JV Only</option>
+                          <option value="Joint-venture Only">Joint-venture Only</option>
                           <option value="Sale Only">Sale Only</option>
-                          <option value="Sale + JV">Sale + JV</option>
+                          <option value="Sale + Joint-venture">Sale + Joint-venture</option>
                         </select>
                       ) : (
                         <input

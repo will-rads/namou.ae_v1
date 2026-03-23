@@ -75,7 +75,7 @@ export default function JVPage() {
               </h2>
             </div>
             <p className="text-xs text-muted">
-              Select how the JV will create value. Each model uses a different return logic.
+              Select how the joint-venture will create value. Each model uses a different return logic.
             </p>
           </div>
 

@@ -13,7 +13,7 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { key: "plotName", label: "Plot Name", width: "min-w-[300px]" },
   { key: "area", label: "Area", width: "min-w-[200px]" },
   { key: "landUse", label: "Land Use", width: "min-w-[150px]" },
-  { key: "jv", label: "JV", width: "min-w-[120px]" },
+  { key: "jv", label: "Joint-venture", width: "min-w-[120px]" },
   { key: "plotArea", label: "Plot Area", width: "min-w-[120px]" },
   { key: "plotType", label: "Plot Type", width: "min-w-[200px]" },
   { key: "askingPrice", label: "Asking Price", width: "min-w-[150px]" },

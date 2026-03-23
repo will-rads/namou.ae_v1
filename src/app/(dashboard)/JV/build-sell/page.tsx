@@ -192,7 +192,7 @@ export default function BuildSellPage() {
       {/* Header */}
       <div className="shrink-0">
         <div className="flex items-center gap-2 text-sm text-muted mb-1">
-          <Link href="/JV" className="hover:text-forest transition-colors">JV Simulator</Link>
+          <Link href="/JV" className="hover:text-forest transition-colors">Joint-Venture Simulator</Link>
           <span>/</span>
           <span className="text-deep-forest font-medium">Build &amp; Sell</span>
         </div>
@@ -246,7 +246,7 @@ export default function BuildSellPage() {
               <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">JV Split</p>
+              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
               <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
               <div className="flex items-center justify-between py-1">
                 <span className="text-xs text-muted">Investor Profit Share</span>
@@ -291,7 +291,7 @@ export default function BuildSellPage() {
 
           {/* Comparison: Sell Today vs JV */}
           <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Comparison — Sell Land Today vs JV</h2>
+            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Comparison — Sell Land Today vs Joint-Venture</h2>
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-xl p-3 bg-mint-white/80 border border-mint-light/40">
                 <span className="text-[11px] text-muted uppercase tracking-wider">Sell Today</span>
@@ -299,12 +299,12 @@ export default function BuildSellPage() {
                 <p className="text-[11px] text-muted mt-0.5">Immediate cash, no risk</p>
               </div>
               <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">JV Proceeds</span>
+                <span className="text-[11px] text-muted uppercase tracking-wider">Joint-Venture Proceeds</span>
                 <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.jvLandOwnerProceeds)}</p>
                 <p className="text-[11px] text-muted mt-0.5">Land returned + profit share</p>
               </div>
               <div className={`rounded-xl p-3 border ${r.jvUplift >= 0 ? "bg-forest/5 border-forest/15" : "bg-red-50 border-red-200"}`}>
-                <span className="text-[11px] text-muted uppercase tracking-wider">JV Uplift</span>
+                <span className="text-[11px] text-muted uppercase tracking-wider">Joint-Venture Uplift</span>
                 <p className={`text-lg font-bold mt-0.5 ${r.jvUplift >= 0 ? "text-forest" : "text-red-600"}`}>
                   {r.jvUplift >= 0 ? "+" : ""}{fmtAED(r.jvUplift)}
                 </p>

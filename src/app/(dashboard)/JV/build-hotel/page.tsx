@@ -218,13 +218,13 @@ export default function BuildHotelPage() {
       {/* Header */}
       <div className="shrink-0">
         <div className="flex items-center gap-2 text-sm text-muted mb-1">
-          <Link href="/JV" className="hover:text-forest transition-colors">JV Simulator</Link>
+          <Link href="/JV" className="hover:text-forest transition-colors">Joint-Venture Simulator</Link>
           <span>/</span>
           <span className="text-deep-forest font-medium">Build &amp; Hotel</span>
         </div>
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Build &amp; Hotel Model</h1>
         <p className="text-sm text-muted mt-1">
-          Develop a hospitality asset with an operator — operator fees are deducted before the JV profit split.
+          Develop a hospitality asset with an operator — operator fees are deducted before the joint-venture profit split.
         </p>
       </div>
 
@@ -279,7 +279,7 @@ export default function BuildHotelPage() {
               <InputRow label="Total OpEx (% of Revenue)" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">JV Split</p>
+              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
               <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
               <div className="flex items-center justify-between py-1">
                 <span className="text-xs text-muted">Investor Share</span>
@@ -339,7 +339,7 @@ export default function BuildHotelPage() {
 
           {/* Profit Split */}
           <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">JV Profit Split (Annual)</h2>
+            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Joint-Venture Profit Split (Annual)</h2>
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
                 <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
