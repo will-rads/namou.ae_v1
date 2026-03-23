@@ -160,16 +160,13 @@ function InputRow({ label, value, unit, onChange }: { label: string; value: numb
     <div className="flex items-center justify-between py-2 lg:py-1.5">
       <span className="text-sm text-muted">{label}</span>
       <div className="flex items-center gap-1">
-        {unit === "AED" && <span className="text-xs text-muted">AED</span>}
+        <span className="text-xs text-muted w-8 text-right">{unit}</span>
         <input
           type="number"
           value={value}
           onChange={e => onChange(Number(e.target.value))}
           className="w-36 text-right text-sm font-semibold text-deep-forest bg-mint-white/60 border border-mint-light/60 rounded-lg px-2 py-1 focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none"
         />
-        {unit === "%" && <span className="text-xs text-muted">%</span>}
-        {unit === "keys" && <span className="text-xs text-muted">keys</span>}
-        {unit === "sqft" && <span className="text-xs text-muted">sqft</span>}
       </div>
     </div>
   );
