@@ -24,6 +24,12 @@ interface Inputs {
   sellingPricePerNSA: number;
 }
 
+type DisplayInputs = Omit<Inputs, "constructionCostPerGFA" | "efficiency" | "sellingPricePerNSA"> & {
+  constructionCostPerGFA: number | "";
+  efficiency: number | "";
+  sellingPricePerNSA: number | "";
+};
+
 interface OfferSim {
   method: PricingMethod;
   pricePerGFA: number;
@@ -35,22 +41,26 @@ interface OfferSim {
 const SENSITIVITY_PRICES = [2500, 2800, 3200, 3600, 4000];
 const RLV_TARGET_MARGIN = 20;
 
-const BASE_INPUTS: Inputs = {
+const DEFAULT_SELLING_PRICE = 3200;
+const DEFAULT_CONSTRUCTION_COST = 900;
+const DEFAULT_EFFICIENCY = 80;
+
+const BASE_INPUTS: DisplayInputs = {
   plotSize: 50000,
   pricingMethod: "per-gfa",
   pricePerPlotSqft: 500,
   pricePerGFA: 300,
   gfaRatio: 3.0,
-  efficiency: 80,
-  constructionCostPerGFA: 900,
+  efficiency: "",
+  constructionCostPerGFA: "",
   softCostPct: 20,
-  sellingPricePerNSA: 3200,
+  sellingPricePerNSA: "",
 };
 
 const SCENARIO_OVERRIDES: Record<Scenario, Partial<Inputs>> = {
-  conservative: { sellingPricePerNSA: Math.round(BASE_INPUTS.sellingPricePerNSA * 0.9), constructionCostPerGFA: Math.round(BASE_INPUTS.constructionCostPerGFA * 1.1), efficiency: 75, softCostPct: 20 },
-  base:         { sellingPricePerNSA: BASE_INPUTS.sellingPricePerNSA, constructionCostPerGFA: BASE_INPUTS.constructionCostPerGFA, efficiency: 80, softCostPct: 20 },
-  optimistic:   { sellingPricePerNSA: Math.round(BASE_INPUTS.sellingPricePerNSA * 1.1), constructionCostPerGFA: Math.round(BASE_INPUTS.constructionCostPerGFA * 0.9), efficiency: 85, softCostPct: 20 },
+  conservative: { sellingPricePerNSA: Math.round(DEFAULT_SELLING_PRICE * 0.9), constructionCostPerGFA: Math.round(DEFAULT_CONSTRUCTION_COST * 1.1), efficiency: 75, softCostPct: 20 },
+  base:         { sellingPricePerNSA: DEFAULT_SELLING_PRICE, constructionCostPerGFA: DEFAULT_CONSTRUCTION_COST, efficiency: DEFAULT_EFFICIENCY, softCostPct: 20 },
+  optimistic:   { sellingPricePerNSA: Math.round(DEFAULT_SELLING_PRICE * 1.1), constructionCostPerGFA: Math.round(DEFAULT_CONSTRUCTION_COST * 0.9), efficiency: 85, softCostPct: 20 },
 };
 
 const SCENARIO_META: Record<Scenario, { label: string; description: string; riskLevel: string; riskColor: string; suitedFor: string; marketOutlook: string }> = {
@@ -101,6 +111,15 @@ function compute(inp: Inputs) {
   return { gfa, nsa, landCost, constructionCost, totalCost, revenue, profit, profitMargin, returnOnCost, gdvMultiple, profitPerPlotSqft, equivPricePerGFA, rlv };
 }
 
+function resolveInputs(d: DisplayInputs): Inputs {
+  return {
+    ...d,
+    constructionCostPerGFA: typeof d.constructionCostPerGFA === "number" ? d.constructionCostPerGFA : 0,
+    efficiency: typeof d.efficiency === "number" ? d.efficiency : 0,
+    sellingPricePerNSA: typeof d.sellingPricePerNSA === "number" ? d.sellingPricePerNSA : 0,
+  };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmtM(n: number): string {
@@ -123,7 +142,7 @@ function getDealLabel(margin: number): { label: string; bg: string; text: string
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-function deriveInputsFromPlot(plot: Plot, base: Inputs): Inputs {
+function deriveInputsFromPlot(plot: Plot, base: DisplayInputs): DisplayInputs {
   const derivedFAR = plot.far ?? (plot.gfa ? plot.gfa / plot.plotArea : base.gfaRatio);
   const derivedPricePerGFA = plot.gfa
     ? plot.askingPrice / plot.gfa
@@ -165,7 +184,7 @@ function loadInitialROIState() {
 
 export default function ROIPage() {
   const router = useRouter();
-  const [inputs, setInputs] = useState<Inputs>(() => loadInitialROIState().inputs);
+  const [inputs, setInputs] = useState<DisplayInputs>(() => loadInitialROIState().inputs);
   const [activeScenario, setActiveScenario] = useState<Scenario>("base");
   const _offer = loadInitialROIState().offer; // kept for sessionStorage seeding
   const [sourcePlot, setSourcePlot] = useState<Plot | null>(() => loadInitialROIState().sourcePlot);
@@ -186,7 +205,8 @@ export default function ROIPage() {
 
   const isCompareMode = comparePlots.length === 2;
 
-  const results = useMemo(() => compute(inputs), [inputs]);
+  const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
+  const results = useMemo(() => compute(resolved), [resolved]);
   void _offer; // used only for initial load
   const dealLabel = getDealLabel(results.profitMargin);
 
@@ -197,22 +217,31 @@ export default function ROIPage() {
     return { ...inputs, plotSize: plot.plotArea, gfaRatio: parseFloat(derivedFAR.toFixed(2)) };
   }, [isCompareMode, comparePlots, inputs]);
 
-  const results2 = useMemo(() => inputs2 ? compute(inputs2) : null, [inputs2]);
+  const results2 = useMemo(() => inputs2 ? compute(resolveInputs(inputs2)) : null, [inputs2]);
   const dealLabel2 = results2 ? getDealLabel(results2.profitMargin) : null;
 
   const sensitivityData = useMemo(() =>
-    SENSITIVITY_PRICES.map(price => ({ price, ...compute({ ...inputs, sellingPricePerNSA: price }) })),
-    [inputs]
+    SENSITIVITY_PRICES.map(price => ({ price, ...compute({ ...resolved, sellingPricePerNSA: price }) })),
+    [resolved]
   );
   const closestSensPrice = SENSITIVITY_PRICES.reduce((c, p) =>
-    Math.abs(p - inputs.sellingPricePerNSA) < Math.abs(c - inputs.sellingPricePerNSA) ? p : c,
+    Math.abs(p - resolved.sellingPricePerNSA) < Math.abs(c - resolved.sellingPricePerNSA) ? p : c,
     SENSITIVITY_PRICES[0]
   );
   const maxAbsProfit = Math.max(...sensitivityData.map(d => Math.abs(d.profit)), 1);
 
-  function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
+  function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
   }
+
+  const hasConstructionInputs = typeof inputs.constructionCostPerGFA === "number" && inputs.constructionCostPerGFA > 0
+    && typeof inputs.efficiency === "number" && inputs.efficiency > 0;
+  const hasSalesInput = typeof inputs.sellingPricePerNSA === "number" && inputs.sellingPricePerNSA > 0;
+  const isTotalCostReady = hasConstructionInputs;
+  const isTotalRevenueReady = hasSalesInput && hasConstructionInputs;
+  const isTotalProfitReady = isTotalCostReady && isTotalRevenueReady;
+  const isProfitMarginReady = isTotalCostReady && isTotalRevenueReady;
+  const allKPIsReady = isTotalCostReady && isTotalRevenueReady;
 
   function applyScenario(s: Scenario) {
     setActiveScenario(s);
@@ -343,8 +372,8 @@ export default function ROIPage() {
                       />
                     </div>
                     {inputs.pricingMethod === "per-plot"
-                      ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v)} />
-                      : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
+                      ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v as number)} />
+                      : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v as number)} />
                     }
                     <DualComputedRow label="Total Land Cost" v1={fmtAED(results.landCost)} v2={fmtAED(results2.landCost)} />
                   </div>
@@ -353,8 +382,8 @@ export default function ROIPage() {
                 <div className="pt-0.5 border-t border-mint-light/40">
                   <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
-                    <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
-                    <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
+                    <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix placeholder="e.g. 900" onChange={v => update("constructionCostPerGFA", v)} />
+                    <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix placeholder="e.g. 80" onChange={v => update("efficiency", v)} />
                     <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
                   </div>
                 </div>
@@ -362,7 +391,7 @@ export default function ROIPage() {
                 <div className="pt-0.5 border-t border-mint-light/40">
                   <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Sales</p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
-                    <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
+                    <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix placeholder="e.g. 3200" onChange={v => update("sellingPricePerNSA", v)} />
                     <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
                   </div>
                 </div>
@@ -372,18 +401,18 @@ export default function ROIPage() {
             {/* Right: KPI results — own frame */}
             <ContentCard className="py-0.5 px-1">
               <div className="grid grid-cols-2 gap-0.5 auto-rows-fr">
-                <KPICard label="Revenue (GDV)" value=""
+                <KPICard label="Revenue (GDV)" value="" ready={isTotalRevenueReady}
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }}
                   tooltipFormula="Revenue = NSA × Selling Price/sqft"
                   tooltipLines={[
-                    `${comparePlots[0].name}: ${formatNumber(Math.round(results.nsa))} NSA × AED ${formatNumber(inputs.sellingPricePerNSA)}`,
+                    `${comparePlots[0].name}: ${formatNumber(Math.round(results.nsa))} NSA × AED ${formatNumber(resolved.sellingPricePerNSA)}`,
                     `= ${fmtAED(results.revenue)}`,
                     "---",
-                    `${comparePlots[1].name}: ${formatNumber(Math.round(results2.nsa))} NSA × AED ${formatNumber(inputs.sellingPricePerNSA)}`,
+                    `${comparePlots[1].name}: ${formatNumber(Math.round(results2.nsa))} NSA × AED ${formatNumber(resolved.sellingPricePerNSA)}`,
                     `= ${fmtAED(results2.revenue)}`,
                   ]}
                 />
-                <KPICard label="Total Cost" value=""
+                <KPICard label="Total Cost" value="" ready={isTotalCostReady}
                   compareValues={{ v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost), label1: comparePlots[0].name, label2: comparePlots[1].name }}
                   tooltipFormula="Total Cost = Land + Construction"
                   tooltipLines={[
@@ -394,7 +423,7 @@ export default function ROIPage() {
                     `= ${fmtAED(results2.totalCost)}`,
                   ]}
                 />
-                <KPICard label="Total Profit" value="" primary
+                <KPICard label="Total Profit" value="" primary ready={isTotalProfitReady}
                   compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }}
                   tooltipFormula="Profit = Revenue − Total Cost"
                   tooltipLines={[
@@ -405,7 +434,7 @@ export default function ROIPage() {
                     `= ${fmtAED(results2.profit)}`,
                   ]}
                 />
-                <KPICard label="Margin" value="" primary
+                <KPICard label="Margin" value="" primary ready={isProfitMarginReady}
                   compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }}
                   tooltipFormula="Margin = (Profit ÷ Revenue) × 100"
                   tooltipLines={[
@@ -416,13 +445,13 @@ export default function ROIPage() {
                     `= ${results2.profitMargin.toFixed(1)}%`,
                   ]}
                 />
-                <KPICard label="Return on Cost" value=""
+                <KPICard label="Return on Cost" value="" ready={allKPIsReady}
                   compareValues={{ v1: `${results.returnOnCost.toFixed(1)}%`, v2: `${results2.returnOnCost.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
-                <KPICard label="GDV Multiple" value=""
+                <KPICard label="GDV Multiple" value="" ready={allKPIsReady}
                   compareValues={{ v1: `${results.gdvMultiple.toFixed(2)}×`, v2: `${results2.gdvMultiple.toFixed(2)}×`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
-                <KPICard label="Profit / Land sqft" value=""
+                <KPICard label="Profit / Land sqft" value="" ready={allKPIsReady}
                   compareValues={{ v1: `AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`, v2: `AED ${formatNumber(Math.round(results2.profitPerPlotSqft))}`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
-                <KPICard label="Residual Land Value" value=""
+                <KPICard label="Residual Land Value" value="" ready={allKPIsReady}
                   compareValues={{ v1: fmtAED(results.rlv), v2: fmtAED(results2.rlv), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
               </div>
             </ContentCard>
@@ -444,18 +473,18 @@ export default function ROIPage() {
                     />
                   </div>
                   {inputs.pricingMethod === "per-plot"
-                    ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v)} />
-                    : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v)} />
+                    ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v as number)} />
+                    : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v as number)} />
                   }
                 </div>
                 <div className="pt-3 border-t border-mint-light/40">
                   <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
-                  <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix onChange={v => update("constructionCostPerGFA", v)} />
-                  <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix onChange={v => update("efficiency", v)} />
+                  <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix placeholder="e.g. 900" onChange={v => update("constructionCostPerGFA", v)} />
+                  <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix placeholder="e.g. 80" onChange={v => update("efficiency", v)} />
                 </div>
                 <div className="pt-3 border-t border-mint-light/40">
                   <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Sales</p>
-                  <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix onChange={v => update("sellingPricePerNSA", v)} />
+                  <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix placeholder="e.g. 3200" onChange={v => update("sellingPricePerNSA", v)} />
                 </div>
               </div>
             </ContentCard>
@@ -467,14 +496,15 @@ export default function ROIPage() {
                   label="Total Revenue (GDV)"
                   value={fmtAED(results.revenue)}
                   sub={`${formatNumber(Math.round(results.nsa))} sqft NSA`}
+                  ready={isTotalRevenueReady}
                   tooltipFormula="Revenue = Plot × FAR × Efficiency × Price/sqft"
                   tooltipLines={[
                     `Plot Size: ${formatNumber(inputs.plotSize)} sqft`,
                     `× FAR: ${inputs.gfaRatio}`,
                     `= GFA: ${formatNumber(Math.round(results.gfa))} sqft`,
-                    `× Efficiency: ${inputs.efficiency}%`,
+                    `× Efficiency: ${resolved.efficiency}%`,
                     `= NSA: ${formatNumber(Math.round(results.nsa))} sqft`,
-                    `× Selling Price: AED ${formatNumber(inputs.sellingPricePerNSA)}/sqft`,
+                    `× Selling Price: AED ${formatNumber(resolved.sellingPricePerNSA)}/sqft`,
                     "---",
                     `= Revenue: ${fmtAED(results.revenue)}`,
                   ]}
@@ -483,6 +513,7 @@ export default function ROIPage() {
                   label="Total Cost"
                   value={fmtAED(results.totalCost)}
                   sub="Land + Construction"
+                  ready={isTotalCostReady}
                   tooltipFormula="Total Cost = Land Cost + Construction Cost"
                   tooltipLines={[
                     inputs.pricingMethod === "per-plot"
@@ -490,7 +521,7 @@ export default function ROIPage() {
                       : `Land: ${formatNumber(Math.round(results.gfa))} GFA × AED ${formatNumber(inputs.pricePerGFA)}/sqft`,
                     `= Land Cost: ${fmtAED(results.landCost)}`,
                     "---",
-                    `Construction: ${formatNumber(Math.round(results.gfa))} GFA × AED ${formatNumber(inputs.constructionCostPerGFA)}`,
+                    `Construction: ${formatNumber(Math.round(results.gfa))} GFA × AED ${formatNumber(resolved.constructionCostPerGFA)}`,
                     `× (1 + ${inputs.softCostPct}% hard + soft cost)`,
                     `= Construction Cost: ${fmtAED(results.constructionCost)}`,
                     "---",
@@ -502,6 +533,7 @@ export default function ROIPage() {
                   value={fmtAED(results.profit)}
                   sub={`${results.returnOnCost.toFixed(1)}% ROC`}
                   primary
+                  ready={isTotalProfitReady}
                   tooltipFormula="Profit = Revenue − Total Cost"
                   tooltipLines={[
                     `Revenue: ${fmtAED(results.revenue)}`,
@@ -515,6 +547,7 @@ export default function ROIPage() {
                   value={`${results.profitMargin.toFixed(1)}%`}
                   badge={dealLabel}
                   primary
+                  ready={isProfitMarginReady}
                   tooltipFormula="Margin = (Profit ÷ Revenue) × 100"
                   tooltipLines={[
                     `Profit: ${fmtAED(results.profit)}`,
@@ -537,8 +570,9 @@ export default function ROIPage() {
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
             <div className="flex flex-col gap-1 lg:gap-1.5 h-full">
-              {/* Investor Metrics + Sensitivity — side by side */}
-              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
+              {/* Investor Metrics + Sensitivity — side by side (shown when all KPIs ready) */}
+              {allKPIsReady && (
+              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0 animate-fade-in">
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
                 <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Investor Metrics</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
@@ -551,7 +585,6 @@ export default function ROIPage() {
                 </div>
               </ContentCard>
 
-              {/* Sensitivity chart + actions */}
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
                 <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Profit vs. Exit Price</p>
                 <div className="flex items-end gap-3 flex-1 min-h-[48px]">
@@ -577,9 +610,13 @@ export default function ROIPage() {
                   })}
                 </div>
                 <p className="text-xs text-muted mt-2 text-center">AED per sqft NSA</p>
+              </ContentCard>
+              </div>
+              )}
 
-                {/* Actions */}
-                <div className="flex justify-between mt-2 pt-2 border-t border-mint-light/40 relative">
+              {/* Actions — always visible */}
+              <ContentCard className="py-2 px-4 shrink-0">
+                <div className="flex justify-between relative">
                   <div>
                     <button
                       ref={compareBtnRef}
@@ -631,7 +668,6 @@ export default function ROIPage() {
                   </button>
                 </div>
               </ContentCard>
-              </div>
             </div>
           )}
 
@@ -690,13 +726,14 @@ export default function ROIPage() {
 
 function KPICard({
   label, value, sub, primary, badge, tooltipFormula, tooltipLines,
-  compareValues,
+  compareValues, ready = true,
 }: {
   label: string; value: string; sub?: string; primary?: boolean;
   badge?: { label: string; bg: string; text: string };
   tooltipFormula?: string;
   tooltipLines?: string[];
   compareValues?: { v1: string; v2: string; label1: string; label2: string; badge1?: { label: string; bg: string; text: string }; badge2?: { label: string; bg: string; text: string } };
+  ready?: boolean;
 }) {
   const [show, setShow] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -704,6 +741,7 @@ function KPICard({
   const [above, setAbove] = useState(false);
 
   function handleEnter() {
+    if (!ready) return;
     if (!(tooltipLines || tooltipFormula) || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const goAbove = rect.bottom + 220 > window.innerHeight;
@@ -727,7 +765,7 @@ function KPICard({
   return (
     <div
       ref={ref}
-      className="relative h-full"
+      className={`relative h-full transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-50"}`}
       onMouseEnter={handleEnter}
       onMouseLeave={() => setShow(false)}
     >
@@ -737,37 +775,55 @@ function KPICard({
           <div className="flex items-stretch gap-1.5">
             <div className="flex-1 text-center min-w-0">
               <p className="text-[10px] font-medium text-forest leading-normal mb-0">{compareValues.label1}</p>
-              <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
-              {compareValues.badge1 && (
-                <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
-                  {compareValues.badge1.label}
-                </span>
+              {ready ? (
+                <>
+                  <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
+                  {compareValues.badge1 && (
+                    <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
+                      {compareValues.badge1.label}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-muted/40`}>—</p>
               )}
             </div>
             <div className="w-px shrink-0 bg-mint-light/60" />
             <div className="flex-1 text-center min-w-0">
               <p className="text-[10px] font-medium text-compare-b leading-normal mb-0">{compareValues.label2}</p>
-              <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
-              {compareValues.badge2 && (
-                <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
-                  {compareValues.badge2.label}
-                </span>
+              {ready ? (
+                <>
+                  <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
+                  {compareValues.badge2 && (
+                    <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
+                      {compareValues.badge2.label}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-muted/40`}>—</p>
               )}
             </div>
           </div>
         ) : (
           <div className="text-center">
-            <p className={`${valueSz} font-bold font-heading leading-tight ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</p>
-            {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
-            {badge && (
-              <span className={`mt-1 inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
-                {badge.label}
-              </span>
+            {ready ? (
+              <>
+                <p className={`${valueSz} font-bold font-heading leading-tight ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+                {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
+                {badge && (
+                  <span className={`mt-1 inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
+                    {badge.label}
+                  </span>
+                )}
+              </>
+            ) : (
+              <p className={`${valueSz} font-bold font-heading leading-tight text-muted/40`}>—</p>
             )}
           </div>
         )}
       </ContentCard>
-      {(tooltipLines || tooltipFormula) && show && createPortal(
+      {ready && (tooltipLines || tooltipFormula) && show && createPortal(
         <div className="bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[300px] pointer-events-none" style={tipStyle}>
           <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-deep-forest rotate-45 rounded-sm ${above ? "-bottom-1.5" : "-top-1.5"}`} />
           {tooltipFormula && (
@@ -818,10 +874,11 @@ function TogglePair({
 }
 
 function NumInput({
-  label, value, unit, prefix, suffix, onChange,
+  label, value, unit, prefix, suffix, onChange, placeholder,
 }: {
-  label: string; value: number; unit: string; prefix?: boolean; suffix?: boolean;
-  onChange: (v: number) => void;
+  label: string; value: number | ""; unit: string; prefix?: boolean; suffix?: boolean;
+  onChange: (v: number | "") => void;
+  placeholder?: string;
 }) {
   return (
     <div className="flex items-center justify-between py-0.5">
@@ -831,7 +888,11 @@ function NumInput({
         <input
           type="number"
           value={value}
-          onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) onChange(v); }}
+          placeholder={placeholder}
+          onChange={e => {
+            if (e.target.value === "") { onChange(placeholder ? "" : 0); return; }
+            const v = Number(e.target.value); if (!isNaN(v)) onChange(v);
+          }}
           className="w-28 px-2 py-1 text-sm font-semibold text-forest bg-white text-right outline-none"
         />
         {suffix && <span className="px-2 py-1 text-sm text-muted bg-mint-bg border-l border-mint-light">{unit}</span>}
