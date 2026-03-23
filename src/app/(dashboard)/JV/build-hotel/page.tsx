@@ -157,7 +157,7 @@ function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
 function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center justify-between py-2">
+    <div className="flex items-center justify-between py-2 lg:py-1.5">
       <span className="text-sm text-muted">{label}</span>
       <div className="flex items-center gap-1">
         {unit === "AED" && <span className="text-xs text-muted">AED</span>}
@@ -186,11 +186,24 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function KPI({ label, value, sub, primary, warn }: { label: string; value: string; sub?: string; primary?: boolean; warn?: boolean }) {
   return (
-    <div className={`rounded-xl p-3 flex flex-col ${warn ? "bg-amber-50 border border-amber-200" : primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
-      <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
-      <span className={`text-lg font-bold mt-0.5 ${warn ? "text-amber-700" : primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
-      {sub && <span className="text-[11px] text-muted mt-0.5">{sub}</span>}
+    <div className={`rounded-xl p-3 md:p-2 flex flex-col ${warn ? "bg-amber-50 border border-amber-200" : primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+      <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">{label}</span>
+      <span className={`text-lg md:text-base font-bold mt-0.5 ${warn ? "text-amber-700" : primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
+      {sub && <span className="text-[10px] text-muted mt-0.5">{sub}</span>}
     </div>
+  );
+}
+
+function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <ContentCard>
+      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left md:pointer-events-none">
+        <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold">{title}</h2>
+        <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      <div className={`mt-1.5 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
+    </ContentCard>
   );
 }
 
@@ -214,7 +227,7 @@ export default function BuildHotelPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto">
+    <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
       {/* Header */}
       <div className="shrink-0">
         <div className="flex items-center gap-2 text-sm text-muted mb-1">
@@ -222,16 +235,16 @@ export default function BuildHotelPage() {
           <span>/</span>
           <span className="text-deep-forest font-medium">Build &amp; Hotel</span>
         </div>
-        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Build &amp; Hotel Model</h1>
-        <p className="text-sm text-muted mt-1">
+        <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Hotel Model</h1>
+        <p className="text-sm text-muted mt-0.5">
           Develop a hospitality asset with an operator — operator fees are deducted before the joint-venture profit split.
         </p>
       </div>
 
       {/* Main */}
-      <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row gap-2 flex-1 min-h-0">
         {/* Left: Inputs */}
-        <ContentCard className="flex-1 flex flex-col md:max-w-md">
+        <ContentCard className="flex flex-col md:w-3/5 lg:w-2/3 min-h-0 md:overflow-y-auto">
           {/* Pre-filled land info */}
           {plotInfo && (
             <div className="mb-2 pb-2 border-b border-mint-light/40">
@@ -250,13 +263,35 @@ export default function BuildHotelPage() {
             </div>
           )}
 
+          {/* Mobile key results snapshot */}
+          <div className="md:hidden mb-2 pb-2 border-b border-mint-light/40">
+            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">Key Results</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
+                <p className="text-[10px] text-muted uppercase tracking-wider">Revenue</p>
+                <p className="text-sm font-bold text-forest">{fmtAED(r.totalRevenue)}</p>
+              </div>
+              <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
+                <p className="text-[10px] text-muted uppercase tracking-wider">Net After Op.</p>
+                <p className="text-sm font-bold text-forest">{fmtAED(r.netIncomeAfterOperator)}</p>
+              </div>
+              <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
+                <p className="text-[10px] text-muted uppercase tracking-wider">Yield</p>
+                <p className="text-sm font-bold text-deep-forest">{r.yieldPct.toFixed(1)}%</p>
+              </div>
+            </div>
+          </div>
+
           <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">
             {plotInfo ? "Simulation Inputs" : "Assumptions"}
           </h2>
 
-          <div className="divide-y divide-mint-light/40 flex-1 flex flex-col justify-evenly">
-            <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Development</p>
+          {/* Inner 2-col on lg for compact desktop */}
+          <div className="flex-1 flex flex-col lg:grid lg:grid-cols-2 lg:gap-x-4">
+            {/* Column 1: Development + Hotel Operations */}
+            <div className="divide-y divide-mint-light/40">
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Development</p>
               <InputRow label="Plot Size" value={inputs.plotSize} unit="sqft" onChange={v => update("plotSize", v)} />
               <InputRow label="Land Value" value={inputs.landValue} unit="AED" onChange={v => update("landValue", v)} />
               <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} />
@@ -269,8 +304,11 @@ export default function BuildHotelPage() {
               <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
               <InputRow label="F&B Revenue (Annual)" value={inputs.fbRevenueAnnual} unit="AED" onChange={v => update("fbRevenueAnnual", v)} />
             </div>
-            <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Operator Fees</p>
+            </div>
+            {/* Column 2: Operator Fees + Operating Costs + JV Split */}
+            <div className="divide-y divide-mint-light/40 border-t border-mint-light/40 lg:border-t-0">
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Operator Fees</p>
               <InputRow label="Base Fee (% of Revenue)" value={inputs.baseFeeRevenuePct} unit="%" onChange={v => update("baseFeeRevenuePct", v)} />
               <InputRow label="Incentive Fee (% of GOP)" value={inputs.incentiveFeeProfitPct} unit="%" onChange={v => update("incentiveFeeProfitPct", v)} />
             </div>
@@ -286,25 +324,24 @@ export default function BuildHotelPage() {
                 <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
               </div>
             </div>
+            </div>
           </div>
         </ContentCard>
 
         {/* Right: Outputs */}
-        <div className="flex-1 flex flex-col gap-2 lg:gap-3 min-h-0">
+        <div className="flex flex-col gap-1.5 md:w-2/5 lg:w-1/3 min-h-0 md:overflow-y-auto">
           {/* Revenue */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Revenue (Annual)</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <Section title="Revenue (Annual)">
+            <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Room Revenue" value={fmtAED(r.roomRevenue)} sub={`${formatNumber(Math.round(r.occupiedNights))} nights × AED ${formatNumber(inputs.adr)}`} />
               <KPI label="F&B Revenue" value={fmtAED(inputs.fbRevenueAnnual)} />
               <KPI label="Total Revenue" value={fmtAED(r.totalRevenue)} primary />
               <KPI label="RevPAR" value={`AED ${formatNumber(Math.round(r.revpar))}`} sub={`${inputs.occupancy}% occupancy`} />
             </div>
-          </ContentCard>
+          </Section>
 
           {/* Waterfall */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">P&amp;L Waterfall</h2>
+          <Section title="P&amp;L Waterfall">
             <div className="space-y-1">
               <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-mint-white/80">
                 <span className="text-sm text-deep-forest">Total Revenue</span>
@@ -335,36 +372,34 @@ export default function BuildHotelPage() {
                 <span className="text-base font-bold text-forest">{fmtAED(r.netIncomeAfterOperator)}</span>
               </div>
             </div>
-          </ContentCard>
+          </Section>
 
           {/* Profit Split */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Joint-Venture Profit Split (Annual)</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
-                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                <p className="text-[11px] text-muted">Annual ROI: {r.landOwnerROI.toFixed(1)}%</p>
+          <Section title="Joint-Venture Profit Split (Annual)">
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className="rounded-xl p-3 md:p-2 bg-forest/5 border border-forest/15">
+                <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
+                <p className="text-lg md:text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
+                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                <p className="text-[10px] text-muted">Annual ROI: {r.landOwnerROI.toFixed(1)}%</p>
               </div>
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
-                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                <p className="text-[11px] text-muted">Annual ROI: {r.investorROI.toFixed(1)}%</p>
+              <div className="rounded-xl p-3 md:p-2 bg-forest/5 border border-forest/15">
+                <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
+                <p className="text-lg md:text-base font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
+                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                <p className="text-[10px] text-muted">Annual ROI: {r.investorROI.toFixed(1)}%</p>
               </div>
             </div>
-          </ContentCard>
+          </Section>
 
           {/* Summary KPIs */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Key Metrics</h2>
-            <div className="grid grid-cols-3 gap-2">
+          <Section title="Key Metrics">
+            <div className="grid grid-cols-3 gap-1.5">
               <KPI label="Development Cost" value={fmtAED(r.totalDevelopmentCost)} sub={`Land ${fmtAED(inputs.landValue)} + Build ${fmtAED(inputs.constructionCostTotal)} + FF&E ${fmtAED(inputs.ffePlusPreOpening)}`} />
               <KPI label="Yield on Cost" value={`${r.yieldPct.toFixed(1)}%`} sub="Net Income ÷ Dev. Cost" primary />
               <KPI label="Operator Take" value={fmtAED(r.totalOperatorFees)} sub={`${r.totalRevenue > 0 ? ((r.totalOperatorFees / r.totalRevenue) * 100).toFixed(1) : 0}% of revenue`} warn />
             </div>
-          </ContentCard>
+          </Section>
         </div>
       </div>
     </div>

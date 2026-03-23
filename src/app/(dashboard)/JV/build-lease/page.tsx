@@ -147,7 +147,7 @@ function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
 function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center justify-between py-2">
+    <div className="flex items-center justify-between py-2 lg:py-1.5">
       <span className="text-sm text-muted">{label}</span>
       <div className="flex items-center gap-1">
         {unit === "AED" && <span className="text-xs text-muted">AED</span>}
@@ -177,11 +177,24 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function KPI({ label, value, sub, primary }: { label: string; value: string; sub?: string; primary?: boolean }) {
   return (
-    <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
-      <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
-      <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
-      {sub && <span className="text-[11px] text-muted mt-0.5">{sub}</span>}
+    <div className={`rounded-xl p-3 md:p-2 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+      <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">{label}</span>
+      <span className={`text-lg md:text-base font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
+      {sub && <span className="text-[10px] text-muted mt-0.5">{sub}</span>}
     </div>
+  );
+}
+
+function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <ContentCard>
+      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left md:pointer-events-none">
+        <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold">{title}</h2>
+        <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      <div className={`mt-1.5 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
+    </ContentCard>
   );
 }
 
@@ -205,7 +218,7 @@ export default function BuildLeasePage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto">
+    <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
       {/* Header */}
       <div className="shrink-0">
         <div className="flex items-center gap-2 text-sm text-muted mb-1">
@@ -213,16 +226,16 @@ export default function BuildLeasePage() {
           <span>/</span>
           <span className="text-deep-forest font-medium">Build &amp; Lease</span>
         </div>
-        <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Build &amp; Lease Model</h1>
-        <p className="text-sm text-muted mt-1">
+        <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Lease Model</h1>
+        <p className="text-sm text-muted mt-0.5">
           Build and lease to tenants — recurring rental income split between landowner and investor.
         </p>
       </div>
 
       {/* Main */}
-      <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row gap-2 flex-1 min-h-0">
         {/* Left: Inputs */}
-        <ContentCard className="flex-1 flex flex-col md:max-w-md">
+        <ContentCard className="flex flex-col md:w-3/5 lg:w-2/3 min-h-0 md:overflow-y-auto">
           {/* Pre-filled land info */}
           {plotInfo && (
             <div className="mb-2 pb-2 border-b border-mint-light/40">
@@ -241,13 +254,35 @@ export default function BuildLeasePage() {
             </div>
           )}
 
+          {/* Mobile key results snapshot */}
+          <div className="md:hidden mb-2 pb-2 border-b border-mint-light/40">
+            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">Key Results</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
+                <p className="text-[10px] text-muted uppercase tracking-wider">NOI</p>
+                <p className="text-sm font-bold text-forest">{fmtAED(r.noi)}</p>
+              </div>
+              <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
+                <p className="text-[10px] text-muted uppercase tracking-wider">Yield</p>
+                <p className="text-sm font-bold text-deep-forest">{r.yieldPct.toFixed(1)}%</p>
+              </div>
+              <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
+                <p className="text-[10px] text-muted uppercase tracking-wider">ROI ({inputs.holdYears}yr)</p>
+                <p className="text-sm font-bold text-deep-forest">{r.totalROI.toFixed(1)}%</p>
+              </div>
+            </div>
+          </div>
+
           <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">
             {plotInfo ? "Simulation Inputs" : "Assumptions"}
           </h2>
 
-          <div className="divide-y divide-mint-light/40 flex-1 flex flex-col justify-evenly">
-            <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Land &amp; Construction</p>
+          {/* Inner 2-col on lg for compact desktop */}
+          <div className="flex-1 flex flex-col lg:grid lg:grid-cols-2 lg:gap-x-4">
+            {/* Column 1: Land & Construction + Rental */}
+            <div className="divide-y divide-mint-light/40">
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Land &amp; Construction</p>
               <InputRow label="Plot Size" value={inputs.plotSize} unit="sqft" onChange={v => update("plotSize", v)} />
               <InputRow label="Land Value" value={inputs.landValue} unit="AED" onChange={v => update("landValue", v)} />
               <InputRow label="FAR" value={inputs.farRatio} unit="x" onChange={v => update("farRatio", v)} />
@@ -260,8 +295,11 @@ export default function BuildLeasePage() {
               <InputRow label="Rent / NSA sqft / yr" value={inputs.rentalPerNSA} unit="AED" onChange={v => update("rentalPerNSA", v)} />
               <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
             </div>
-            <div>
-              <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Expenses (% of Gross Rent)</p>
+            </div>
+            {/* Column 2: Expenses + Hold & Exit + JV Split */}
+            <div className="divide-y divide-mint-light/40 border-t border-mint-light/40 lg:border-t-0">
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Expenses (% of Gross Rent)</p>
               <InputRow label="Operating Costs" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
               <InputRow label="Maintenance" value={inputs.maintenancePct} unit="%" onChange={v => update("maintenancePct", v)} />
               <InputRow label="Property Mgmt Fee" value={inputs.propertyMgmtFeePct} unit="%" onChange={v => update("propertyMgmtFeePct", v)} />
@@ -279,59 +317,56 @@ export default function BuildLeasePage() {
                 <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
               </div>
             </div>
+            </div>
           </div>
         </ContentCard>
 
         {/* Right: Outputs */}
-        <div className="flex-1 flex flex-col gap-2 lg:gap-3 min-h-0">
+        <div className="flex flex-col gap-1.5 md:w-2/5 lg:w-1/3 min-h-0 md:overflow-y-auto">
           {/* Annual Income */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Annual Income</h2>
-            <div className="grid grid-cols-2 gap-2">
+          <Section title="Annual Income">
+            <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Gross Rental Income" value={fmtAED(r.grossRentalIncome)} sub={`${formatNumber(Math.round(r.nsa))} NSA × AED ${inputs.rentalPerNSA} × ${inputs.occupancy}%`} />
               <KPI label="Total Expenses" value={fmtAED(r.totalExpenses)} sub={`Ops ${fmtAED(r.operatingCosts)} + Maint ${fmtAED(r.maintenance)} + Mgmt ${fmtAED(r.propertyMgmtFee)}`} />
               <KPI label="NOI (Net Operating Income)" value={fmtAED(r.noi)} primary sub="Gross Rent − Expenses" />
               <KPI label={`Cash Flow (${inputs.holdYears} yrs)`} value={fmtAED(r.totalNOI)} primary sub={`NOI × ${inputs.holdYears} years`} />
             </div>
-          </ContentCard>
+          </Section>
 
           {/* Returns */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Returns</h2>
-            <div className="grid grid-cols-3 gap-2">
+          <Section title="Returns">
+            <div className="grid grid-cols-3 gap-1.5">
               <KPI label="Yield" value={`${r.yieldPct.toFixed(1)}%`} sub="NOI ÷ Dev. Cost" primary />
               <KPI label={`ROI (${inputs.holdYears} yrs)`} value={`${r.totalROI.toFixed(1)}%`} sub="Total NOI ÷ Dev. Cost" />
               <KPI label="Payback Period" value={r.paybackYears === Infinity ? "N/A" : `${r.paybackYears.toFixed(1)} yrs`} sub="Dev. Cost ÷ NOI" />
             </div>
-          </ContentCard>
+          </Section>
 
           {/* Profit Split */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Profit Split ({inputs.holdYears}-Year Income)</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
-                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                <p className="text-[11px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
+          <Section title={`Profit Split (${inputs.holdYears}-Year Income)`}>
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className="rounded-xl p-3 md:p-2 bg-forest/5 border border-forest/15">
+                <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
+                <p className="text-lg md:text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
+                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                <p className="text-[10px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
               </div>
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
-                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                <p className="text-[11px] text-muted">ROI: {r.investorROI.toFixed(1)}%</p>
+              <div className="rounded-xl p-3 md:p-2 bg-forest/5 border border-forest/15">
+                <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
+                <p className="text-lg md:text-base font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
+                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                <p className="text-[10px] text-muted">ROI: {r.investorROI.toFixed(1)}%</p>
               </div>
             </div>
-          </ContentCard>
+          </Section>
 
           {/* Optional Exit */}
-          <ContentCard>
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Exit Valuation (Optional)</h2>
-            <div className="grid grid-cols-2 gap-2">
+          <Section title="Exit Valuation (Optional)">
+            <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${inputs.capRate}% cap rate`} primary />
               <KPI label="Exit Profit" value={fmtAED(r.exitProfit)} sub="Exit Value − Dev. Cost" primary={r.exitProfit >= 0} />
             </div>
-          </ContentCard>
+          </Section>
         </div>
       </div>
     </div>
