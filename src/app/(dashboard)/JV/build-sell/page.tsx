@@ -157,23 +157,23 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function KPI({ label, value, sub, primary }: { label: string; value: string; sub?: string; primary?: boolean }) {
   return (
-    <div className={`rounded-xl p-2 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
-      <span className="text-[10px] text-muted uppercase tracking-wider">{label}</span>
-      <span className={`text-base font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
-      {sub && <span className="text-[10px] text-muted mt-0.5">{sub}</span>}
+    <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+      <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
+      <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
+      {sub && <span className="text-[11px] text-muted mt-0.5">{sub}</span>}
     </div>
   );
 }
 
-function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+function Section({ title, defaultOpen = true, className, children }: { title: string; defaultOpen?: boolean; className?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <ContentCard>
+    <ContentCard className={className}>
       <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left md:pointer-events-none">
-        <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold">{title}</h2>
+        <h2 className="text-xs uppercase tracking-widest text-muted font-semibold">{title}</h2>
         <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
       </button>
-      <div className={`mt-1.5 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
+      <div className={`mt-2 flex-1 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
     </ContentCard>
   );
 }
@@ -260,7 +260,7 @@ export default function BuildSellPage() {
           {/* Inner 2-col on lg for compact desktop */}
           <div className="flex-1 flex flex-col lg:grid lg:grid-cols-2 lg:gap-x-4">
             {/* Column 1: Land + Construction */}
-            <div className="divide-y divide-mint-light/40">
+            <div className="divide-y divide-mint-light/40 flex flex-col justify-between">
             <div>
               <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Land</p>
               <InputRow label="Plot Size" value={inputs.plotSize} unit="sqft" onChange={v => update("plotSize", v)} />
@@ -275,7 +275,7 @@ export default function BuildSellPage() {
             </div>
             </div>
             {/* Column 2: Sales + JV Split */}
-            <div className="divide-y divide-mint-light/40 border-t border-mint-light/40 lg:border-t-0">
+            <div className="divide-y divide-mint-light/40 border-t border-mint-light/40 lg:border-t-0 flex flex-col justify-between">
               <div>
                 <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Sales</p>
               <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} />
@@ -293,9 +293,9 @@ export default function BuildSellPage() {
         </ContentCard>
 
         {/* Right: Outputs */}
-        <div className="flex flex-col gap-1 md:w-[45%] md:overflow-y-auto">
+        <div className="flex flex-col gap-2 md:w-[45%] md:overflow-y-auto">
           {/* Project Summary */}
-          <Section title="Project Summary">
+          <Section title="Project Summary" className="md:flex-[4] flex flex-col">
             <div className="grid grid-cols-2 gap-1.5">
               <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} />
               <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} />
@@ -306,42 +306,42 @@ export default function BuildSellPage() {
           </Section>
 
           {/* Profit Split */}
-          <Section title="Profit Split">
+          <Section title="Profit Split" className="md:flex-1 flex flex-col">
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
-                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerProfit)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                <p className="text-[10px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
+              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
+                <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
+                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerProfit)}</p>
+                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                <p className="text-[11px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
               </div>
-              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
-                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.investorProfit)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                <p className="text-[10px] text-muted">ROI: {r.investorROI.toFixed(1)}%</p>
+              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
+                <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
+                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorProfit)}</p>
+                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                <p className="text-[11px] text-muted">ROI: {r.investorROI.toFixed(1)}%</p>
               </div>
             </div>
           </Section>
 
           {/* Comparison */}
-          <Section title="Sell Land Today vs Joint-Venture">
+          <Section title="Sell Land Today vs Joint-Venture" className="md:flex-1 flex flex-col">
             <div className="grid grid-cols-3 gap-1.5">
-              <div className="rounded-xl p-2 bg-mint-white/80 border border-mint-light/40">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Sell Today</span>
-                <p className="text-base font-bold text-deep-forest mt-0.5">{fmtAED(r.sellTodayProceeds)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Immediate cash</p>
+              <div className="rounded-xl p-3 bg-mint-white/80 border border-mint-light/40">
+                <span className="text-[11px] text-muted uppercase tracking-wider">Sell Today</span>
+                <p className="text-lg font-bold text-deep-forest mt-0.5">{fmtAED(r.sellTodayProceeds)}</p>
+                <p className="text-[11px] text-muted mt-0.5">Immediate cash</p>
               </div>
-              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Joint-Venture</span>
-                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.jvLandOwnerProceeds)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Land + profit share</p>
+              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
+                <span className="text-[11px] text-muted uppercase tracking-wider">Joint-Venture</span>
+                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.jvLandOwnerProceeds)}</p>
+                <p className="text-[11px] text-muted mt-0.5">Land + profit share</p>
               </div>
-              <div className={`rounded-xl p-2 border ${r.jvUplift >= 0 ? "bg-forest/5 border-forest/15" : "bg-red-50 border-red-200"}`}>
-                <span className="text-[10px] text-muted uppercase tracking-wider">Uplift</span>
-                <p className={`text-base font-bold mt-0.5 ${r.jvUplift >= 0 ? "text-forest" : "text-red-600"}`}>
+              <div className={`rounded-xl p-3 border ${r.jvUplift >= 0 ? "bg-forest/5 border-forest/15" : "bg-red-50 border-red-200"}`}>
+                <span className="text-[11px] text-muted uppercase tracking-wider">Uplift</span>
+                <p className={`text-lg font-bold mt-0.5 ${r.jvUplift >= 0 ? "text-forest" : "text-red-600"}`}>
                   {r.jvUplift >= 0 ? "+" : ""}{fmtAED(r.jvUplift)}
                 </p>
-                <p className="text-[10px] text-muted mt-0.5">
+                <p className="text-[11px] text-muted mt-0.5">
                   {r.jvUpliftPct >= 0 ? "+" : ""}{r.jvUpliftPct.toFixed(1)}% vs sell
                 </p>
               </div>
