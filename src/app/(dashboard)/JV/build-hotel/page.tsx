@@ -260,7 +260,7 @@ export default function BuildHotelPage() {
       {/* 2×2 Quadrant Grid */}
       <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-2 gap-2 flex-1 min-h-0">
         {/* TOP-LEFT: Plot Info (green card) */}
-        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-3 md:p-4 flex flex-col justify-center">
+        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 px-3 py-1.5 md:px-4 md:py-2 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-2">
             <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
             <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
