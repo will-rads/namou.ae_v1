@@ -232,36 +232,26 @@ export default function BuildSellPage() {
 
       {/* 2×2 Quadrant Grid */}
       <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-2 gap-2 flex-1 min-h-0">
-        {/* TOP-LEFT: Plot Info / Land Inputs Fallback */}
-        <ContentCard className="flex flex-col justify-center md:p-6">
-          {plotInfo ? (
-            <>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                <span className="text-base font-bold text-forest">{plotInfo.name}</span>
-              </div>
-              <div className="bg-mint-bg/50 rounded-lg px-4 py-2 border border-mint-light/30">
-                <InfoRow label="Plot Size" value={`${formatNumber(plotInfo.plotSize)} sqft`} />
-                <InfoRow label="Land Value" value={fmtAED(plotInfo.landValue)} />
-                <InfoRow label="Location" value={plotInfo.location} />
-                <InfoRow label="Zoning" value={plotInfo.zoning} />
-                <InfoRow label="Deal Type" value={plotInfo.dealType} />
-              </div>
-              <p className="text-[10px] text-muted mt-2">Pre-filled from selected plot. Simulation inputs are editable →</p>
-            </>
-          ) : (
-            <>
-              <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-3">Land</h2>
-              <InputRow label="Plot Size" value={inputs.plotSize} unit="sqft" onChange={v => update("plotSize", v)} />
-              <InputRow label="Land Value" value={inputs.landValue} unit="AED" onChange={v => update("landValue", v)} />
-            </>
-          )}
-        </ContentCard>
+        {/* TOP-LEFT: Plot Info (green card) */}
+        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-4 md:p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
+            <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
+          </div>
+          <div className="bg-white/60 rounded-lg px-4 py-3 border border-mint-light/30">
+            <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
+            <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
+            <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
+            <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
+            <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
+          </div>
+          <p className="text-[10px] text-muted mt-3">Pre-filled from selected plot. Simulation inputs are editable.</p>
+        </div>
 
         {/* TOP-RIGHT: Simulation Inputs */}
         <ContentCard className="flex flex-col">
           <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
-            {plotInfo ? "Simulation Inputs" : "Assumptions"}
+            Simulation Inputs
           </h2>
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
             {/* Inner left: Construction */}
