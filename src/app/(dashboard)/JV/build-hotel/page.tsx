@@ -178,7 +178,7 @@ function InputRow({ label, value, unit, onChange }: { label: string; value: numb
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-1.5">
+    <div className="flex items-center justify-between py-0.5">
       <span className="text-xs text-muted">{label}</span>
       <span className="text-sm font-semibold text-deep-forest">{value}</span>
     </div>
@@ -260,12 +260,12 @@ export default function BuildHotelPage() {
       {/* 2×2 Quadrant Grid */}
       <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-2 gap-2 flex-1 min-h-0">
         {/* TOP-LEFT: Plot Info (green card) */}
-        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 px-3 py-1.5 md:px-4 md:py-2 flex flex-col justify-center">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 px-3 py-1 md:px-4 md:py-1.5 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-1">
             <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
             <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
           </div>
-          <div className="bg-white/60 rounded-lg px-3 py-2 border border-mint-light/30">
+          <div className="bg-white/60 rounded-lg px-3 py-1 border border-mint-light/30">
             <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
             <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
             <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
@@ -273,7 +273,7 @@ export default function BuildHotelPage() {
             <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
             <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
           </div>
-          <p className="text-[10px] text-muted mt-2">Pre-filled from selected plot. Simulation inputs are editable.</p>
+          <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs are editable.</p>
         </div>
 
         {/* TOP-RIGHT: Simulation Inputs */}
