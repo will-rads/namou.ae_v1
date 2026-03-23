@@ -147,7 +147,7 @@ function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
 function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center justify-between py-2 lg:py-1.5">
+    <div className="flex items-center justify-between py-1.5 lg:py-1">
       <span className="text-sm text-muted">{label}</span>
       <div className="flex items-center gap-1">
         <span className="text-xs text-muted w-8 text-right">{unit === "x" ? "×" : unit}</span>
@@ -173,9 +173,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function KPI({ label, value, sub, primary }: { label: string; value: string; sub?: string; primary?: boolean }) {
   return (
-    <div className={`rounded-xl p-3 md:p-2 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
-      <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">{label}</span>
-      <span className={`text-lg md:text-base font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
+    <div className={`rounded-xl p-2 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+      <span className="text-[10px] text-muted uppercase tracking-wider">{label}</span>
+      <span className={`text-base font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
       {sub && <span className="text-[10px] text-muted mt-0.5">{sub}</span>}
     </div>
   );
@@ -214,7 +214,7 @@ export default function BuildLeasePage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto">
+    <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
       {/* Header */}
       <div className="shrink-0">
         <div className="flex items-center gap-2 text-sm text-muted mb-1">
@@ -228,10 +228,10 @@ export default function BuildLeasePage() {
         </p>
       </div>
 
-      {/* Main */}
-      <div className="flex flex-col gap-2 flex-1 min-h-0">
-        {/* Inputs */}
-        <ContentCard className="flex flex-col">
+      {/* Main: Inputs left, Metrics right */}
+      <div className="flex flex-col md:flex-row gap-2 flex-1 min-h-0">
+        {/* Left: Inputs */}
+        <ContentCard className="flex flex-col md:w-[55%] md:overflow-y-auto">
           {/* Pre-filled land info */}
           {plotInfo && (
             <div className="mb-2 pb-2 border-b border-mint-light/40">
@@ -317,8 +317,8 @@ export default function BuildLeasePage() {
           </div>
         </ContentCard>
 
-        {/* Outputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 items-start">
+        {/* Right: Outputs */}
+        <div className="flex flex-col gap-1 md:w-[45%] md:overflow-y-auto">
           {/* Annual Income */}
           <Section title="Annual Income">
             <div className="grid grid-cols-2 gap-1.5">
@@ -341,15 +341,15 @@ export default function BuildLeasePage() {
           {/* Profit Split */}
           <Section title={`Profit Split (${inputs.holdYears}-Year Income)`}>
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="rounded-xl p-3 md:p-2 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
-                <p className="text-lg md:text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
+                <span className="text-[10px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
+                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
                 <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
                 <p className="text-[10px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
               </div>
-              <div className="rounded-xl p-3 md:p-2 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] md:text-[10px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
-                <p className="text-lg md:text-base font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
+                <span className="text-[10px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
+                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
                 <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
                 <p className="text-[10px] text-muted">ROI: {r.investorROI.toFixed(1)}%</p>
               </div>
