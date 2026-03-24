@@ -10,6 +10,7 @@ import {
   loadSpreadsheetRows,
   clearSpreadsheetRows,
   spreadsheetRowsToPlots,
+  coordsFromUrl,
   type SpreadsheetRow,
 } from "@/data/spreadsheetData";
 import { savePlots, clearPlots } from "@/data/plotsStore";
@@ -74,12 +75,41 @@ export default function BackendPage() {
 
   // ── Apply changes ──
 
-  function applyChanges() {
-    saveSpreadsheetRows(rows);
-    savePlots(spreadsheetRowsToPlots(rows));
+  async function applyChanges() {
+    // Resolve any shortened Google Maps URLs that coordsFromUrl can't parse locally
+    const resolved = await resolveLocationPins(rows);
+    saveSpreadsheetRows(resolved);
+    savePlots(spreadsheetRowsToPlots(resolved));
     reloadPlotsFromStorage();
+    setRows(resolved);
     setIsDirty(false);
     showToast("Changes saved and published to website.", "success");
+  }
+
+  /** For each row whose locationPin is a shortened maps URL that coordsFromUrl
+   *  cannot resolve locally, call the server-side resolver to follow the
+   *  redirect and replace the shortened URL with the full coordinate URL. */
+  async function resolveLocationPins(src: SpreadsheetRow[]): Promise<SpreadsheetRow[]> {
+    const out = [...src];
+    for (let i = 0; i < out.length; i++) {
+      const pin = out[i].locationPin;
+      if (!pin || !pin.includes("maps.app.goo.gl")) continue;
+      if (coordsFromUrl(pin)) continue; // already resolvable locally
+      try {
+        const res = await fetch("/api/resolve-maps-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: pin }),
+        });
+        if (res.ok) {
+          const { fullUrl } = await res.json();
+          if (fullUrl && typeof fullUrl === "string") {
+            out[i] = { ...out[i], locationPin: fullUrl };
+          }
+        }
+      } catch { /* keep original URL on failure */ }
+    }
+    return out;
   }
 
   // ── Reset to default ──

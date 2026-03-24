@@ -1,6 +1,6 @@
 /* ── Mock data for the baseline UI (v1, no backend) ── */
 
-import { ORIGINAL_SPREADSHEET_ROWS, spreadsheetRowsToPlots } from "./spreadsheetData";
+import { ORIGINAL_SPREADSHEET_ROWS, spreadsheetRowsToPlots, loadSpreadsheetRows } from "./spreadsheetData";
 
 export type LandCategory = "residential" | "commercial" | "industrial" | "mixed-use";
 
@@ -264,32 +264,37 @@ function restoreDefaults(): void {
   }
 }
 
-/** Re-read localStorage and update the in-memory plots/areas/categories.
- *  Call after saving or clearing the plots override from /backend. */
-export function reloadPlotsFromStorage(): void {
-  if (typeof window === "undefined") return;
+/** Derive plots from the spreadsheet rows source of truth, or fall back to
+ *  the pre-computed plots cache, or defaults.  Always re-runs coordsFromUrl()
+ *  so any parsing improvements apply retroactively. */
+function loadOverride(): Plot[] | null {
+  if (typeof window === "undefined") return null;
+  // Primary: derive fresh from spreadsheet rows (source of truth)
+  try {
+    const rows = loadSpreadsheetRows();
+    if (rows && rows.length > 0) return spreadsheetRowsToPlots(rows);
+  } catch { /* ignore */ }
+  // Fallback: pre-computed Plot[] cache (backward compat)
   try {
     const stored = localStorage.getItem("namou_plots_override");
     if (stored) {
       const parsed: Plot[] = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        applyPlotsOverride(parsed);
-        return;
-      }
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch { /* ignore */ }
+  return null;
+}
+
+/** Re-read localStorage and update the in-memory plots/areas/categories.
+ *  Call after saving or clearing the plots override from /backend. */
+export function reloadPlotsFromStorage(): void {
+  const override = loadOverride();
+  if (override) { applyPlotsOverride(override); return; }
   restoreDefaults();
 }
 
 // ── Client-side: apply localStorage overrides if present ──────────────────────
-if (typeof window !== "undefined") {
-  try {
-    const stored = localStorage.getItem("namou_plots_override");
-    if (stored) {
-      const parsed: Plot[] = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        applyPlotsOverride(parsed);
-      }
-    }
-  } catch { /* SSR or parse error — use defaults */ }
+{
+  const override = loadOverride();
+  if (override) applyPlotsOverride(override);
 }

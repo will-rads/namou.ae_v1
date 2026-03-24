@@ -472,7 +472,7 @@ function validCoords(lat: number, lng: number): [number, number] | null {
  *  - Full URL: !3d...!4d... pattern
  *  - Query-param: ?q=lat,lng  or  &ll=lat,lng
  *  - Shortened maps.app.goo.gl links (pre-resolved lookup) */
-function coordsFromUrl(url: string): [number, number] | null {
+export function coordsFromUrl(url: string): [number, number] | null {
   if (!url) return null;
   const s = url.trim();
   // Plain coordinates: "25.665, 55.760" or "25.665,55.760" or "25.665 55.760"
