@@ -78,6 +78,15 @@ export default function BackendPage() {
   async function applyChanges() {
     // Resolve any shortened Google Maps URLs that coordsFromUrl can't parse locally
     const resolved = await resolveLocationPins(rows);
+    // Save to server (shared across all devices/browsers)
+    try {
+      await fetch("/api/spreadsheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resolved),
+      });
+    } catch { /* server save failed — still save locally */ }
+    // Also save to localStorage for instant same-browser updates
     saveSpreadsheetRows(resolved);
     savePlots(spreadsheetRowsToPlots(resolved));
     reloadPlotsFromStorage();
@@ -116,6 +125,8 @@ export default function BackendPage() {
 
   function resetToDefault() {
     if (!window.confirm("Reset all data to the original spreadsheet? This will discard all your edits.")) return;
+    // Clear server-side override
+    fetch("/api/spreadsheet", { method: "DELETE" }).catch(() => {});
     clearSpreadsheetRows();
     clearPlots();
     reloadPlotsFromStorage();

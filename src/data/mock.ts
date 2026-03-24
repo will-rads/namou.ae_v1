@@ -1,6 +1,6 @@
 /* ── Mock data for the baseline UI (v1, no backend) ── */
 
-import { ORIGINAL_SPREADSHEET_ROWS, spreadsheetRowsToPlots, loadSpreadsheetRows } from "./spreadsheetData";
+import { ORIGINAL_SPREADSHEET_ROWS, spreadsheetRowsToPlots, loadSpreadsheetRows, saveSpreadsheetRows } from "./spreadsheetData";
 
 export type LandCategory = "residential" | "commercial" | "industrial" | "mixed-use";
 
@@ -269,6 +269,19 @@ function restoreDefaults(): void {
  *  so any parsing improvements apply retroactively. */
 function loadOverride(): Plot[] | null {
   if (typeof window === "undefined") return null;
+  // Server-injected data (shared across all devices/browsers)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const serverRows = (window as any).__NAMOU_SERVER_DATA__;
+    if (serverRows) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).__NAMOU_SERVER_DATA__;
+      if (Array.isArray(serverRows) && serverRows.length > 0) {
+        saveSpreadsheetRows(serverRows);
+        return spreadsheetRowsToPlots(serverRows);
+      }
+    }
+  } catch { /* ignore */ }
   // Primary: derive fresh from spreadsheet rows (source of truth)
   try {
     const rows = loadSpreadsheetRows();
