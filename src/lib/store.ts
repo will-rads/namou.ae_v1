@@ -49,49 +49,38 @@ async function fsDelete(): Promise<void> {
 
 // ── Blob helpers (Vercel production) ────────────────────────────────────────
 
-/** Cached blob URL — set after the first successful put or list. */
-let _blobUrl: string | null = null;
-
 async function blobRead(): Promise<SpreadsheetRow[] | null> {
-  const { list, head } = await import("@vercel/blob");
-  // Try the known URL first (fast path after a write)
-  if (_blobUrl) {
-    try {
-      const meta = await head(_blobUrl);
-      const res = await fetch(meta.downloadUrl, { cache: "no-store" });
-      if (res.ok) return res.json();
-    } catch { /* blob may have been deleted — fall through to list */ }
-  }
-  // Discover via list
+  const { list, get } = await import("@vercel/blob");
   const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
   if (blobs.length === 0) return null;
-  _blobUrl = blobs[0].url;
-  const res = await fetch(blobs[0].downloadUrl, { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json();
+  // Use SDK get() instead of fetch(downloadUrl) to bypass CDN caching
+  const result = await get(blobs[0].url, { access: "private" });
+  if (!result || !result.stream) return null;
+  const reader = result.stream.getReader();
+  const chunks: Uint8Array[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const text = new TextDecoder().decode(Buffer.concat(chunks));
+  return JSON.parse(text);
 }
 
 async function blobWrite(rows: SpreadsheetRow[]): Promise<void> {
   const { put } = await import("@vercel/blob");
-  const blob = await put(BLOB_KEY, JSON.stringify(rows), {
+  await put(BLOB_KEY, JSON.stringify(rows), {
     access: "private",
     addRandomSuffix: false,
     allowOverwrite: true,
     cacheControlMaxAge: 0,
   });
-  _blobUrl = blob.url;
 }
 
 async function blobDelete(): Promise<void> {
   const { list, del } = await import("@vercel/blob");
-  if (_blobUrl) {
-    try { await del(_blobUrl); } catch { /* ignore */ }
-    _blobUrl = null;
-    return;
-  }
   const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
   if (blobs.length > 0) await del(blobs[0].url);
-  _blobUrl = null;
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
