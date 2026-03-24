@@ -58,7 +58,9 @@ function emptyRow(): SpreadsheetRow {
 }
 
 export function newSpreadsheetRow(): SpreadsheetRow {
-  return emptyRow();
+  const r = emptyRow();
+  r.jv = "Sale Only";
+  return r;
 }
 
 // Data extracted from the Google Sheet (30 rows, 30 columns)

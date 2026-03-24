@@ -21,21 +21,35 @@ import { reloadPlotsFromStorage } from "@/data/mock";
 export default function BackendPage() {
   const [rows, setRows] = useState<SpreadsheetRow[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  /** Fill blank/missing jv fields with "Sale Only". */
+  function normalizeJv(src: SpreadsheetRow[]): SpreadsheetRow[] {
+    return src.map(r => (r.jv ? r : { ...r, jv: "Sale Only" }));
+  }
+
   useEffect(() => {
-    // Primary: localStorage (synced from server on page load)
-    const stored = loadSpreadsheetRows();
-    if (stored) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setRows(stored);
-      return;
-    }
-    // Fetch from server API if localStorage is empty
+    // Always fetch from server API — persistent storage is the source of truth
     fetch("/api/spreadsheet")
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length > 0) setRows(data); })
-      .catch(() => {});
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setRows(normalizeJv(data));
+          // Update localStorage cache from server truth
+          saveSpreadsheetRows(data);
+        }
+      })
+      .catch(() => {
+        // Network/server error — fall back to stale localStorage cache
+        const stored = loadSpreadsheetRows();
+        if (stored) setRows(normalizeJv(stored));
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
@@ -81,23 +95,34 @@ export default function BackendPage() {
   // ── Apply changes ──
 
   async function applyChanges() {
-    // Resolve any shortened Google Maps URLs that coordsFromUrl can't parse locally
-    const resolved = await resolveLocationPins(rows);
-    // Save to server (shared across all devices/browsers)
+    setSaving(true);
     try {
-      await fetch("/api/spreadsheet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(resolved),
-      });
-    } catch { /* server save failed — still save locally */ }
-    // Also save to localStorage for instant same-browser updates
-    saveSpreadsheetRows(resolved);
-    savePlots(spreadsheetRowsToPlots(resolved));
-    reloadPlotsFromStorage();
-    setRows(resolved);
-    setIsDirty(false);
-    showToast("Changes saved and published to website.", "success");
+      // Resolve any shortened Google Maps URLs that coordsFromUrl can't parse locally
+      const resolved = normalizeJv(await resolveLocationPins(rows));
+      // Save to server (persistent storage — source of truth)
+      let serverOk = false;
+      try {
+        const res = await fetch("/api/spreadsheet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(resolved),
+        });
+        serverOk = res.ok;
+      } catch { /* network error */ }
+      if (!serverOk) {
+        showToast("Failed to save — changes were NOT published. Please try again.", "error");
+        return;
+      }
+      // Server save succeeded — now update local cache
+      saveSpreadsheetRows(resolved);
+      savePlots(spreadsheetRowsToPlots(resolved));
+      reloadPlotsFromStorage();
+      setRows(resolved);
+      setIsDirty(false);
+      showToast("Changes saved and published to website.", "success");
+    } finally {
+      setSaving(false);
+    }
   }
 
   /** For each row whose locationPin is a shortened maps URL that coordsFromUrl
@@ -130,29 +155,59 @@ export default function BackendPage() {
 
   async function resetToDefault() {
     if (!window.confirm("Reset all data to defaults? This will discard all your edits.")) return;
-    // Clear server-side override (API will re-seed from initial data on next GET)
-    await fetch("/api/spreadsheet", { method: "DELETE" }).catch(() => {});
-    clearSpreadsheetRows();
-    clearPlots();
-    reloadPlotsFromStorage();
-    // Fetch the re-seeded initial data from server
+    setSaving(true);
     try {
-      const res = await fetch("/api/spreadsheet");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) { setRows(data); setIsDirty(false); showToast("Data reset to defaults.", "success"); return; }
+      // Clear server-side override
+      let deleteOk = false;
+      try {
+        const res = await fetch("/api/spreadsheet", { method: "DELETE" });
+        deleteOk = res.ok;
+      } catch { /* network error */ }
+      if (!deleteOk) {
+        showToast("Failed to reset — please try again.", "error");
+        return;
       }
-    } catch {}
-    // Safety fallback
-    setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
-    setIsDirty(false);
-    showToast("Data reset to defaults.", "success");
+      // Server reset succeeded — clear local cache
+      clearSpreadsheetRows();
+      clearPlots();
+      // Fetch the re-seeded initial data from server
+      try {
+        const res = await fetch("/api/spreadsheet");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            saveSpreadsheetRows(data);
+            savePlots(spreadsheetRowsToPlots(data));
+            reloadPlotsFromStorage();
+            setRows(normalizeJv(data));
+            setIsDirty(false);
+            showToast("Data reset to defaults.", "success");
+            return;
+          }
+        }
+      } catch { /* fetch error */ }
+      // Safety fallback
+      reloadPlotsFromStorage();
+      setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
+      setIsDirty(false);
+      showToast("Data reset to defaults.", "success");
+    } finally {
+      setSaving(false);
+    }
   }
 
   // ── Cell renderer ──
 
   const inputCls =
     "w-full px-2 py-1.5 rounded-lg border border-mint-light/60 bg-white text-sm text-deep-forest focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none transition-colors";
+
+  if (loading) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center animate-fade-in">
+        <p className="text-sm text-muted">Loading backend data&hellip;</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
@@ -257,7 +312,8 @@ export default function BackendPage() {
         <div className="border-t border-mint-light/40 px-4 py-2 shrink-0 flex items-center justify-between">
           <button
             onClick={addRow}
-            className="flex items-center gap-2 px-4 py-2 border border-dashed border-forest/30 text-forest rounded-xl text-sm font-medium hover:bg-mint-bg/50 transition-colors"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 border border-dashed border-forest/30 text-forest rounded-xl text-sm font-medium hover:bg-mint-bg/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -268,16 +324,17 @@ export default function BackendPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={resetToDefault}
-              className="px-5 py-2 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors"
+              disabled={saving}
+              className="px-5 py-2 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Reset to Default
             </button>
             <button
               onClick={applyChanges}
-              disabled={!isDirty}
+              disabled={!isDirty || saving}
               className="px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Apply Changes
+              {saving ? "Saving\u2026" : "Apply Changes"}
             </button>
           </div>
         </div>
