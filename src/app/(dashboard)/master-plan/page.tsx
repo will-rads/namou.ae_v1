@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
-import { plots, areas, landCategories, areaDealAvailability, type Plot, formatNumber } from "@/data/mock";
+import { plots, areas, landCategories, plotDealAvailability, type Plot, formatNumber } from "@/data/mock";
 
 const PlotMap = dynamic(() => import("@/components/PlotMap"), {
   ssr: false,
@@ -28,6 +28,34 @@ const typeToLandUse: Record<string, string[]> = {
   "mixed-use": ["Mixed", "Residential / Commercial", "Commercial / Residential"],
   industrial:  ["Industrial"],
 };
+
+const SIZE_OPTIONS = [
+  { label: "All Sizes", value: "" },
+  { label: "Up to 10,000 sqft", value: "0-10000" },
+  { label: "10,000 – 50,000 sqft", value: "10000-50000" },
+  { label: "50,000+ sqft", value: "50000-" },
+];
+
+const PRICE_OPTIONS = [
+  { label: "All Prices", value: "" },
+  { label: "Up to AED 5M", value: "0-5000000" },
+  { label: "AED 5M – 15M", value: "5000000-15000000" },
+  { label: "AED 15M+", value: "15000000-" },
+];
+
+function matchesRange(value: number, range: string): boolean {
+  if (!range) return true;
+  const parts = range.split("-");
+  const min = parts[0] ? Number(parts[0]) : null;
+  const max = parts[1] ? Number(parts[1]) : null;
+  if (min !== null && value < min) return false;
+  if (max !== null && value > max) return false;
+  return true;
+}
+
+function filterLabel(value: string, options: { label: string; value: string }[]): string {
+  return options.find(o => o.value === value)?.label ?? "";
+}
 
 export default function MasterPlanPage() {
   return (
@@ -58,6 +86,33 @@ function MasterPlanContent() {
   const [compareMode, setCompareMode] = useState(false);
   const [comparePlots, setComparePlots] = useState<Plot[]>([]);
 
+  // ── Land filters (persisted in sessionStorage, set from /home or edited here) ──
+  const [sizeFilter, setSizeFilter] = useState(() => {
+    try { return sessionStorage.getItem("filter_size") ?? ""; } catch { return ""; }
+  });
+  const [priceFilter, setPriceFilter] = useState(() => {
+    try { return sessionStorage.getItem("filter_price") ?? ""; } catch { return ""; }
+  });
+  const [editingFilter, setEditingFilter] = useState<"size" | "price" | null>(null);
+  const filterPopRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      if (sizeFilter) sessionStorage.setItem("filter_size", sizeFilter); else sessionStorage.removeItem("filter_size");
+      if (priceFilter) sessionStorage.setItem("filter_price", priceFilter); else sessionStorage.removeItem("filter_price");
+    } catch { /* SSR safety */ }
+  }, [sizeFilter, priceFilter]);
+
+  // Close filter popover on outside click
+  useEffect(() => {
+    if (!editingFilter) return;
+    function handleClick(e: MouseEvent) {
+      if (filterPopRef.current && !filterPopRef.current.contains(e.target as Node)) setEditingFilter(null);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [editingFilter]);
+
   function handleSelectPlot(plot: Plot) {
     if (compareMode) {
       setComparePlots(prev => {
@@ -72,6 +127,7 @@ function MasterPlanContent() {
     } else {
       setSelectedPlot(plot);
       sessionStorage.setItem("selected_plot", JSON.stringify(plot));
+      window.dispatchEvent(new Event("plot-selected"));
     }
   }
 
@@ -93,7 +149,9 @@ function MasterPlanContent() {
     const matchesType = !ctxType || !typeToLandUse[ctxType]?.length
       || typeToLandUse[ctxType].some(f => p.landUse.includes(f));
     const matchesArea = !areaName || p.area === areaName;
-    return matchesType && matchesArea;
+    const matchesSize = matchesRange(p.plotArea, sizeFilter);
+    const matchesPrice = matchesRange(p.askingPrice, priceFilter);
+    return matchesType && matchesArea && matchesSize && matchesPrice;
   });
 
   const showPanel = selectedPlot && !compareMode;
@@ -127,6 +185,50 @@ function MasterPlanContent() {
               )}
             </>
           )}
+          {/* Active filter badges — clickable to edit */}
+          {sizeFilter && (
+            <div className="relative" ref={editingFilter === "size" ? filterPopRef : undefined}>
+              <button
+                onClick={() => setEditingFilter(editingFilter === "size" ? null : "size")}
+                className="text-xs font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1.5 rounded-full hover:bg-forest/20 transition-colors"
+              >
+                {filterLabel(sizeFilter, SIZE_OPTIONS)} ✕
+              </button>
+              {editingFilter === "size" && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
+                  <select
+                    value={sizeFilter}
+                    onChange={(e) => { setSizeFilter(e.target.value); setEditingFilter(null); }}
+                    className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
+                  >
+                    {SIZE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+          {priceFilter && (
+            <div className="relative" ref={editingFilter === "price" ? filterPopRef : undefined}>
+              <button
+                onClick={() => setEditingFilter(editingFilter === "price" ? null : "price")}
+                className="text-xs font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1.5 rounded-full hover:bg-forest/20 transition-colors"
+              >
+                {filterLabel(priceFilter, PRICE_OPTIONS)} ✕
+              </button>
+              {editingFilter === "price" && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
+                  <select
+                    value={priceFilter}
+                    onChange={(e) => { setPriceFilter(e.target.value); setEditingFilter(null); }}
+                    className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
+                  >
+                    {PRICE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
           {selectedPlot && !compareMode && (
             <>
               <span className="text-sm font-semibold text-forest bg-forest/10 border border-forest/20 px-3 py-1.5 rounded-full">
@@ -244,7 +346,7 @@ function MasterPlanContent() {
 
         {/* Plot detail panel — horizontal split */}
         {showPanel && (
-          <PlotDetailPanel plot={selectedPlot} onClose={() => setSelectedPlot(null)} dealAvailability={areaDealAvailability(ctxType, ctxArea)} />
+          <PlotDetailPanel plot={selectedPlot} onClose={() => setSelectedPlot(null)} dealAvailability={plotDealAvailability(selectedPlot)} />
         )}
 
         {/* Comparison table — right side */}
@@ -445,7 +547,7 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
 
         </div>
 
-        {/* CTAs — based on area deal-type availability */}
+        {/* CTAs — based on selected plot's Deal Type */}
         <div className={`mt-2 pt-2 border-t border-mint-light/60 shrink-0 flex gap-2 ${dealAvailability.showRoi && dealAvailability.showJv ? "flex-row" : "flex-col"}`}>
           {dealAvailability.showRoi && (
             <Link
@@ -460,7 +562,7 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
               href="/JV"
               className="block w-full text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
             >
-              {dealAvailability.showRoi ? "Check Joint Venture Opportunity" : "Joint Venture Opportunity"}
+              Joint-Venture Opportunities
             </Link>
           )}
         </div>

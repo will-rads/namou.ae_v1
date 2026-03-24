@@ -344,6 +344,16 @@ export function areaDealAvailability(
   return { showRoi: true, showJv: false };
 }
 
+/** Determine ROI/JV visibility based on a single plot's Deal Type field. */
+export function plotDealAvailability(
+  plot: Plot | null,
+): { showRoi: boolean; showJv: boolean } {
+  const jv = (plot?.jv ?? "").trim();
+  if (jv === "Sale + Joint-venture") return { showRoi: true, showJv: true };
+  if (jv === "Joint-venture Only") return { showRoi: false, showJv: true };
+  return { showRoi: true, showJv: false };
+}
+
 // ── Populate from backend-managed data (server-injected → localStorage → bootstrap fallback) ──
 {
   const backendData = loadOverride();

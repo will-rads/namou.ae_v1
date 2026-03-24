@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
-import { areaDealAvailability } from "@/data/mock";
+import { plotDealAvailability, type Plot } from "@/data/mock";
 
 const mainNavItems = [
   { href: "/master-plan", baseHref: "/master-plan", label: "Master Plan", icon: PlanIcon },
@@ -265,26 +265,25 @@ function NavLink({ href, label, active, children, onNavigate }: { href: string; 
   );
 }
 
-/* ── Deal-context nav items — ROI and/or JV based on area deal types ── */
+/* ── Deal-context nav items — ROI and/or JV based on selected plot's Deal Type ── */
+
+function readSelectedPlot(): Plot | null {
+  try {
+    const stored = sessionStorage.getItem("selected_plot");
+    return stored ? JSON.parse(stored) : null;
+  } catch { return null; }
+}
 
 function DealNavItems({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
-  const searchParams = useSearchParams();
-  const urlType = searchParams.get("type");
-  const urlArea = searchParams.get("area");
+  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(readSelectedPlot);
 
-  const [ctx] = useState<{ type: string | null; area: string | null }>(() => {
-    try {
-      return {
-        type: urlType ?? sessionStorage.getItem("ctx_type"),
-        area: urlArea ?? sessionStorage.getItem("ctx_area"),
-      };
-    } catch { return { type: urlType, area: urlArea }; }
-  });
+  useEffect(() => {
+    function onPlotChanged() { setSelectedPlot(readSelectedPlot()); }
+    window.addEventListener("plot-selected", onPlotChanged);
+    return () => window.removeEventListener("plot-selected", onPlotChanged);
+  }, []);
 
-  const ctxType = urlType ?? ctx.type;
-  const ctxArea = urlArea ?? ctx.area;
-
-  const { showRoi, showJv } = useMemo(() => areaDealAvailability(ctxType, ctxArea), [ctxType, ctxArea]);
+  const { showRoi, showJv } = useMemo(() => plotDealAvailability(selectedPlot), [selectedPlot]);
 
   const roiActive = pathname === "/roi" || pathname === "/roi/calculator";
   const jvActive = pathname.startsWith("/JV");
