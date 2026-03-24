@@ -458,28 +458,38 @@ const URL_COORDS: Record<string, [number, number]> = {
   "HqjyFFc3PU1HuH1s9": [25.344303, 55.638806],
 };
 
-/** Try to extract lat/lng from a Google Maps URL.
- *  Supports full URLs (@lat,lng or !3d/!4d patterns) and
- *  falls back to the pre-resolved lookup for shortened maps.app.goo.gl links. */
+/** Validate that parsed values are plausible WGS84 coordinates. */
+function validCoords(lat: number, lng: number): [number, number] | null {
+  if (isNaN(lat) || isNaN(lng)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return [lat, lng];
+}
+
+/** Try to extract lat/lng from a Google Maps URL, a plain coordinate string,
+ *  or a Maps query-parameter URL.  Supports:
+ *  - Plain coordinates: "25.665, 55.760" or "25.665,55.760"
+ *  - Full URL: @lat,lng pattern
+ *  - Full URL: !3d...!4d... pattern
+ *  - Query-param: ?q=lat,lng  or  &ll=lat,lng
+ *  - Shortened maps.app.goo.gl links (pre-resolved lookup) */
 function coordsFromUrl(url: string): [number, number] | null {
   if (!url) return null;
+  const s = url.trim();
+  // Plain coordinates: "25.665, 55.760" or "25.665,55.760" or "25.665 55.760"
+  const plain = s.match(/^(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)$/);
+  if (plain) return validCoords(parseFloat(plain[1]), parseFloat(plain[2]));
   // Full URL: @lat,lng pattern
-  const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (atMatch) {
-    const lat = parseFloat(atMatch[1]);
-    const lng = parseFloat(atMatch[2]);
-    if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
-  }
+  const atMatch = s.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (atMatch) return validCoords(parseFloat(atMatch[1]), parseFloat(atMatch[2]));
   // Full URL: !3d...!4d... pattern
-  const d3 = url.match(/!3d(-?\d+\.?\d*)/);
-  const d4 = url.match(/!4d(-?\d+\.?\d*)/);
-  if (d3 && d4) {
-    const lat = parseFloat(d3[1]);
-    const lng = parseFloat(d4[1]);
-    if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
-  }
+  const d3 = s.match(/!3d(-?\d+\.?\d*)/);
+  const d4 = s.match(/!4d(-?\d+\.?\d*)/);
+  if (d3 && d4) return validCoords(parseFloat(d3[1]), parseFloat(d4[1]));
+  // URL query params: ?q=lat,lng  &ll=lat,lng  ?center=lat,lng
+  const qMatch = s.match(/[?&](?:q|ll|query|center)=(-?\d+\.?\d*)[,+](-?\d+\.?\d*)/);
+  if (qMatch) return validCoords(parseFloat(qMatch[1]), parseFloat(qMatch[2]));
   // Shortened URL: look up by short code
-  const shortMatch = url.match(/maps\.app\.goo\.gl\/([A-Za-z0-9]+)/);
+  const shortMatch = s.match(/maps\.app\.goo\.gl\/([A-Za-z0-9]+)/);
   if (shortMatch && URL_COORDS[shortMatch[1]]) return URL_COORDS[shortMatch[1]];
   return null;
 }
@@ -535,8 +545,8 @@ export function spreadsheetRowsToPlots(rows: SpreadsheetRow[]): Plot[] {
         landUse: row.landUse || "",
         location: row.area ? `${row.area}, Ras Al Khaimah` : "Ras Al Khaimah",
         plotType: row.plotType || "",
-        airportEta: row.airportEta || "",
-        casinoEta: row.casinoEta || "",
+        airportEta: row.airportEta || (AREA_ETAS[row.area]?.airport ?? ""),
+        casinoEta: row.casinoEta || (AREA_ETAS[row.area]?.casino ?? ""),
         ...(row.maxHeight ? { maxHeight: row.maxHeight } : {}),
         ...(farVal != null ? { far: farVal } : {}),
         ...(gfaVal != null ? { gfa: gfaVal } : {}),
