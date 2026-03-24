@@ -53,7 +53,7 @@ async function blobRead(): Promise<SpreadsheetRow[] | null> {
   const { list } = await import("@vercel/blob");
   const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
   if (blobs.length === 0) return null;
-  const res = await fetch(blobs[0].downloadUrl);
+  const res = await fetch(blobs[0].downloadUrl, { cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
 }
@@ -64,6 +64,7 @@ async function blobWrite(rows: SpreadsheetRow[]): Promise<void> {
     access: "private",
     addRandomSuffix: false,
     allowOverwrite: true,
+    cacheControlMaxAge: 0,
   });
 }
 
