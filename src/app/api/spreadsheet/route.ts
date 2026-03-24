@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { readRowsOrSeed, writeRows, deleteRows } from "@/lib/store";
 
+export const dynamic = "force-dynamic";
+
 function safeMessage(e: unknown): string {
   return e instanceof Error ? e.message : "Unknown error";
 }
