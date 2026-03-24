@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readRowsOrSeed, writeRows, deleteRows } from "@/lib/store";
+import { readRowsOrSeed, readRows, writeRows, deleteRows } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,10 @@ export async function POST(request: Request) {
   try {
     const rows = await request.json();
     await writeRows(rows);
-    return NextResponse.json({ ok: true });
+    // Verify write: read back immediately and return diagnostic info
+    const readback = await readRows();
+    const firstPlotName = readback?.[0]?.plotName ?? "(null)";
+    return NextResponse.json({ ok: true, rowsWritten: rows.length, readbackRows: readback?.length ?? 0, readbackFirst: firstPlotName });
   } catch (e) {
     console.error("[spreadsheet POST]", e);
     return NextResponse.json({ error: "Failed to save", details: safeMessage(e) }, { status: 500 });
