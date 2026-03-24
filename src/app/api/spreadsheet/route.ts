@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readRowsOrSeed, readRows, writeRows, deleteRows } from "@/lib/store";
+import { readRowsOrSeed, writeRows, deleteRows } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +24,7 @@ export async function POST(request: Request) {
   try {
     const rows = await request.json();
     await writeRows(rows);
-    // Diagnostic readback (temporary — will be removed once persistence is confirmed)
-    const readback = await readRows();
-    return NextResponse.json({ ok: true, readbackRows: readback?.length ?? 0 });
+    return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[spreadsheet POST]", e);
     return NextResponse.json({ error: "Failed to save", details: safeMessage(e) }, { status: 500 });
