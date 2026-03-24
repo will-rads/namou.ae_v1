@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, Fragment, useState, useEffect, useCallback, useMemo } from "react";
-import { plots, areas } from "@/data/mock";
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
+import { areaDealAvailability } from "@/data/mock";
 
 const mainNavItems = [
   { href: "/master-plan", baseHref: "/master-plan", label: "Master Plan", icon: PlanIcon },
@@ -64,21 +64,19 @@ function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navI
   return (
     <nav className="flex flex-col gap-1 px-2 flex-1">
       {navItems.map((item) => {
-        const active =
-          item.baseHref === "/roi"
-            ? pathname === "/roi" || pathname === "/roi/calculator"
-            : pathname.startsWith(item.baseHref);
+        if (item.baseHref === "/roi") {
+          // ROI + JV visibility controlled by area deal-type rules
+          return (
+            <Suspense key={item.baseHref} fallback={null}>
+              <DealNavItems pathname={pathname} onNavigate={onNavigate} />
+            </Suspense>
+          );
+        }
+        const active = pathname.startsWith(item.baseHref);
         return (
-          <Fragment key={item.baseHref}>
-            <NavLink href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
-              <item.icon className="w-4 h-4 shrink-0" />
-            </NavLink>
-            {item.baseHref === "/roi" && (
-              <Suspense fallback={null}>
-                <JvNavItem pathname={pathname} onNavigate={onNavigate} />
-              </Suspense>
-            )}
-          </Fragment>
+          <NavLink key={item.baseHref} href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
+            <item.icon className="w-4 h-4 shrink-0" />
+          </NavLink>
         );
       })}
 
@@ -267,22 +265,9 @@ function NavLink({ href, label, active, children, onNavigate }: { href: string; 
   );
 }
 
-/* ── JV nav item — visible only when current context has JV-eligible plots ── */
+/* ── Deal-context nav items — ROI and/or JV based on area deal types ── */
 
-const JV_ELIGIBLE = new Set(["Joint-venture Only", "Sale + Joint-venture"]);
-
-const TYPE_TO_LAND_USE: Record<string, string[]> = {
-  residential: ["Residential"],
-  commercial:  ["Commercial", "Hospitality"],
-  "mixed-use": ["Mixed", "Residential / Commercial", "Commercial / Residential"],
-  industrial:  ["Industrial"],
-};
-
-function toSlug(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-}
-
-function JvNavItem({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function DealNavItems({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const searchParams = useSearchParams();
   const urlType = searchParams.get("type");
   const urlArea = searchParams.get("area");
@@ -299,24 +284,24 @@ function JvNavItem({ pathname, onNavigate }: { pathname: string; onNavigate?: ()
   const ctxType = urlType ?? ctx.type;
   const ctxArea = urlArea ?? ctx.area;
 
-  const hasJv = useMemo(() => {
-    const areaName = ctxArea ? (areas.find(a => toSlug(a) === ctxArea) ?? null) : null;
-    return plots.some((p) => {
-      const matchesType = !ctxType || !TYPE_TO_LAND_USE[ctxType]?.length
-        || TYPE_TO_LAND_USE[ctxType].some(f => p.landUse.includes(f));
-      const matchesArea = !areaName || p.area === areaName;
-      return matchesType && matchesArea && JV_ELIGIBLE.has((p.jv ?? "").trim());
-    });
-  }, [ctxType, ctxArea]);
+  const { showRoi, showJv } = useMemo(() => areaDealAvailability(ctxType, ctxArea), [ctxType, ctxArea]);
 
-  if (!hasJv) return null;
-
-  const active = pathname.startsWith("/JV");
+  const roiActive = pathname === "/roi" || pathname === "/roi/calculator";
+  const jvActive = pathname.startsWith("/JV");
 
   return (
-    <NavLink href="/JV" label="Joint Venture" active={active} onNavigate={onNavigate}>
-      <JvIcon className="w-4 h-4 shrink-0" />
-    </NavLink>
+    <>
+      {showRoi && (
+        <NavLink href="/roi" label="ROI" active={roiActive} onNavigate={onNavigate}>
+          <TrendIcon className="w-4 h-4 shrink-0" />
+        </NavLink>
+      )}
+      {showJv && (
+        <NavLink href="/JV" label="Joint Venture" active={jvActive} onNavigate={onNavigate}>
+          <JvIcon className="w-4 h-4 shrink-0" />
+        </NavLink>
+      )}
+    </>
   );
 }
 

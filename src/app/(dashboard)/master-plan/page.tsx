@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
-import { plots, areas, landCategories, type Plot, formatNumber } from "@/data/mock";
+import { plots, areas, landCategories, areaDealAvailability, type Plot, formatNumber } from "@/data/mock";
 
 const PlotMap = dynamic(() => import("@/components/PlotMap"), {
   ssr: false,
@@ -244,7 +244,7 @@ function MasterPlanContent() {
 
         {/* Plot detail panel — horizontal split */}
         {showPanel && (
-          <PlotDetailPanel plot={selectedPlot} onClose={() => setSelectedPlot(null)} />
+          <PlotDetailPanel plot={selectedPlot} onClose={() => setSelectedPlot(null)} dealAvailability={areaDealAvailability(ctxType, ctxArea)} />
         )}
 
         {/* Comparison table — right side */}
@@ -364,7 +364,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
   );
 }
 
-function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void }) {
+function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onClose: () => void; dealAvailability: { showRoi: boolean; showJv: boolean } }) {
   const [openSection, setOpenSection] = useState<string>("land-info");
   function toggle(key: string) {
     setOpenSection(prev => (prev === key ? "" : key));
@@ -445,14 +445,24 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
 
         </div>
 
-        {/* CTAs */}
-        <div className="mt-2 pt-2 border-t border-mint-light/60 shrink-0">
-          <Link
-            href="/roi"
-            className="block w-full text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
-          >
-            Analyze ROI
-          </Link>
+        {/* CTAs — based on area deal-type availability */}
+        <div className={`mt-2 pt-2 border-t border-mint-light/60 shrink-0 flex gap-2 ${dealAvailability.showRoi && dealAvailability.showJv ? "flex-row" : "flex-col"}`}>
+          {dealAvailability.showRoi && (
+            <Link
+              href="/roi"
+              className="block w-full text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
+            >
+              Analyze ROI
+            </Link>
+          )}
+          {dealAvailability.showJv && (
+            <Link
+              href="/JV"
+              className="block w-full text-center px-4 py-2.5 border border-forest text-forest rounded-xl font-semibold text-sm hover:bg-mint-bg transition-colors"
+            >
+              {dealAvailability.showRoi ? "Check Joint Venture Opportunity" : "Joint Venture Opportunity"}
+            </Link>
+          )}
         </div>
       </ContentCard>
     </div>

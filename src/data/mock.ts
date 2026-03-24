@@ -74,18 +74,13 @@ export interface ROIOutputs {
   gfaPrice: number;
 }
 
-/* ── Safety-only seed (used if server injection + localStorage are both empty) ── */
-const _seedPlots: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
+/* ── Bootstrap fallback (used only when backend data is unavailable — SSR or first load) ── */
+const _BOOTSTRAP_PLOTS: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
+const _BOOTSTRAP_AREAS: string[] = [...new Set(_BOOTSTRAP_PLOTS.map(p => p.area).filter(Boolean))];
 
-/* ── Areas (rebuilt from backend data after hydration) ── */
-export const areas: string[] = [...new Set(_seedPlots.map(p => p.area).filter(Boolean))];
-
-const _SEED_AREAS: readonly string[] = Object.freeze([...areas]);
-
-/* ── Plots (populated from backend-managed data on every page load) ── */
-export const plots: Plot[] = [..._seedPlots];
-
-const _SEED_PLOTS: readonly Plot[] = JSON.parse(JSON.stringify(plots));
+/* ── Live data arrays — populated from backend-managed data on every page load ── */
+export const plots: Plot[] = [];
+export const areas: string[] = [];
 
 /* ── Filter categories for Master Plan ── */
 export const masterPlanFilters = [
@@ -255,9 +250,9 @@ function applyPlotsOverride(parsed: Plot[]): void {
 
 function restoreDefaults(): void {
   plots.length = 0;
-  plots.push(...JSON.parse(JSON.stringify(_SEED_PLOTS)));
+  plots.push(...JSON.parse(JSON.stringify(_BOOTSTRAP_PLOTS)));
   areas.length = 0;
-  areas.push(..._SEED_AREAS);
+  areas.push(..._BOOTSTRAP_AREAS);
   for (const cat of landCategories) {
     cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
   }
@@ -306,8 +301,56 @@ export function reloadPlotsFromStorage(): void {
   restoreDefaults();
 }
 
-// ── Client-side: hydrate from backend data (server-injected or localStorage) ──
+/* ── Area-level deal-type availability (shared by Sidebar + Master Plan) ── */
+
+const _DEAL_TYPE_TO_LAND_USE: Record<string, string[]> = {
+  residential: ["Residential"],
+  commercial:  ["Commercial", "Hospitality"],
+  "mixed-use": ["Mixed", "Residential / Commercial", "Commercial / Residential"],
+  industrial:  ["Industrial"],
+};
+
+function _areaSlug(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+/** Determine which sections (ROI / JV) should be visible for the given
+ *  type + area context, based on the deal types present in that area.
+ *
+ *  Precedence when multiple deal types coexist:
+ *    Sale + Joint-venture  → both shown
+ *    Joint-venture Only    → JV only
+ *    Sale Only             → ROI only
+ *    (default)             → ROI only */
+export function areaDealAvailability(
+  ctxType: string | null,
+  ctxArea: string | null,
+): { showRoi: boolean; showJv: boolean } {
+  const areaName = ctxArea ? (areas.find(a => _areaSlug(a) === ctxArea) ?? null) : null;
+  const contextPlots = plots.filter(p => {
+    const matchesType = !ctxType || !_DEAL_TYPE_TO_LAND_USE[ctxType]?.length
+      || _DEAL_TYPE_TO_LAND_USE[ctxType].some(f => p.landUse.includes(f));
+    const matchesArea = !areaName || p.area === areaName;
+    return matchesType && matchesArea;
+  });
+
+  const hasSaleJv = contextPlots.some(p => (p.jv ?? "").trim() === "Sale + Joint-venture");
+  const hasJvOnly = contextPlots.some(p => (p.jv ?? "").trim() === "Joint-venture Only");
+  const hasSaleOnly = contextPlots.some(p => (p.jv ?? "").trim() === "Sale Only");
+
+  if (hasSaleJv) return { showRoi: true, showJv: true };
+  if (hasJvOnly) return { showRoi: false, showJv: true };
+  if (hasSaleOnly) return { showRoi: true, showJv: false };
+  return { showRoi: true, showJv: false };
+}
+
+// ── Populate from backend-managed data (server-injected → localStorage → bootstrap fallback) ──
 {
-  const override = loadOverride();
-  if (override) applyPlotsOverride(override);
+  const backendData = loadOverride();
+  if (backendData) {
+    applyPlotsOverride(backendData);
+  } else {
+    // Bootstrap fallback: no backend data reachable (SSR or first-ever load)
+    applyPlotsOverride(JSON.parse(JSON.stringify(_BOOTSTRAP_PLOTS)));
+  }
 }
