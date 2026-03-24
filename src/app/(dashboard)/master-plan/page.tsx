@@ -217,17 +217,13 @@ function MasterPlanContent() {
 
           {/* Area summary stats — bottom-right on mobile, top-right on sm+, always visible, context-aware */}
           {(() => {
-            const summaryPlots = compareMode && comparePlots.length > 0
-              ? comparePlots
-              : selectedPlot
-                ? [selectedPlot]
-                : filteredPlots;
+            const summaryPlots = filteredPlots;
             return (
               <div className="absolute bottom-3 right-3 sm:bottom-auto sm:top-3 z-[800] bg-white/90 backdrop-blur-sm rounded-xl p-3 sm:p-4 text-xs text-deep-forest shadow-sm min-w-[180px] sm:min-w-[220px]">
                 <p className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2">Area Summary</p>
                 <div className="space-y-2">
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted shrink-0">Plots Shown</span>
+                    <span className="text-muted shrink-0">Plots Available</span>
                     <span className="font-bold text-forest whitespace-nowrap">{summaryPlots.length}</span>
                   </div>
                   <div className="flex justify-between gap-4">
