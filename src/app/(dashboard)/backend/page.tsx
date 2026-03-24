@@ -54,7 +54,13 @@ export default function BackendPage() {
     setIsDirty(true);
     setTimeout(() => {
       const el = document.getElementById("backend-table-end");
-      el?.scrollIntoView({ behavior: "smooth" });
+      if (el) {
+        // Scroll only the table's own overflow container, not ancestor elements
+        const scrollParent = el.closest(".overflow-auto");
+        if (scrollParent) {
+          scrollParent.scrollTo({ top: scrollParent.scrollHeight, behavior: "smooth" });
+        }
+      }
     }, 50);
   }
 
