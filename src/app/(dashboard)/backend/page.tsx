@@ -101,6 +101,7 @@ export default function BackendPage() {
       const resolved = normalizeJv(await resolveLocationPins(rows));
       // Save to server (persistent storage — source of truth)
       let serverOk = false;
+      let serverDetail = "";
       try {
         const res = await fetch("/api/spreadsheet", {
           method: "POST",
@@ -108,9 +109,12 @@ export default function BackendPage() {
           body: JSON.stringify(resolved),
         });
         serverOk = res.ok;
-      } catch { /* network error */ }
+        if (!serverOk) {
+          try { const body = await res.json(); serverDetail = body.details || body.error || ""; } catch { /* ignore */ }
+        }
+      } catch { serverDetail = "Network error — is the server running?"; }
       if (!serverOk) {
-        showToast("Failed to save — changes were NOT published. Please try again.", "error");
+        showToast(`Save failed: ${serverDetail || "unknown error"}`, "error");
         return;
       }
       // Server save succeeded — now update local cache
@@ -159,12 +163,16 @@ export default function BackendPage() {
     try {
       // Clear server-side override
       let deleteOk = false;
+      let deleteDetail = "";
       try {
         const res = await fetch("/api/spreadsheet", { method: "DELETE" });
         deleteOk = res.ok;
-      } catch { /* network error */ }
+        if (!deleteOk) {
+          try { const body = await res.json(); deleteDetail = body.details || body.error || ""; } catch { /* ignore */ }
+        }
+      } catch { deleteDetail = "Network error — is the server running?"; }
       if (!deleteOk) {
-        showToast("Failed to reset — please try again.", "error");
+        showToast(`Reset failed: ${deleteDetail || "unknown error"}`, "error");
         return;
       }
       // Server reset succeeded — clear local cache
@@ -364,9 +372,9 @@ function Toast({
   onClose: () => void;
 }) {
   useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
+    const timer = setTimeout(onClose, type === "error" ? 6000 : 3000);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [onClose, type]);
 
   return (
     <div

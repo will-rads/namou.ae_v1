@@ -8,7 +8,15 @@
 import { ORIGINAL_SPREADSHEET_ROWS, type SpreadsheetRow } from "@/data/spreadsheetData";
 
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
+const IS_VERCEL = !!process.env.VERCEL;
 const BLOB_KEY = "spreadsheet-override.json";
+
+/** Throw a clear error when running on Vercel without blob storage configured. */
+function assertNotEphemeralFs(): void {
+  if (IS_VERCEL && !USE_BLOB) {
+    throw new Error("BLOB_READ_WRITE_TOKEN is not configured — filesystem storage is ephemeral on Vercel");
+  }
+}
 
 // ── Filesystem helpers (local dev only) ─────────────────────────────────────
 
@@ -72,21 +80,27 @@ export async function readRows(): Promise<SpreadsheetRow[] | null> {
   return USE_BLOB ? blobRead() : fsRead();
 }
 
-/** Read rows, auto-seeding from ORIGINAL_SPREADSHEET_ROWS if nothing stored. */
+/** Read rows, auto-seeding from ORIGINAL_SPREADSHEET_ROWS if nothing stored.
+ *  If seeding fails (e.g. missing blob token), still returns seed data so the
+ *  site can load — writes will surface the real error separately. */
 export async function readRowsOrSeed(): Promise<SpreadsheetRow[]> {
   const existing = await readRows();
   if (existing && existing.length > 0) return existing;
-  // Auto-seed
-  await writeRows(ORIGINAL_SPREADSHEET_ROWS);
+  // Try to persist the seed; if it fails, return seed data anyway
+  try { await writeRows(ORIGINAL_SPREADSHEET_ROWS); } catch { /* write will fail again on next save and surface the error */ }
   return ORIGINAL_SPREADSHEET_ROWS;
 }
 
 /** Write rows to persistent store. */
 export async function writeRows(rows: SpreadsheetRow[]): Promise<void> {
-  return USE_BLOB ? blobWrite(rows) : fsWrite(rows);
+  if (USE_BLOB) return blobWrite(rows);
+  assertNotEphemeralFs();
+  return fsWrite(rows);
 }
 
 /** Delete stored rows (next readRowsOrSeed will re-seed). */
 export async function deleteRows(): Promise<void> {
-  return USE_BLOB ? blobDelete() : fsDelete();
+  if (USE_BLOB) return blobDelete();
+  assertNotEphemeralFs();
+  return fsDelete();
 }
