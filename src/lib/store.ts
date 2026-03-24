@@ -55,6 +55,7 @@ async function blobWrite(rows: SpreadsheetRow[]): Promise<void> {
   await put(BLOB_KEY, JSON.stringify(rows), {
     access: "public",
     addRandomSuffix: false,
+    allowOverwrite: true,
   });
 }
 
