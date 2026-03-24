@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { Suspense, Fragment, useState, useEffect, useCallback, useMemo } from "react";
+import { plots, areas } from "@/data/mock";
 
 const mainNavItems = [
   { href: "/master-plan", baseHref: "/master-plan", label: "Master Plan", icon: PlanIcon },
@@ -68,12 +69,18 @@ function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navI
             ? pathname === "/roi" || pathname === "/roi/calculator"
             : pathname.startsWith(item.baseHref);
         return (
-          <NavLink key={item.baseHref} href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
-            <item.icon className="w-4 h-4 shrink-0" />
-          </NavLink>
+          <Fragment key={item.baseHref}>
+            <NavLink href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
+              <item.icon className="w-4 h-4 shrink-0" />
+            </NavLink>
+            {item.baseHref === "/roi" && (
+              <Suspense fallback={null}>
+                <JvNavItem pathname={pathname} onNavigate={onNavigate} />
+              </Suspense>
+            )}
+          </Fragment>
         );
       })}
-
 
       {/* Context-sensitive bottom links */}
       <Suspense fallback={null}>
@@ -257,6 +264,70 @@ function NavLink({ href, label, active, children, onNavigate }: { href: string; 
         {label}
       </span>
     </Link>
+  );
+}
+
+/* ── JV nav item — visible only when current context has JV-eligible plots ── */
+
+const JV_ELIGIBLE = new Set(["Joint-venture Only", "Sale + Joint-venture"]);
+
+const TYPE_TO_LAND_USE: Record<string, string[]> = {
+  residential: ["Residential"],
+  commercial:  ["Commercial", "Hospitality"],
+  "mixed-use": ["Mixed", "Residential / Commercial", "Commercial / Residential"],
+  industrial:  ["Industrial"],
+};
+
+function toSlug(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function JvNavItem({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const searchParams = useSearchParams();
+  const urlType = searchParams.get("type");
+  const urlArea = searchParams.get("area");
+
+  const [ctx] = useState<{ type: string | null; area: string | null }>(() => {
+    try {
+      return {
+        type: urlType ?? sessionStorage.getItem("ctx_type"),
+        area: urlArea ?? sessionStorage.getItem("ctx_area"),
+      };
+    } catch { return { type: urlType, area: urlArea }; }
+  });
+
+  const ctxType = urlType ?? ctx.type;
+  const ctxArea = urlArea ?? ctx.area;
+
+  const hasJv = useMemo(() => {
+    const areaName = ctxArea ? (areas.find(a => toSlug(a) === ctxArea) ?? null) : null;
+    return plots.some((p) => {
+      const matchesType = !ctxType || !TYPE_TO_LAND_USE[ctxType]?.length
+        || TYPE_TO_LAND_USE[ctxType].some(f => p.landUse.includes(f));
+      const matchesArea = !areaName || p.area === areaName;
+      return matchesType && matchesArea && JV_ELIGIBLE.has((p.jv ?? "").trim());
+    });
+  }, [ctxType, ctxArea]);
+
+  if (!hasJv) return null;
+
+  const active = pathname.startsWith("/JV");
+
+  return (
+    <NavLink href="/JV" label="Joint Venture" active={active} onNavigate={onNavigate}>
+      <JvIcon className="w-4 h-4 shrink-0" />
+    </NavLink>
+  );
+}
+
+function JvIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
   );
 }
 

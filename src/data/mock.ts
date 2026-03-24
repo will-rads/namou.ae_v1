@@ -28,6 +28,7 @@ export interface Plot {
   lat?: number; // WGS84 latitude (decimal degrees)
   lng?: number; // WGS84 longitude (decimal degrees)
   googleMapsUrl?: string;
+  jv?: string; // Joint-venture eligibility from backend
 }
 
 export interface Landmark {

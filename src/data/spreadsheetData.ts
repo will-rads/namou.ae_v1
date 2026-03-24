@@ -556,6 +556,7 @@ export function spreadsheetRowsToPlots(rows: SpreadsheetRow[]): Plot[] {
         ...(latVal != null ? { lat: latVal } : {}),
         ...(lngVal != null ? { lng: lngVal } : {}),
         ...(row.locationPin ? { googleMapsUrl: row.locationPin } : {}),
+        ...(row.jv ? { jv: row.jv } : {}),
       } satisfies Plot;
     });
 }
