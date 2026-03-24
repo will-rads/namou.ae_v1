@@ -4,6 +4,7 @@ import "./globals.css";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { headers } from "next/headers";
+import { ORIGINAL_SPREADSHEET_ROWS } from "@/data/spreadsheetData";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -40,10 +41,13 @@ export default async function RootLayout({
     if (existsSync(filePath)) {
       const raw = readFileSync(filePath, "utf-8");
       JSON.parse(raw); // validate JSON before injecting
-      // Escape closing script tags to prevent XSS
       serverDataScript = raw.replace(/<\//g, "<\\/");
+    } else {
+      // No backend data file yet — seed from initial rows so the
+      // server-managed data pipeline is always active
+      serverDataScript = JSON.stringify(ORIGINAL_SPREADSHEET_ROWS).replace(/<\//g, "<\\/");
     }
-  } catch { /* no override file — use built-in defaults */ }
+  } catch { /* read error — client falls back to localStorage */ }
 
   return (
     <html lang="en" className={`${dmSans.variable} ${robotoMono.variable}`}>

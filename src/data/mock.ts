@@ -1,4 +1,4 @@
-/* ── Mock data for the baseline UI (v1, no backend) ── */
+/* ── Data layer — /backend is the source of truth ── */
 
 import { ORIGINAL_SPREADSHEET_ROWS, spreadsheetRowsToPlots, loadSpreadsheetRows, saveSpreadsheetRows } from "./spreadsheetData";
 
@@ -74,20 +74,18 @@ export interface ROIOutputs {
   gfaPrice: number;
 }
 
-/* ── Derive default plots from the spreadsheet (source of truth for /backend) ── */
-const _defaultPlots: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
+/* ── Safety-only seed (used if server injection + localStorage are both empty) ── */
+const _seedPlots: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
 
-/* ── Areas (derived from spreadsheet plots) ── */
-export const areas: string[] = [...new Set(_defaultPlots.map(p => p.area).filter(Boolean))];
+/* ── Areas (rebuilt from backend data after hydration) ── */
+export const areas: string[] = [...new Set(_seedPlots.map(p => p.area).filter(Boolean))];
 
-/* ── Frozen copy of original areas (before any localStorage overrides) ── */
-const ORIGINAL_AREAS: readonly string[] = Object.freeze([...areas]);
+const _SEED_AREAS: readonly string[] = Object.freeze([...areas]);
 
-/* ── Plots (derived from spreadsheet — /backend is the source of truth) ── */
-export const plots: Plot[] = [..._defaultPlots];
+/* ── Plots (populated from backend-managed data on every page load) ── */
+export const plots: Plot[] = [..._seedPlots];
 
-/* ── Frozen copy of the original plots (before any localStorage overrides) ── */
-export const ORIGINAL_PLOTS: readonly Plot[] = JSON.parse(JSON.stringify(plots));
+const _SEED_PLOTS: readonly Plot[] = JSON.parse(JSON.stringify(plots));
 
 /* ── Filter categories for Master Plan ── */
 export const masterPlanFilters = [
@@ -257,17 +255,18 @@ function applyPlotsOverride(parsed: Plot[]): void {
 
 function restoreDefaults(): void {
   plots.length = 0;
-  plots.push(...JSON.parse(JSON.stringify(ORIGINAL_PLOTS)));
+  plots.push(...JSON.parse(JSON.stringify(_SEED_PLOTS)));
   areas.length = 0;
-  areas.push(...ORIGINAL_AREAS);
+  areas.push(..._SEED_AREAS);
   for (const cat of landCategories) {
     cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
   }
 }
 
-/** Derive plots from the spreadsheet rows source of truth, or fall back to
- *  the pre-computed plots cache, or defaults.  Always re-runs coordsFromUrl()
- *  so any parsing improvements apply retroactively. */
+/** Load backend-managed plot data.  Priority:
+ *  1. Server-injected data (cross-device shared source of truth)
+ *  2. localStorage cache (same-browser fast path)
+ *  3. Legacy pre-computed Plot[] cache (backward compat) */
 function loadOverride(): Plot[] | null {
   if (typeof window === "undefined") return null;
   // Server-injected data (shared across all devices/browsers)
@@ -283,12 +282,12 @@ function loadOverride(): Plot[] | null {
       }
     }
   } catch { /* ignore */ }
-  // Primary: derive fresh from spreadsheet rows (source of truth)
+  // localStorage cache (synced from server on page load)
   try {
     const rows = loadSpreadsheetRows();
     if (rows && rows.length > 0) return spreadsheetRowsToPlots(rows);
   } catch { /* ignore */ }
-  // Fallback: pre-computed Plot[] cache (backward compat)
+  // Legacy fallback: pre-computed Plot[] cache
   try {
     const stored = localStorage.getItem("namou_plots_override");
     if (stored) {
@@ -299,15 +298,15 @@ function loadOverride(): Plot[] | null {
   return null;
 }
 
-/** Re-read localStorage and update the in-memory plots/areas/categories.
- *  Call after saving or clearing the plots override from /backend. */
+/** Re-read backend data from localStorage and update the in-memory
+ *  plots/areas/categories.  Called after /backend saves or resets. */
 export function reloadPlotsFromStorage(): void {
   const override = loadOverride();
   if (override) { applyPlotsOverride(override); return; }
   restoreDefaults();
 }
 
-// ── Client-side: apply localStorage overrides if present ──────────────────────
+// ── Client-side: hydrate from backend data (server-injected or localStorage) ──
 {
   const override = loadOverride();
   if (override) applyPlotsOverride(override);

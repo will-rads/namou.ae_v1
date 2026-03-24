@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
 import type { Plot } from "@/data/mock";
-import { ORIGINAL_SPREADSHEET_ROWS, loadSpreadsheetRows } from "@/data/spreadsheetData";
+
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,9 +62,7 @@ function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inp
     if (!stored) return { plotInfo: null, inputs: {} };
     const plot: Plot = JSON.parse(stored);
 
-    const rows = loadSpreadsheetRows() ?? ORIGINAL_SPREADSHEET_ROWS;
-    const matchRow = rows.find(r => r.plotName?.trim() === plot.name);
-    const dealType = matchRow?.jv || "—";
+    const dealType = plot.jv || "—";
 
     const far = plot.far ?? (plot.gfa && plot.plotArea ? plot.gfa / plot.plotArea : DEFAULTS.farRatio);
 

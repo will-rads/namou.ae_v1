@@ -24,13 +24,18 @@ export default function BackendPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
+    // Primary: localStorage (synced from server on page load)
     const stored = loadSpreadsheetRows();
     if (stored) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration (SSR-safe)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRows(stored);
-    } else {
-      setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
+      return;
     }
+    // Fetch from server API if localStorage is empty
+    fetch("/api/spreadsheet")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length > 0) setRows(data); })
+      .catch(() => {});
   }, []);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
@@ -123,15 +128,23 @@ export default function BackendPage() {
 
   // ── Reset to default ──
 
-  function resetToDefault() {
-    if (!window.confirm("Reset all data to the original spreadsheet? This will discard all your edits.")) return;
-    // Clear server-side override
-    fetch("/api/spreadsheet", { method: "DELETE" }).catch(() => {});
+  async function resetToDefault() {
+    if (!window.confirm("Reset all data to defaults? This will discard all your edits.")) return;
+    // Clear server-side override (API will re-seed from initial data on next GET)
+    await fetch("/api/spreadsheet", { method: "DELETE" }).catch(() => {});
     clearSpreadsheetRows();
     clearPlots();
     reloadPlotsFromStorage();
-    const original: SpreadsheetRow[] = JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS));
-    setRows(original);
+    // Fetch the re-seeded initial data from server
+    try {
+      const res = await fetch("/api/spreadsheet");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) { setRows(data); setIsDirty(false); showToast("Data reset to defaults.", "success"); return; }
+      }
+    } catch {}
+    // Safety fallback
+    setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
     setIsDirty(false);
     showToast("Data reset to defaults.", "success");
   }
@@ -150,7 +163,7 @@ export default function BackendPage() {
             Backend Admin
           </h1>
           <p className="text-sm text-muted mt-0.5">
-            Full spreadsheet data. Edits are saved to browser storage.
+            Manage land data. Changes are published to all devices on save.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted">
