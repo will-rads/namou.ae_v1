@@ -35,7 +35,7 @@ const actions = [
     hasCalendar: true,
   },
   {
-    title: "Schedule a Video Meeting",
+    title: "Schedule a Follow-up Meeting",
     description: "Connect remotely to review plots, ROI models, or deal terms.",
     href: "#",
     icon: (
@@ -206,7 +206,7 @@ export default function CTAPage() {
                   {action.icon}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-deep-forest">{action.title}</h2>
+                  <h2 className="text-lg font-semibold text-deep-forest text-center">{action.title}</h2>
                   <p className="text-sm mt-1.5 text-muted leading-relaxed">{action.description}</p>
                 </div>
               </div>
