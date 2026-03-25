@@ -67,17 +67,19 @@ export default function MasterPlanPage() {
 
 function MasterPlanContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const urlCtxType = searchParams.get("type");
   const urlCtxArea = searchParams.get("area");
 
-  // Fall back to sessionStorage context set during onboarding when URL params are absent
-  const [storedCtx] = useState<{ type: string | null; area: string | null }>(() => {
-    try { return { type: sessionStorage.getItem("ctx_type"), area: sessionStorage.getItem("ctx_area") }; }
-    catch { return { type: null, area: null }; }
-  });
+  // Fall back to sessionStorage context set during onboarding when URL params are absent.
+  // Read live (not cached in useState) so clearing via ✕ takes effect on re-render.
+  let storedType: string | null = null;
+  let storedArea: string | null = null;
+  try { storedType = sessionStorage.getItem("ctx_type"); } catch {}
+  try { storedArea = sessionStorage.getItem("ctx_area"); } catch {}
 
-  const ctxType = urlCtxType ?? storedCtx.type;
-  const ctxArea = urlCtxArea ?? storedCtx.area;
+  const ctxType = urlCtxType ?? storedType;
+  const ctxArea = urlCtxArea ?? storedArea;
 
   const areaName = ctxArea ? (areas.find(a => areaSlug(a) === ctxArea) ?? null) : null;
   const typeLabel = ctxType ? (landCategories.find(c => c.slug === ctxType)?.label ?? ctxType) : null;
@@ -93,7 +95,7 @@ function MasterPlanContent() {
   const [priceFilter, setPriceFilter] = useState(() => {
     try { return sessionStorage.getItem("filter_price") ?? ""; } catch { return ""; }
   });
-  const [editingFilter, setEditingFilter] = useState<"size" | "price" | null>(null);
+  const [editingFilter, setEditingFilter] = useState<"type" | "area" | "size" | "price" | null>(null);
   const filterPopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -160,32 +162,93 @@ function MasterPlanContent() {
   return (
     <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       {/* Header row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 relative z-10">
         <div>
           <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Master Plan Overview</h1>
           <p className="text-sm text-muted mt-0.5">
             Zoning, access, and land distribution within Al Marjan.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {(typeLabel || areaName) && (
-            <>
-              {typeLabel && (
-                <span className="text-xs font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1.5 rounded-full">
-                  {typeLabel}
-                </span>
-              )}
-              {areaName && (
-                <>
-                  <span className="text-muted text-xs">·</span>
-                  <span className="text-xs font-medium text-deep-forest bg-mint-bg border border-mint-light px-3 py-1.5 rounded-full">
-                    {areaName}
-                  </span>
-                </>
-              )}
-            </>
-          )}
-          {/* Size filter button — always visible */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Type dropdown */}
+          <div className="relative" ref={editingFilter === "type" ? filterPopRef : undefined}>
+            <button
+              onClick={() => setEditingFilter(editingFilter === "type" ? null : "type")}
+              className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                ctxType
+                  ? "text-forest bg-forest/10 border border-forest/20 hover:bg-forest/20"
+                  : "text-muted bg-white/80 border border-mint-light hover:border-forest/30 hover:text-forest"
+              }`}
+            >
+              {typeLabel ?? "Type"}
+              {ctxType && <span className="ml-1" onClick={(e) => { e.stopPropagation(); router.push("/master-plan" + (ctxArea ? `?area=${encodeURIComponent(ctxArea)}` : "")); sessionStorage.removeItem("ctx_type"); setEditingFilter(null); }}>✕</span>}
+            </button>
+            {editingFilter === "type" && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-[900]">
+                <select
+                  value={ctxType ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      sessionStorage.setItem("ctx_type", val);
+                      router.push(`/master-plan?type=${encodeURIComponent(val)}${ctxArea ? `&area=${encodeURIComponent(ctxArea)}` : ""}`);
+                    } else {
+                      sessionStorage.removeItem("ctx_type");
+                      router.push("/master-plan" + (ctxArea ? `?area=${encodeURIComponent(ctxArea)}` : ""));
+                    }
+                    setEditingFilter(null);
+                  }}
+                  className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
+                >
+                  <option value="">All Types</option>
+                  {landCategories.map(c => <option key={c.slug} value={c.slug}>{c.label}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+          {/* Area dropdown */}
+          <div className="relative" ref={editingFilter === "area" ? filterPopRef : undefined}>
+            <button
+              onClick={() => setEditingFilter(editingFilter === "area" ? null : "area")}
+              className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                areaName
+                  ? "text-forest bg-forest/10 border border-forest/20 hover:bg-forest/20"
+                  : "text-muted bg-white/80 border border-mint-light hover:border-forest/30 hover:text-forest"
+              }`}
+            >
+              {areaName ?? "Area"}
+              {ctxArea && <span className="ml-1" onClick={(e) => { e.stopPropagation(); router.push("/master-plan" + (ctxType ? `?type=${encodeURIComponent(ctxType)}` : "")); sessionStorage.removeItem("ctx_area"); setEditingFilter(null); }}>✕</span>}
+            </button>
+            {editingFilter === "area" && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-[900]">
+                <select
+                  value={ctxArea ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      sessionStorage.setItem("ctx_area", val);
+                      router.push(`/master-plan?${ctxType ? `type=${encodeURIComponent(ctxType)}&` : ""}area=${encodeURIComponent(val)}`);
+                    } else {
+                      sessionStorage.removeItem("ctx_area");
+                      router.push("/master-plan" + (ctxType ? `?type=${encodeURIComponent(ctxType)}` : ""));
+                    }
+                    setEditingFilter(null);
+                  }}
+                  className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
+                >
+                  <option value="">All Areas</option>
+                  {(() => {
+                    const relevantPlots = ctxType && typeToLandUse[ctxType]?.length
+                      ? plots.filter(p => typeToLandUse[ctxType!].some(f => p.landUse.includes(f)))
+                      : plots;
+                    const uniqueAreas = [...new Set(relevantPlots.map(p => p.area))].sort();
+                    return uniqueAreas.map(a => <option key={a} value={areaSlug(a)}>{a}</option>);
+                  })()}
+                </select>
+              </div>
+            )}
+          </div>
+          {/* Size filter button */}
           <div className="relative" ref={editingFilter === "size" ? filterPopRef : undefined}>
             <button
               onClick={() => setEditingFilter(editingFilter === "size" ? null : "size")}
@@ -199,7 +262,7 @@ function MasterPlanContent() {
               {sizeFilter && <span className="ml-1" onClick={(e) => { e.stopPropagation(); setSizeFilter(""); setEditingFilter(null); }}>✕</span>}
             </button>
             {editingFilter === "size" && (
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-[900]">
                 <select
                   value={sizeFilter}
                   onChange={(e) => { setSizeFilter(e.target.value); setEditingFilter(null); }}
@@ -210,7 +273,7 @@ function MasterPlanContent() {
               </div>
             )}
           </div>
-          {/* Budget filter button — always visible */}
+          {/* Budget filter button */}
           <div className="relative" ref={editingFilter === "price" ? filterPopRef : undefined}>
             <button
               onClick={() => setEditingFilter(editingFilter === "price" ? null : "price")}
@@ -224,7 +287,7 @@ function MasterPlanContent() {
               {priceFilter && <span className="ml-1" onClick={(e) => { e.stopPropagation(); setPriceFilter(""); setEditingFilter(null); }}>✕</span>}
             </button>
             {editingFilter === "price" && (
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-[900]">
                 <select
                   value={priceFilter}
                   onChange={(e) => { setPriceFilter(e.target.value); setEditingFilter(null); }}
@@ -277,7 +340,7 @@ function MasterPlanContent() {
       <div className="flex flex-col md:flex-row flex-1 gap-3 min-h-0">
 
         {/* Map */}
-        <div className={`relative bg-mint-white rounded-2xl overflow-hidden border border-mint-light/40 shadow-sm min-h-[250px] md:min-h-0 ${showPanel || showCompare ? "md:w-1/2" : "flex-1"}`}>
+        <div className={`relative z-0 bg-mint-white rounded-2xl overflow-hidden border border-mint-light/40 shadow-sm min-h-[250px] md:min-h-0 ${showPanel || showCompare ? "md:w-1/2" : "flex-1"}`}>
 
           {/* Satellite map — fills the container */}
           <PlotMap

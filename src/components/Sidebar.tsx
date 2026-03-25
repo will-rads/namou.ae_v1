@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import { plotDealAvailability, type Plot } from "@/data/mock";
 
@@ -13,52 +13,6 @@ const mainNavItems = [
   { href: "/cta", baseHref: "/cta", label: "Next Steps", icon: RocketIcon },
 ];
 
-function ContextLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
-  const searchParams = useSearchParams();
-  const urlType = searchParams.get("type");
-  const urlArea = searchParams.get("area");
-
-  const [ctxType, setCtxType] = useState<string | null>(() => {
-    if (urlType) return urlType;
-    try { return sessionStorage.getItem("ctx_type"); } catch { return null; }
-  });
-  const [ctxArea, setCtxArea] = useState<string | null>(() => {
-    if (urlArea) return urlArea;
-    try { return sessionStorage.getItem("ctx_area"); } catch { return null; }
-  });
-
-  useEffect(() => {
-    if (urlType) {
-      sessionStorage.setItem("ctx_type", urlType);
-      if (urlArea) sessionStorage.setItem("ctx_area", urlArea);
-      if (urlType !== ctxType) setCtxType(urlType);
-      if (urlArea !== ctxArea) setCtxArea(urlArea);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlType, urlArea]);
-
-  const otherAreasHref = ctxType
-    ? `/other-areas?type=${encodeURIComponent(ctxType)}${ctxArea ? `&area=${encodeURIComponent(ctxArea)}` : ""}`
-    : "/other-areas";
-  const otherTypesHref = ctxType
-    ? `/other-types?type=${encodeURIComponent(ctxType)}${ctxArea ? `&area=${encodeURIComponent(ctxArea)}` : ""}`
-    : "/other-types";
-
-  const activeOtherAreas = pathname === "/other-areas";
-  const activeOtherTypes = pathname === "/other-types";
-
-  return (
-    <>
-      <div className="mx-2 my-2 border-t border-white/10" />
-      <NavLink href={otherAreasHref} label="Other Areas" active={activeOtherAreas} onNavigate={onNavigate}>
-        <MapPinIcon className="w-4 h-4 shrink-0" />
-      </NavLink>
-      <NavLink href={otherTypesHref} label="Other Types" active={activeOtherTypes} onNavigate={onNavigate}>
-        <LayersIcon className="w-4 h-4 shrink-0" />
-      </NavLink>
-    </>
-  );
-}
 
 function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navItems: typeof mainNavItems; onNavigate?: () => void }) {
   return (
@@ -80,10 +34,6 @@ function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navI
         );
       })}
 
-      {/* Context-sensitive bottom links */}
-      <Suspense fallback={null}>
-        <ContextLinks pathname={pathname} onNavigate={onNavigate} />
-      </Suspense>
     </nav>
   );
 }
@@ -203,23 +153,6 @@ function PlanIcon({ className }: { className?: string }) {
   );
 }
 
-function MapPinIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-    </svg>
-  );
-}
-
-function LayersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  );
-}
 
 function TrendIcon({ className }: { className?: string }) {
   return (
