@@ -286,7 +286,7 @@ function MasterPlanContent() {
             <div className="absolute top-3 left-3 z-[800] max-w-[calc(100%-24px)] sm:max-w-none">
               <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-mint-light/40 shadow-sm overflow-hidden">
                 <div className="px-3 pt-2.5 pb-1">
-                  <p className="text-[10px] uppercase tracking-wider text-muted font-semibold">
+                  <p className="text-[10px] uppercase tracking-wider text-muted font-semibold text-center">
                     {compareMode ? `Select Plots (${comparePlots.length}/2)` : "Available Plots"}
                   </p>
                 </div>
@@ -322,7 +322,7 @@ function MasterPlanContent() {
             const summaryPlots = filteredPlots;
             return (
               <div className="absolute bottom-3 right-3 sm:bottom-auto sm:top-3 z-[800] bg-white/90 backdrop-blur-sm rounded-xl p-3 sm:p-4 text-xs text-deep-forest shadow-sm min-w-[180px] sm:min-w-[220px]">
-                <p className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2">Area Summary</p>
+                <p className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2 text-center">Area Summary</p>
                 <div className="space-y-2">
                   <div className="flex justify-between gap-4">
                     <span className="text-muted shrink-0">Plots Available</span>
