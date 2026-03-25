@@ -185,49 +185,56 @@ function MasterPlanContent() {
               )}
             </>
           )}
-          {/* Active filter badges — clickable to edit */}
-          {sizeFilter && (
-            <div className="relative" ref={editingFilter === "size" ? filterPopRef : undefined}>
-              <button
-                onClick={() => setEditingFilter(editingFilter === "size" ? null : "size")}
-                className="text-xs font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1.5 rounded-full hover:bg-forest/20 transition-colors"
-              >
-                {filterLabel(sizeFilter, SIZE_OPTIONS)} ✕
-              </button>
-              {editingFilter === "size" && (
-                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
-                  <select
-                    value={sizeFilter}
-                    onChange={(e) => { setSizeFilter(e.target.value); setEditingFilter(null); }}
-                    className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
-                  >
-                    {SIZE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
-          {priceFilter && (
-            <div className="relative" ref={editingFilter === "price" ? filterPopRef : undefined}>
-              <button
-                onClick={() => setEditingFilter(editingFilter === "price" ? null : "price")}
-                className="text-xs font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1.5 rounded-full hover:bg-forest/20 transition-colors"
-              >
-                {filterLabel(priceFilter, PRICE_OPTIONS)} ✕
-              </button>
-              {editingFilter === "price" && (
-                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
-                  <select
-                    value={priceFilter}
-                    onChange={(e) => { setPriceFilter(e.target.value); setEditingFilter(null); }}
-                    className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
-                  >
-                    {PRICE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Size filter button — always visible */}
+          <div className="relative" ref={editingFilter === "size" ? filterPopRef : undefined}>
+            <button
+              onClick={() => setEditingFilter(editingFilter === "size" ? null : "size")}
+              className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                sizeFilter
+                  ? "text-forest bg-forest/10 border border-forest/20 hover:bg-forest/20"
+                  : "text-muted bg-white/80 border border-mint-light hover:border-forest/30 hover:text-forest"
+              }`}
+            >
+              {sizeFilter ? filterLabel(sizeFilter, SIZE_OPTIONS) : "Size"}
+              {sizeFilter && <span className="ml-1" onClick={(e) => { e.stopPropagation(); setSizeFilter(""); setEditingFilter(null); }}>✕</span>}
+            </button>
+            {editingFilter === "size" && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
+                <select
+                  value={sizeFilter}
+                  onChange={(e) => { setSizeFilter(e.target.value); setEditingFilter(null); }}
+                  className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
+                >
+                  {SIZE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+          {/* Budget filter button — always visible */}
+          <div className="relative" ref={editingFilter === "price" ? filterPopRef : undefined}>
+            <button
+              onClick={() => setEditingFilter(editingFilter === "price" ? null : "price")}
+              className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                priceFilter
+                  ? "text-forest bg-forest/10 border border-forest/20 hover:bg-forest/20"
+                  : "text-muted bg-white/80 border border-mint-light hover:border-forest/30 hover:text-forest"
+              }`}
+            >
+              {priceFilter ? filterLabel(priceFilter, PRICE_OPTIONS) : "Budget"}
+              {priceFilter && <span className="ml-1" onClick={(e) => { e.stopPropagation(); setPriceFilter(""); setEditingFilter(null); }}>✕</span>}
+            </button>
+            {editingFilter === "price" && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-20">
+                <select
+                  value={priceFilter}
+                  onChange={(e) => { setPriceFilter(e.target.value); setEditingFilter(null); }}
+                  className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
+                >
+                  {PRICE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
 
           {selectedPlot && !compareMode && (
             <>
