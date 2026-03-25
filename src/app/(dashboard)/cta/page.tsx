@@ -21,20 +21,6 @@ const actions = [
     hasCalendar: true,
   },
   {
-    title: "Book Another Call",
-    description: "Continue the conversation with your Namou specialist.",
-    href: "#",
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
-      </svg>
-    ),
-    timeline: "Same-day availability",
-    prep: "No preparation needed",
-    details: "30-min focused session to address questions about pricing, zoning, or legal structure.",
-    hasCalendar: true,
-  },
-  {
     title: "Schedule a Follow-up Meeting",
     description: "Connect remotely to review plots, ROI models, or deal terms.",
     href: "#",
@@ -47,21 +33,6 @@ const actions = [
     prep: "Stable internet connection recommended",
     details: "Screen-share walkthrough of your customized ROI model with a senior analyst.",
     hasCalendar: true,
-  },
-  {
-    title: "Receive Brochures & ROI Calculations",
-    description: "Get detailed property brochures and personalised ROI reports sent to your inbox.",
-    href: "#",
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-        <polyline points="22 6 12 13 2 6" />
-      </svg>
-    ),
-    timeline: "Delivered within 1 hour",
-    prep: "No preparation needed",
-    details: "Receive a curated package with project brochures, plot specifications, and your customised ROI breakdown.",
-    hasBrochureForm: true,
   },
 ];
 
@@ -264,6 +235,29 @@ export default function CTAPage() {
           );
         })}
       </div>
+
+      {/* Submit Your Offer — wide bottom card */}
+      <Link href="/offer" className="group shrink-0">
+        <ContentCard className="flex items-center justify-between gap-4 transition-all group-hover:shadow-md group-hover:border-forest/30">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-forest/10 text-forest">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-deep-forest">Submit Your Offer</h2>
+              <p className="text-sm text-muted mt-0.5">Review your payment plan and confirm your offer to proceed.</p>
+            </div>
+          </div>
+          <div className="flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            Go to offer
+            <svg className="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        </ContentCard>
+      </Link>
 
       {/* Calendar Modal */}
       {calendarAction && (
