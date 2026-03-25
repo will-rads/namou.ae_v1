@@ -248,11 +248,13 @@ export default function BuildSellPage() {
 
           {/* Project Summary */}
           <Section title="Project Summary" className="flex flex-col flex-1">
-            <div className="grid grid-cols-2 gap-2">
-              <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} />
-              <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} />
-              <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} />
-              <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(inputs.sellingPricePerNSA)}`} />
+            <div className="flex flex-col gap-2 flex-1">
+              <div className="grid grid-cols-2 gap-2">
+                <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} />
+                <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} />
+                <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} />
+                <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(inputs.sellingPricePerNSA)}`} />
+              </div>
               <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} />
             </div>
           </Section>
