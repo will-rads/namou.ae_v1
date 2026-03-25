@@ -129,7 +129,7 @@ function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
 function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center justify-between py-2 lg:py-1.5">
+    <div className="flex items-center justify-between py-1.5 lg:py-1">
       <span className="text-sm text-muted">{label}</span>
       <div className="flex items-center gap-1">
         <span className="text-xs text-muted w-8 text-right">{unit === "x" ? "×" : unit}</span>
@@ -259,27 +259,27 @@ export default function BuildSellPage() {
         </div>
 
         {/* RIGHT COLUMN */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           {/* Simulation Inputs */}
           <ContentCard className="flex flex-col">
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
+            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">
               Simulation Inputs
             </h2>
             <div className="flex flex-col divide-y divide-mint-light/40">
               {/* Row 1: Construction */}
-              <div className="pb-3">
+              <div className="pb-2">
                 <p className="text-sm font-semibold text-deep-forest pb-1">Construction</p>
                 <InputRow label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
                 <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
                 <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
               </div>
               {/* Row 2: Sales */}
-              <div className="py-3">
+              <div className="py-2">
                 <p className="text-sm font-semibold text-deep-forest pb-1">Sales</p>
                 <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} />
               </div>
               {/* Row 3: Joint-Venture Split */}
-              <div className="pt-3">
+              <div className="pt-2">
                 <p className="text-sm font-semibold text-deep-forest pb-1">Joint-Venture Split</p>
                 <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
                 <div className="flex items-center justify-between py-1.5">
