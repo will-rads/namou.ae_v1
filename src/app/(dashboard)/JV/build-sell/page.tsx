@@ -226,7 +226,7 @@ export default function BuildSellPage() {
       </div>
 
       {/* Two-column layout — each column stacks independently */}
-      <div className="flex flex-col md:grid md:grid-cols-2 gap-2 flex-1 min-h-0">
+      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[1fr] gap-2 flex-1 min-h-0">
         {/* LEFT COLUMN */}
         <div className="flex flex-col gap-2">
           {/* Plot Info (green card) */}
@@ -309,7 +309,7 @@ export default function BuildSellPage() {
           </Section>
 
           {/* Sell Land Today vs Joint-Venture */}
-          <Section title="Sell Land Today vs Joint-Venture">
+          <Section title="Sell Land Today vs Joint-Venture" className="flex flex-col flex-1">
             <div className="grid grid-cols-3 gap-1.5">
               <div className="rounded-xl p-2.5 bg-mint-white/80 border border-mint-light/40">
                 <span className="text-[10px] text-muted uppercase tracking-wider">Sell Today</span>
