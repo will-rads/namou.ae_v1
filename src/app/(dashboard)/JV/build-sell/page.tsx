@@ -153,9 +153,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function KPI({ label, value, sub, primary }: { label: string; value: string; sub?: string; primary?: boolean }) {
+function KPI({ label, value, sub, primary, className }: { label: string; value: string; sub?: string; primary?: boolean; className?: string }) {
   return (
-    <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+    <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"} ${className ?? ""}`}>
       <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
       <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
       {sub && <span className="text-[11px] text-muted mt-0.5">{sub}</span>}
@@ -249,13 +249,13 @@ export default function BuildSellPage() {
           {/* Project Summary */}
           <Section title="Project Summary" className="flex flex-col flex-1">
             <div className="flex flex-col gap-2 flex-1">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-2 flex-1">
                 <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} />
                 <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} />
                 <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} />
                 <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(inputs.sellingPricePerNSA)}`} />
               </div>
-              <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} />
+              <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="items-center text-center" />
             </div>
           </Section>
         </div>
