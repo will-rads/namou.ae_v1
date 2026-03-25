@@ -247,7 +247,7 @@ export default function BuildSellPage() {
           </div>
 
           {/* Project Summary */}
-          <Section title="Project Summary" className="flex flex-col flex-1">
+          <Section title="Project Summary" className="flex flex-col flex-1 !pb-2">
             <div className="flex flex-col gap-2 flex-1">
               <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-2 flex-1">
                 <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center justify-center" />
