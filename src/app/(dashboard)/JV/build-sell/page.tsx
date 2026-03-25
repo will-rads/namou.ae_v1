@@ -250,10 +250,10 @@ export default function BuildSellPage() {
           <Section title="Project Summary" className="flex flex-col flex-1">
             <div className="flex flex-col gap-2 flex-1">
               <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-2 flex-1">
-                <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} />
-                <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} />
-                <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} />
-                <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(inputs.sellingPricePerNSA)}`} />
+                <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center" />
+                <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} sub={`${formatNumber(Math.round(r.gfa))} GFA × ${inputs.efficiency}%`} className="items-center text-center" />
+                <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} className="items-center text-center" />
+                <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(inputs.sellingPricePerNSA)}`} className="items-center text-center" />
               </div>
               <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="items-center text-center" />
             </div>
