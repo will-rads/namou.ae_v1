@@ -462,7 +462,7 @@ export default function ROIPage() {
             <ContentCard className="flex-1 p-3 flex flex-col">
               <div className="flex-1 flex flex-col justify-evenly">
                 <div>
-                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Land Acquisition</p>
+                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2 text-center">Land Acquisition</p>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted">Pricing Method</span>
                     <TogglePair
@@ -574,7 +574,7 @@ export default function ROIPage() {
               {allKPIsReady && (
               <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0 animate-fade-in">
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
-                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Investor Metrics</p>
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold text-center">Investor Metrics</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
                   <MetricRow label="Return on Cost"      value={`${results.returnOnCost.toFixed(1)}%`} />
                   <MetricRow label="GDV Multiple"         value={`${results.gdvMultiple.toFixed(2)}×`} />
@@ -586,7 +586,7 @@ export default function ROIPage() {
               </ContentCard>
 
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
-                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Profit vs. Exit Price</p>
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold text-center">Profit vs. Exit Price</p>
                 <div className="flex items-end gap-3 flex-1 min-h-[48px]">
                   {sensitivityData.map(d => {
                     const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
