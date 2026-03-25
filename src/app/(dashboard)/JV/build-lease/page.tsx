@@ -185,7 +185,7 @@ function Section({ title, defaultOpen = true, className, children }: { title: st
   return (
     <ContentCard className={className}>
       <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left md:pointer-events-none">
-        <h2 className="text-xs uppercase tracking-widest text-muted font-semibold">{title}</h2>
+        <h2 className="text-xs uppercase tracking-widest text-muted font-semibold text-center flex-1">{title}</h2>
         <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
       </button>
       <div className={`mt-1 flex-1 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
@@ -263,7 +263,7 @@ export default function BuildLeasePage() {
 
         {/* TOP-RIGHT: Simulation Inputs */}
         <ContentCard className="flex flex-col">
-          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
+          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2 text-center">
             Simulation Inputs
           </h2>
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
@@ -348,7 +348,7 @@ export default function BuildLeasePage() {
             </div>
           </Section>
 
-          <Section title="Exit Valuation (Optional)" className="flex-1 flex flex-col">
+          <Section title="Exit Valuation" className="flex-1 flex flex-col">
             <div className="grid grid-cols-2 gap-1.5">
               <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${inputs.capRate}% cap rate`} primary />
               <KPI label="Exit Profit" value={fmtAED(r.exitProfit)} sub="Exit Value − Dev. Cost" primary={r.exitProfit >= 0} />
