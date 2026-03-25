@@ -53,7 +53,7 @@ function ContextLinks({ pathname, onNavigate }: { pathname: string; onNavigate?:
       <NavLink href={otherAreasHref} label="Other Areas" active={activeOtherAreas} onNavigate={onNavigate}>
         <MapPinIcon className="w-4 h-4 shrink-0" />
       </NavLink>
-      <NavLink href={otherTypesHref} label="Other Land Types" active={activeOtherTypes} onNavigate={onNavigate}>
+      <NavLink href={otherTypesHref} label="Other Types" active={activeOtherTypes} onNavigate={onNavigate}>
         <LayersIcon className="w-4 h-4 shrink-0" />
       </NavLink>
     </>
