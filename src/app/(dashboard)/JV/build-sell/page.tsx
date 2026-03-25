@@ -249,27 +249,26 @@ export default function BuildSellPage() {
           <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
             Simulation Inputs
           </h2>
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
-            {/* Inner left: Construction */}
-            <div className="flex flex-col">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 md:gap-x-6 md:divide-x md:divide-mint-light/40">
+            {/* Column 1: Construction */}
+            <div className="flex flex-col md:pr-6">
               <p className="text-sm font-semibold text-deep-forest pb-1.5">Construction</p>
               <InputRow label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
               <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
               <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
             </div>
-            {/* Inner right: Sales + JV Split */}
-            <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
-              <div>
-                <p className="text-sm font-semibold text-deep-forest pb-1.5">Sales</p>
-                <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-deep-forest pt-3 pb-1.5">Joint-Venture Split</p>
-                <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
-                <div className="flex items-center justify-between py-2 lg:py-1.5">
-                  <span className="text-sm text-muted">Investor Profit Share</span>
-                  <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
-                </div>
+            {/* Column 2: Sales */}
+            <div className="flex flex-col border-t border-mint-light/40 md:border-t-0 md:pl-6 md:pr-6 pt-3 md:pt-0">
+              <p className="text-sm font-semibold text-deep-forest pb-1.5">Sales</p>
+              <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} />
+            </div>
+            {/* Column 3: Joint-Venture Split */}
+            <div className="flex flex-col border-t border-mint-light/40 md:border-t-0 md:pl-6 pt-3 md:pt-0">
+              <p className="text-sm font-semibold text-deep-forest pb-1.5">Joint-Venture Split</p>
+              <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
+              <div className="flex items-center justify-between py-2 lg:py-1.5">
+                <span className="text-sm text-muted">Investor Profit Share</span>
+                <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
               </div>
             </div>
           </div>
