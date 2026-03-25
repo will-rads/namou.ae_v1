@@ -504,23 +504,23 @@ export default function FinalOfferPage() {
 
       {/* Payment plan summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        <ContentCard className="bg-mint-bg border-mint-light">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1 text-center">Land Price</p>
+        <ContentCard className="bg-mint-bg border-mint-light text-center">
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Land Price</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.landCost)}</p>
           <p className="text-xs text-muted mt-1">{formatNumber(selectedPlot.plotArea)} sqft</p>
         </ContentCard>
-        <ContentCard className="bg-mint-bg border-mint-light">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1 text-center">Total Dev. Cost</p>
+        <ContentCard className="bg-mint-bg border-mint-light text-center">
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Total Dev. Cost</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.totalCost)}</p>
           <p className="text-xs text-muted mt-1">Land + Construction</p>
         </ContentCard>
-        <ContentCard className="bg-forest/10 border-forest/20">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1 text-center">Payment Stages</p>
+        <ContentCard className="bg-forest/10 border-forest/20 text-center">
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Payment Stages</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{paymentStages.length}</p>
           <p className="text-xs text-muted mt-1">{selectedPlot.paymentPlan ? "Structured plan" : "No plan"}</p>
         </ContentCard>
-        <ContentCard className="bg-forest/10 border-forest/20">
-          <p className="text-xs text-muted uppercase tracking-wider mb-1 text-center">Projected Profit</p>
+        <ContentCard className="bg-forest/10 border-forest/20 text-center">
+          <p className="text-xs text-muted uppercase tracking-wider mb-1">Projected Profit</p>
           <p className={`text-2xl font-bold font-heading ${offerSummary.profit > 0 ? "text-forest" : "text-red-600"}`}>{fmtAED(offerSummary.profit)}</p>
           <p className="text-xs text-muted mt-1">{offerSummary.profitMargin.toFixed(1)}% margin</p>
         </ContentCard>
