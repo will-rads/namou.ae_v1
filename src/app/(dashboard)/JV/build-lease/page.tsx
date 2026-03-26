@@ -145,15 +145,20 @@ function fmtAED(n: number) { return `AED ${fmt(n)}`; }
 function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
 function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
+  const [focused, setFocused] = useState(false);
+  const display = focused ? String(value) : value.toLocaleString("en-US");
   return (
     <div className="flex items-center justify-between py-1.5 lg:py-1">
       <span className="text-sm text-muted">{label}</span>
       <div className="flex items-center gap-1">
         <span className="text-xs text-muted w-8 text-right">{unit === "x" ? "×" : unit}</span>
         <input
-          type="number"
-          value={value}
-          onChange={e => onChange(Number(e.target.value))}
+          type="text"
+          inputMode="decimal"
+          value={display}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onChange={e => { const v = Number(e.target.value.replace(/,/g, "")); if (!isNaN(v)) onChange(v); }}
           className="w-36 text-right text-sm font-semibold text-deep-forest bg-mint-white/60 border border-mint-light/60 rounded-lg px-2 py-1 focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none"
         />
       </div>

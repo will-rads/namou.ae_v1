@@ -883,18 +883,24 @@ function NumInput({
   onChange: (v: number | "") => void;
   placeholder?: string;
 }) {
+  const [focused, setFocused] = useState(false);
+  const display = value === "" ? "" : focused ? String(value) : value.toLocaleString("en-US");
   return (
     <div className="flex items-center justify-between py-0.5">
       <label className="text-sm text-muted">{label}</label>
       <div className="flex items-center border border-mint-light rounded-lg overflow-hidden focus-within:border-forest transition-colors">
         {(prefix || suffix) && <span className="px-2 py-1 text-sm text-muted bg-mint-bg border-r border-mint-light">{unit}</span>}
         <input
-          type="number"
-          value={value}
+          type="text"
+          inputMode="decimal"
+          value={display}
           placeholder={placeholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           onChange={e => {
-            if (e.target.value === "") { onChange(placeholder ? "" : 0); return; }
-            const v = Number(e.target.value); if (!isNaN(v)) onChange(v);
+            const raw = e.target.value.replace(/,/g, "");
+            if (raw === "") { onChange(placeholder ? "" : 0); return; }
+            const v = Number(raw); if (!isNaN(v)) onChange(v);
           }}
           className="w-28 px-2 py-1 text-sm font-semibold text-forest bg-white text-right outline-none"
         />
