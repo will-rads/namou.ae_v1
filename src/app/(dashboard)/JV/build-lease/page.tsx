@@ -249,6 +249,17 @@ export default function BuildLeasePage() {
   const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
   const r = useMemo(() => compute(resolved), [resolved]);
 
+  const [splitOverridden, setSplitOverridden] = useState(false);
+  const contributionSplit = useMemo(() => {
+    if (typeof inputs.constructionPerGFA !== "number" || inputs.constructionPerGFA <= 0) return null;
+    if (typeof inputs.efficiency !== "number" || inputs.efficiency <= 0) return null;
+    if (typeof inputs.softCostPct !== "number") return null;
+    const gfa = inputs.plotSize * inputs.farRatio;
+    const constructionCost = gfa * inputs.constructionPerGFA * (1 + inputs.softCostPct / 100);
+    const total = inputs.landValue + constructionCost;
+    return total > 0 ? Math.round((inputs.landValue / total) * 100) : null;
+  }, [inputs.plotSize, inputs.farRatio, inputs.landValue, inputs.constructionPerGFA, inputs.softCostPct, inputs.efficiency]);
+
   useEffect(() => {
     const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
     if (info) {
@@ -256,6 +267,12 @@ export default function BuildLeasePage() {
       setInputs(prev => ({ ...prev, ...plotInputs }));
     }
   }, []);
+
+  // Auto-fill split from contribution ratio (unless user overrode)
+  useEffect(() => {
+    if (splitOverridden || contributionSplit === null) return;
+    setInputs(prev => prev.landOwnerSplit === contributionSplit ? prev : { ...prev, landOwnerSplit: contributionSplit });
+  }, [contributionSplit, splitOverridden]);
 
   function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
@@ -367,7 +384,7 @@ export default function BuildLeasePage() {
           <div className="border-t border-mint-light/40 pt-2 mt-1">
             <p className="text-xs font-semibold text-deep-forest text-center pb-1">Joint-Venture Split</p>
             <div className="grid grid-cols-2 gap-x-4">
-              <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} placeholder="e.g. 40" />
+              <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => { setSplitOverridden(true); update("landOwnerSplit", v); }} placeholder="auto" />
               <div className="flex items-center justify-between py-1.5 lg:py-1">
                 <span className="text-sm text-muted">Investor Share</span>
                 <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>

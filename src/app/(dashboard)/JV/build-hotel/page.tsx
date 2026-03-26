@@ -255,6 +255,15 @@ export default function BuildHotelPage() {
   const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
   const r = useMemo(() => compute(resolved), [resolved]);
 
+  const [splitOverridden, setSplitOverridden] = useState(false);
+  const contributionSplit = useMemo(() => {
+    if (typeof inputs.constructionCostTotal !== "number" || inputs.constructionCostTotal <= 0) return null;
+    if (typeof inputs.ffePlusPreOpening !== "number") return null;
+    const investorContrib = inputs.constructionCostTotal + inputs.ffePlusPreOpening;
+    const total = inputs.landValue + investorContrib;
+    return total > 0 ? Math.round((inputs.landValue / total) * 100) : null;
+  }, [inputs.landValue, inputs.constructionCostTotal, inputs.ffePlusPreOpening]);
+
   useEffect(() => {
     const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
     if (info) {
@@ -262,6 +271,12 @@ export default function BuildHotelPage() {
       setInputs(prev => ({ ...prev, ...plotInputs }));
     }
   }, []);
+
+  // Auto-fill split from contribution ratio (unless user overrode)
+  useEffect(() => {
+    if (splitOverridden || contributionSplit === null) return;
+    setInputs(prev => prev.landOwnerSplit === contributionSplit ? prev : { ...prev, landOwnerSplit: contributionSplit });
+  }, [contributionSplit, splitOverridden]);
 
   function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
@@ -421,7 +436,7 @@ export default function BuildHotelPage() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
-                  <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} placeholder="e.g. 40" />
+                  <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => { setSplitOverridden(true); update("landOwnerSplit", v); }} placeholder="auto" />
                   <div className="flex items-center justify-between py-1">
                     <span className="text-xs text-muted">Investor Share</span>
                     <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
