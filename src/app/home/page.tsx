@@ -39,10 +39,7 @@ export default function LandingPage() {
               priority
             />
             <p className="text-sm sm:text-base md:text-lg text-white/75 max-w-lg mx-auto leading-relaxed mt-4 sm:mt-5">
-              Curated land opportunities in Ras Al Khaimah.
-              Compare plots, run ROI and JV simulations,
-              review pricing — and move toward the best deal
-              with confidence.
+              Review land opportunities, compare pricing scenarios, and model ROI or Joint-venture outcomes in real time to guide each conversation toward the right deal.
             </p>
           </div>
         </div>
@@ -53,10 +50,10 @@ export default function LandingPage() {
             href="/overview"
             className="px-10 sm:px-14 py-3.5 sm:py-4 bg-white/15 backdrop-blur-sm border border-white/30 rounded-2xl text-base sm:text-lg font-semibold text-white hover:bg-white/25 hover:border-white/50 transition-all text-center shadow-lg"
           >
-            Enter the Simulation
+            Begin the Land Search
           </Link>
           <span className="text-xs text-white/40 tracking-wide">
-            Explore plots, returns, and deal structures
+            Guided land review and deal structuring
           </span>
         </div>
 
