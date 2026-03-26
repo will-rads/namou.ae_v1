@@ -376,7 +376,7 @@ function MasterPlanContent() {
                         <p className={`text-xs font-semibold ${active ? "text-white" : "text-deep-forest"}`}>
                           {plot.name}
                         </p>
-                        <p className={`text-[11px] mt-0.5 ${active ? "text-white/70" : "text-muted"}`}>
+                        <p className={`text-[11px] font-heading mt-0.5 ${active ? "text-white/70" : "text-muted"}`}>
                           {formatNumber(plot.plotArea)} sqft
                         </p>
                       </button>
@@ -465,7 +465,7 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <p className="text-sm font-bold text-deep-forest font-heading">Plot Comparison</p>
-          <span className="text-[11px] font-medium text-muted bg-mint-bg border border-mint-light/60 px-2 py-0.5 rounded-full">
+          <span className="text-[11px] font-medium font-heading text-muted bg-mint-bg border border-mint-light/60 px-2 py-0.5 rounded-full">
             {cPlots.length}/2 selected
           </span>
         </div>

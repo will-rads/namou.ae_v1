@@ -46,8 +46,8 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }
 
-/* Bold values (numbers, KPIs) share the heading font for visual consistency */
-.font-bold {
+/* Emphasised values (numbers, KPIs, stats) share the heading font */
+.font-bold, .font-semibold {
   font-family: var(--font-heading);
 }
 

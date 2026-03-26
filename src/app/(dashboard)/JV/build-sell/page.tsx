@@ -158,7 +158,7 @@ function KPI({ label, value, sub, primary, className }: { label: string; value: 
     <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"} ${className ?? ""}`}>
       <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
       <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
-      {sub && <span className="text-[11px] text-muted mt-0.5">{sub}</span>}
+      {sub && <span className="text-[11px] text-muted font-heading mt-0.5">{sub}</span>}
     </div>
   );
 }
@@ -298,14 +298,14 @@ export default function BuildSellPage() {
               <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
                 <span className="text-[10px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
                 <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerProfit)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                <p className="text-[10px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
+                <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                <p className="text-[10px] text-muted font-heading">ROI: {r.landOwnerROI.toFixed(1)}%</p>
               </div>
               <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
                 <span className="text-[10px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
                 <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.investorProfit)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                <p className="text-[10px] text-muted">ROI: {r.investorROI.toFixed(1)}%</p>
+                <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                <p className="text-[10px] text-muted font-heading">ROI: {r.investorROI.toFixed(1)}%</p>
               </div>
             </div>
           </Section>

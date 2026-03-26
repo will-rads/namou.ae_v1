@@ -602,10 +602,10 @@ export default function ROIPage() {
                             style={{ height: `${Math.max(ratio * 100, 3)}%` }}
                           />
                         </div>
-                        <p className={`text-xs mt-1.5 font-medium ${isCurrent ? "text-forest" : "text-muted"}`}>
+                        <p className={`text-xs mt-1.5 font-medium font-heading ${isCurrent ? "text-forest" : "text-muted"}`}>
                           {(d.price / 1000).toFixed(1)}K
                         </p>
-                        <p className={`text-xs ${isCurrent ? "text-forest font-semibold" : "text-muted"}`}>
+                        <p className={`text-xs font-heading ${isCurrent ? "text-forest font-semibold" : "text-muted"}`}>
                           {fmtAED(d.profit)}
                         </p>
                       </div>
@@ -651,7 +651,7 @@ export default function ROIPage() {
                               className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-mint-bg transition-colors border border-transparent hover:border-mint-light/60"
                             >
                               <p className="text-sm font-semibold text-forest">{p.name}</p>
-                              <p className="text-xs text-muted mt-0.5">{p.area} · AED {formatNumber(p.askingPrice)}</p>
+                              <p className="text-xs text-muted font-heading mt-0.5">{p.area} · AED {formatNumber(p.askingPrice)}</p>
                             </button>
                           ))}
                         </div>

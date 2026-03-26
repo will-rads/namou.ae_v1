@@ -507,7 +507,7 @@ export default function FinalOfferPage() {
         <ContentCard className="bg-mint-bg border-mint-light text-center">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Land Price</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.landCost)}</p>
-          <p className="text-xs text-muted mt-1">{formatNumber(selectedPlot.plotArea)} sqft</p>
+          <p className="text-xs text-muted font-heading mt-1">{formatNumber(selectedPlot.plotArea)} sqft</p>
         </ContentCard>
         <ContentCard className="bg-mint-bg border-mint-light text-center">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Total Dev. Cost</p>
@@ -522,7 +522,7 @@ export default function FinalOfferPage() {
         <ContentCard className="bg-forest/10 border-forest/20 text-center">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Projected Profit</p>
           <p className={`text-2xl font-bold font-heading ${offerSummary.profit > 0 ? "text-forest" : "text-red-600"}`}>{fmtAED(offerSummary.profit)}</p>
-          <p className="text-xs text-muted mt-1">{offerSummary.profitMargin.toFixed(1)}% margin</p>
+          <p className="text-xs text-muted font-heading mt-1">{offerSummary.profitMargin.toFixed(1)}% margin</p>
         </ContentCard>
       </div>
 
