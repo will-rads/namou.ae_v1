@@ -38,7 +38,13 @@ interface OfferSim {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SENSITIVITY_PRICES = [2500, 2800, 3200, 3600, 4000];
+/** Build 5 price points centred on the current selling price with a readable step. */
+function buildSensitivityPrices(center: number): number[] {
+  const raw = Math.max(center * 0.1, 25);
+  // Round step to a "nice" number: nearest 25 up to 200, nearest 50 up to 500, nearest 100 above
+  const step = raw <= 200 ? Math.round(raw / 25) * 25 : raw <= 500 ? Math.round(raw / 50) * 50 : Math.round(raw / 100) * 100;
+  return [-2, -1, 0, 1, 2].map(i => Math.round(center + i * step));
+}
 const RLV_TARGET_MARGIN = 20;
 
 const DEFAULT_SELLING_PRICE = 3200;
@@ -220,13 +226,10 @@ export default function ROIPage() {
   const results2 = useMemo(() => inputs2 ? compute(resolveInputs(inputs2)) : null, [inputs2]);
   const dealLabel2 = results2 ? getDealLabel(results2.profitMargin) : null;
 
+  const sensPrices = useMemo(() => buildSensitivityPrices(resolved.sellingPricePerNSA), [resolved.sellingPricePerNSA]);
   const sensitivityData = useMemo(() =>
-    SENSITIVITY_PRICES.map(price => ({ price, ...compute({ ...resolved, sellingPricePerNSA: price }) })),
-    [resolved]
-  );
-  const closestSensPrice = SENSITIVITY_PRICES.reduce((c, p) =>
-    Math.abs(p - resolved.sellingPricePerNSA) < Math.abs(c - resolved.sellingPricePerNSA) ? p : c,
-    SENSITIVITY_PRICES[0]
+    sensPrices.map(price => ({ price, ...compute({ ...resolved, sellingPricePerNSA: price }) })),
+    [sensPrices, resolved]
   );
   const maxAbsProfit = Math.max(...sensitivityData.map(d => Math.abs(d.profit)), 1);
 
@@ -590,7 +593,7 @@ export default function ROIPage() {
                 <div className="flex items-end gap-3 flex-1 min-h-[48px]">
                   {sensitivityData.map(d => {
                     const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
-                    const isCurrent = d.price === closestSensPrice;
+                    const isCurrent = d.price === resolved.sellingPricePerNSA;
                     return (
                       <div key={d.price} className="flex flex-col items-center flex-1 h-full">
                         <div className="flex-1 flex items-end w-full">
