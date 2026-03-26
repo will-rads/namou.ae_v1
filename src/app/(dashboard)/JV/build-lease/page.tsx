@@ -245,6 +245,8 @@ function Section({ title, className, children }: { title: string; className?: st
 // ── Session & Nav ────────────────────────────────────────────────────────────
 
 const SESSION_KEY = "jv_build_lease_state";
+const SHARED_SESSION_KEY = "jv_shared_inputs";
+const SHARED_KEYS = ["efficiency", "constructionPerGFA", "softCostPct", "occupancy", "operatingCostPct", "landOwnerSplit"] as const;
 const JV_MODELS = [
   { label: "Build & Sell", href: "/JV/build-sell" },
   { label: "Build & Lease", href: "/JV/build-lease" },
@@ -272,26 +274,48 @@ export default function BuildLeasePage() {
   }, [inputs.plotSize, inputs.farRatio, inputs.landValue, inputs.constructionPerGFA, inputs.softCostPct, inputs.efficiency]);
 
   useEffect(() => {
-    // Restore from simulator session
+    let base: DisplayInputs = { ...DEFAULTS };
+    let overridden = false;
+    // 1. Apply shared fields from other simulators
+    try {
+      const shared = JSON.parse(sessionStorage.getItem(SHARED_SESSION_KEY) || "{}");
+      for (const key of SHARED_KEYS) {
+        if (key in base && key in shared && shared[key] !== "" && shared[key] !== undefined) {
+          (base as Record<string, unknown>)[key] = shared[key];
+        }
+      }
+    } catch {}
+    // 2. Apply own session state (higher priority)
     try {
       const stored = sessionStorage.getItem(SESSION_KEY);
       if (stored) {
-        const { inputs: restored, splitOverridden: overridden } = JSON.parse(stored);
-        if (restored) setInputs(prev => ({ ...prev, ...restored }));
-        if (overridden) setSplitOverridden(true);
+        const { inputs: restored, splitOverridden: so } = JSON.parse(stored);
+        if (restored) base = { ...base, ...restored };
+        if (so) overridden = true;
       }
     } catch {}
-    // Apply current plot data (overwrites plot-derived fields)
+    // 3. Apply plot data (highest for plot-derived fields)
     const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
     if (info) {
       setPlotInfo(info);
-      setInputs(prev => ({ ...prev, ...plotInputs }));
+      base = { ...base, ...plotInputs };
     }
+    setInputs(base);
+    if (overridden) setSplitOverridden(true);
   }, []);
 
-  // Persist inputs to session for cross-simulator navigation
+  // Persist inputs to own session + shared fields for cross-simulator carry-over
   useEffect(() => {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ inputs, splitOverridden })); } catch {}
+    try {
+      const shared = JSON.parse(sessionStorage.getItem(SHARED_SESSION_KEY) || "{}");
+      for (const key of SHARED_KEYS) {
+        if (key in inputs) {
+          shared[key] = (inputs as Record<string, unknown>)[key];
+        }
+      }
+      sessionStorage.setItem(SHARED_SESSION_KEY, JSON.stringify(shared));
+    } catch {}
   }, [inputs, splitOverridden]);
 
   // Auto-fill split from contribution ratio (unless user overrode)
