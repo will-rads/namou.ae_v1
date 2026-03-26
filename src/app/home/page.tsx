@@ -47,7 +47,7 @@ export default function LandingPage() {
         {/* CTA — placed separately in lower portion of screen */}
         <div className="flex flex-col items-center gap-3 mb-4 sm:mb-8">
           <Link
-            href="/overview"
+            href="/master-plan"
             className="px-10 sm:px-14 py-3.5 sm:py-4 bg-white/15 backdrop-blur-sm border border-white/30 rounded-2xl text-base sm:text-lg font-semibold text-white hover:bg-white/25 hover:border-white/50 transition-all text-center shadow-lg"
           >
             Begin the Land Search
