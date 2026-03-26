@@ -46,6 +46,11 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }
 
+/* Bold values (numbers, KPIs) share the heading font for visual consistency */
+.font-bold {
+  font-family: var(--font-heading);
+}
+
 /* Sidebar tooltips: show only when sidebar is collapsed (not hovered) */
 aside:not(:hover) .nav-link:hover .nav-tooltip {
   opacity: 1;
