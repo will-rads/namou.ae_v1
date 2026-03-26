@@ -31,21 +31,33 @@ interface Inputs {
   investorCashTopUp: number;
 }
 
-const DEFAULTS: Inputs = {
+type DisplayInputs = {
+  plotSize: number;
+  landValue: number;
+  farRatio: number;
+  efficiency: number | "";
+  constructionPerGFA: number | "";
+  softCostPct: number | "";
+  sellingPricePerNSA: number | "";
+  landOwnerSplit: number | "";
+  investorCashTopUp: number | "";
+};
+
+const DEFAULTS: DisplayInputs = {
   plotSize: 50_000,
   landValue: 25_000_000,
   farRatio: 3.0,
-  efficiency: 80,
-  constructionPerGFA: 900,
-  softCostPct: 20,
-  sellingPricePerNSA: 3_200,
-  landOwnerSplit: 40,
-  investorCashTopUp: 0,
+  efficiency: "",
+  constructionPerGFA: "",
+  softCostPct: "",
+  sellingPricePerNSA: "",
+  landOwnerSplit: "",
+  investorCashTopUp: "",
 };
 
 // ── Session + backend helpers ────────────────────────────────────────────────
 
-function loadPlotFromSession(): { plot: Plot | null; plotInfo: PlotInfo | null; inputs: Partial<Inputs> } {
+function loadPlotFromSession(): { plot: Plot | null; plotInfo: PlotInfo | null; inputs: Partial<DisplayInputs> } {
   if (typeof window === "undefined") return { plot: null, plotInfo: null, inputs: {} };
   try {
     const stored = sessionStorage.getItem("selected_plot");
@@ -66,7 +78,7 @@ function loadPlotFromSession(): { plot: Plot | null; plotInfo: PlotInfo | null; 
       far,
     };
 
-    const inputs: Partial<Inputs> = {
+    const inputs: Partial<DisplayInputs> = {
       plotSize: plot.plotArea,
       landValue: plot.askingPrice,
       farRatio: parseFloat(far.toFixed(2)),
@@ -115,6 +127,20 @@ function compute(inp: Inputs) {
   };
 }
 
+function resolveInputs(d: DisplayInputs): Inputs {
+  return {
+    plotSize: d.plotSize,
+    landValue: d.landValue,
+    farRatio: d.farRatio,
+    efficiency: typeof d.efficiency === "number" ? d.efficiency : 0,
+    constructionPerGFA: typeof d.constructionPerGFA === "number" ? d.constructionPerGFA : 0,
+    softCostPct: typeof d.softCostPct === "number" ? d.softCostPct : 0,
+    sellingPricePerNSA: typeof d.sellingPricePerNSA === "number" ? d.sellingPricePerNSA : 0,
+    landOwnerSplit: typeof d.landOwnerSplit === "number" ? d.landOwnerSplit : 0,
+    investorCashTopUp: typeof d.investorCashTopUp === "number" ? d.investorCashTopUp : 0,
+  };
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmt(n: number): string {
@@ -127,9 +153,9 @@ function fmtAED(n: number) { return `AED ${fmt(n)}`; }
 
 function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
-function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
+function InputRow({ label, value, unit, onChange, placeholder }: { label: string; value: number | ""; unit: string; onChange: (v: number | "") => void; placeholder?: string }) {
   const [focused, setFocused] = useState(false);
-  const display = focused ? String(value) : value.toLocaleString("en-US");
+  const display = value === "" ? "" : focused ? String(value) : value.toLocaleString("en-US");
   return (
     <div className="flex items-center justify-between py-1.5 lg:py-1">
       <span className="text-sm text-muted">{label}</span>
@@ -139,9 +165,14 @@ function InputRow({ label, value, unit, onChange }: { label: string; value: numb
           type="text"
           inputMode="decimal"
           value={display}
+          placeholder={placeholder}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          onChange={e => { const v = Number(e.target.value.replace(/,/g, "")); if (!isNaN(v)) onChange(v); }}
+          onChange={e => {
+            const raw = e.target.value.replace(/,/g, "");
+            if (raw === "") { onChange(""); return; }
+            const v = Number(raw); if (!isNaN(v)) onChange(v);
+          }}
           className="w-36 text-right text-sm font-semibold text-deep-forest bg-mint-white/60 border border-mint-light/60 rounded-lg px-2 py-1 focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none"
         />
       </div>
@@ -158,25 +189,27 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function KPI({ label, value, sub, primary, className }: { label: string; value: string; sub?: string; primary?: boolean; className?: string }) {
+function KPI({ label, value, sub, primary, className, ready = true }: { label: string; value: string; sub?: string; primary?: boolean; className?: string; ready?: boolean }) {
   return (
-    <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"} ${className ?? ""}`}>
+    <div className={`rounded-xl p-3 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"} ${className ?? ""} transition-opacity ${ready ? "opacity-100" : "opacity-50"}`}>
       <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
-      <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
-      {sub && <span className="text-[11px] text-muted font-heading mt-0.5">{sub}</span>}
+      {ready ? (
+        <>
+          <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
+          {sub && <span className="text-[11px] text-muted font-heading mt-0.5">{sub}</span>}
+        </>
+      ) : (
+        <span className="text-lg font-bold mt-0.5 text-muted/30">—</span>
+      )}
     </div>
   );
 }
 
-function Section({ title, defaultOpen = true, className, children }: { title: string; defaultOpen?: boolean; className?: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen);
+function Section({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
   return (
     <ContentCard className={className}>
-      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left md:pointer-events-none">
-        <h2 className="text-xs uppercase tracking-widest text-muted font-semibold text-center flex-1">{title}</h2>
-        <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
-      </button>
-      <div className={`mt-2 flex-1 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
+      <h2 className="text-xs uppercase tracking-widest text-muted font-semibold text-center">{title}</h2>
+      <div className="mt-2 flex-1">{children}</div>
     </ContentCard>
   );
 }
@@ -185,8 +218,9 @@ function Section({ title, defaultOpen = true, className, children }: { title: st
 
 export default function BuildSellPage() {
   const [plotInfo, setPlotInfo] = useState<PlotInfo | null>(null);
-  const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
-  const r = useMemo(() => compute(inputs), [inputs]);
+  const [inputs, setInputs] = useState<DisplayInputs>(DEFAULTS);
+  const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
+  const r = useMemo(() => compute(resolved), [resolved]);
 
   useEffect(() => {
     const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
@@ -196,9 +230,21 @@ export default function BuildSellPage() {
     }
   }, []);
 
-  function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
+  function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
   }
+
+  // Readiness flags
+  const hasConstruction = typeof inputs.efficiency === "number" && inputs.efficiency > 0
+    && typeof inputs.constructionPerGFA === "number" && inputs.constructionPerGFA > 0
+    && typeof inputs.softCostPct === "number";
+  const hasSales = typeof inputs.sellingPricePerNSA === "number" && inputs.sellingPricePerNSA > 0;
+  const hasJVSplit = typeof inputs.landOwnerSplit === "number";
+  const isGFAReady = typeof inputs.efficiency === "number" && inputs.efficiency > 0;
+  const isCostReady = hasConstruction;
+  const isGDVReady = hasSales && isGFAReady;
+  const isProfitReady = isCostReady && isGDVReady;
+  const isSplitReady = isProfitReady && hasJVSplit;
 
   return (
     <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
@@ -217,15 +263,15 @@ export default function BuildSellPage() {
         <div className="grid grid-cols-3 gap-1.5">
           <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
             <p className="text-[10px] text-muted uppercase tracking-wider">Total Cost</p>
-            <p className="text-sm font-bold text-deep-forest">{fmtAED(r.totalCost)}</p>
+            <p className="text-sm font-bold text-deep-forest">{isCostReady ? fmtAED(r.totalCost) : "—"}</p>
           </div>
           <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
             <p className="text-[10px] text-muted uppercase tracking-wider">GDV</p>
-            <p className="text-sm font-bold text-deep-forest">{fmtAED(r.gdv)}</p>
+            <p className="text-sm font-bold text-deep-forest">{isGDVReady ? fmtAED(r.gdv) : "—"}</p>
           </div>
           <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
             <p className="text-[10px] text-muted uppercase tracking-wider">Net Profit</p>
-            <p className="text-sm font-bold text-forest">{fmtAED(r.netProfit)}</p>
+            <p className="text-sm font-bold text-forest">{isProfitReady ? fmtAED(r.netProfit) : "—"}</p>
           </div>
         </div>
       </div>
@@ -255,12 +301,12 @@ export default function BuildSellPage() {
           <Section title="Project Summary" className="flex flex-col flex-1 !pb-2">
             <div className="flex flex-col gap-2 flex-1">
               <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-2 flex-1">
-                <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center justify-center" />
-                <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} sub={`${formatNumber(Math.round(r.gfa))} GFA × ${inputs.efficiency}%`} className="items-center text-center justify-center" />
-                <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} className="items-center text-center justify-center" />
-                <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(inputs.sellingPricePerNSA)}`} className="items-center text-center justify-center" />
+                <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center justify-center" ready={isGFAReady} />
+                <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} sub={`${formatNumber(Math.round(r.gfa))} GFA × ${resolved.efficiency}%`} className="items-center text-center justify-center" ready={isGFAReady} />
+                <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} className="items-center text-center justify-center" ready={isCostReady} />
+                <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(resolved.sellingPricePerNSA)}`} className="items-center text-center justify-center" ready={isGDVReady} />
               </div>
-              <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="items-center text-center py-4" />
+              <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="items-center text-center py-4" ready={isProfitReady} />
             </div>
           </Section>
         </div>
@@ -276,22 +322,22 @@ export default function BuildSellPage() {
               {/* Row 1: Construction */}
               <div className="pb-2">
                 <p className="text-sm font-semibold text-deep-forest pb-1">Construction</p>
-                <InputRow label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
-                <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
-                <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
+                <InputRow label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} placeholder="e.g. 80" />
+                <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} placeholder="e.g. 900" />
+                <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} placeholder="e.g. 20" />
               </div>
               {/* Row 2: Sales */}
               <div className="py-2">
                 <p className="text-sm font-semibold text-deep-forest pb-1">Sales</p>
-                <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} />
+                <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} placeholder="e.g. 3200" />
               </div>
               {/* Row 3: Joint-Venture Split */}
               <div className="pt-2">
                 <p className="text-sm font-semibold text-deep-forest pb-1">Joint-Venture Split</p>
-                <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
+                <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} placeholder="e.g. 40" />
                 <div className="flex items-center justify-between py-1.5">
                   <span className="text-sm text-muted">Investor Profit Share</span>
-                  <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
+                  <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
                 </div>
               </div>
             </div>
@@ -299,45 +345,53 @@ export default function BuildSellPage() {
 
           {/* Profit Split */}
           <Section title="Profit Split">
-            <div className="grid grid-cols-2 gap-1.5">
-              <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
-                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerProfit)}</p>
-                <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                <p className="text-[10px] text-muted font-heading">ROI: {r.landOwnerROI.toFixed(1)}%</p>
+            {isSplitReady ? (
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
+                  <span className="text-[10px] text-muted uppercase tracking-wider">Landowner ({resolved.landOwnerSplit}%)</span>
+                  <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerProfit)}</p>
+                  <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                  <p className="text-[10px] text-muted font-heading">ROI: {r.landOwnerROI.toFixed(1)}%</p>
+                </div>
+                <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
+                  <span className="text-[10px] text-muted uppercase tracking-wider">Investor ({100 - resolved.landOwnerSplit}%)</span>
+                  <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.investorProfit)}</p>
+                  <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                  <p className="text-[10px] text-muted font-heading">ROI: {r.investorROI.toFixed(1)}%</p>
+                </div>
               </div>
-              <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
-                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.investorProfit)}</p>
-                <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                <p className="text-[10px] text-muted font-heading">ROI: {r.investorROI.toFixed(1)}%</p>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted/40 text-center py-4">Enter construction, sales, and JV split inputs to see profit breakdown</p>
+            )}
           </Section>
 
           {/* Sell Land Today vs Joint-Venture */}
           <Section title="Sell Land Today vs Joint-Venture" className="flex flex-col flex-1">
-            <div className="grid grid-cols-3 gap-1.5">
-              <div className="rounded-xl p-2.5 bg-mint-white/80 border border-mint-light/40">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Sell Today</span>
-                <p className="text-base font-bold text-deep-forest mt-0.5">{fmtAED(r.sellTodayProceeds)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Immediate cash</p>
+            {isSplitReady ? (
+              <div className="grid grid-cols-3 gap-1.5">
+                <div className="rounded-xl p-2.5 bg-mint-white/80 border border-mint-light/40">
+                  <span className="text-[10px] text-muted uppercase tracking-wider">Sell Today</span>
+                  <p className="text-base font-bold text-deep-forest mt-0.5">{fmtAED(r.sellTodayProceeds)}</p>
+                  <p className="text-[10px] text-muted mt-0.5">Immediate cash</p>
+                </div>
+                <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
+                  <span className="text-[10px] text-muted uppercase tracking-wider">Joint-Venture</span>
+                  <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.jvLandOwnerProceeds)}</p>
+                  <p className="text-[10px] text-muted mt-0.5">Land + profit share</p>
+                </div>
+                <div className={`rounded-xl p-2.5 border ${r.jvUplift >= 0 ? "bg-forest/5 border-forest/15" : "bg-red-50 border-red-200"}`}>
+                  <span className="text-[10px] text-muted uppercase tracking-wider">Uplift</span>
+                  <p className={`text-base font-bold mt-0.5 ${r.jvUplift >= 0 ? "text-forest" : "text-red-600"}`}>
+                    {r.jvUplift >= 0 ? "+" : ""}{fmtAED(r.jvUplift)}
+                  </p>
+                  <p className="text-[10px] text-muted mt-0.5">
+                    {r.jvUpliftPct >= 0 ? "+" : ""}{r.jvUpliftPct.toFixed(1)}% vs sell
+                  </p>
+                </div>
               </div>
-              <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
-                <span className="text-[10px] text-muted uppercase tracking-wider">Joint-Venture</span>
-                <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.jvLandOwnerProceeds)}</p>
-                <p className="text-[10px] text-muted mt-0.5">Land + profit share</p>
-              </div>
-              <div className={`rounded-xl p-2.5 border ${r.jvUplift >= 0 ? "bg-forest/5 border-forest/15" : "bg-red-50 border-red-200"}`}>
-                <span className="text-[10px] text-muted uppercase tracking-wider">Uplift</span>
-                <p className={`text-base font-bold mt-0.5 ${r.jvUplift >= 0 ? "text-forest" : "text-red-600"}`}>
-                  {r.jvUplift >= 0 ? "+" : ""}{fmtAED(r.jvUplift)}
-                </p>
-                <p className="text-[10px] text-muted mt-0.5">
-                  {r.jvUpliftPct >= 0 ? "+" : ""}{r.jvUpliftPct.toFixed(1)}% vs sell
-                </p>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted/40 text-center py-4">Enter all inputs to compare selling today vs joint-venture</p>
+            )}
           </Section>
         </div>
       </div>

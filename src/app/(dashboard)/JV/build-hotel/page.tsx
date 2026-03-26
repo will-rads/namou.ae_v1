@@ -43,28 +43,39 @@ interface Inputs {
   landOwnerSplit: number;
 }
 
-const DEFAULTS: Inputs = {
+type DisplayInputs = {
+  plotSize: number;
+  landValue: number;
+  constructionCostTotal: number | "";
+  ffePlusPreOpening: number | "";
+  numberOfKeys: number | "";
+  adr: number | "";
+  occupancy: number | "";
+  fbRevenueAnnual: number | "";
+  baseFeeRevenuePct: number | "";
+  incentiveFeeProfitPct: number | "";
+  operatingCostPct: number | "";
+  landOwnerSplit: number | "";
+};
+
+const DEFAULTS: DisplayInputs = {
   plotSize: 80_000,
   landValue: 40_000_000,
-  constructionCostTotal: 180_000_000,
-  ffePlusPreOpening: 25_000_000,
-
-  numberOfKeys: 200,
-  adr: 800,
-  occupancy: 72,
-  fbRevenueAnnual: 15_000_000,
-
-  baseFeeRevenuePct: 5,
-  incentiveFeeProfitPct: 10,
-
-  operatingCostPct: 55,
-
-  landOwnerSplit: 40,
+  constructionCostTotal: "",
+  ffePlusPreOpening: "",
+  numberOfKeys: "",
+  adr: "",
+  occupancy: "",
+  fbRevenueAnnual: "",
+  baseFeeRevenuePct: "",
+  incentiveFeeProfitPct: "",
+  operatingCostPct: "",
+  landOwnerSplit: "",
 };
 
 // ── Session + backend helpers ────────────────────────────────────────────────
 
-function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inputs> } {
+function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<DisplayInputs> } {
   if (typeof window === "undefined") return { plotInfo: null, inputs: {} };
   try {
     const stored = sessionStorage.getItem("selected_plot");
@@ -85,7 +96,7 @@ function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inp
       far,
     };
 
-    const inputs: Partial<Inputs> = {
+    const inputs: Partial<DisplayInputs> = {
       plotSize: plot.plotArea,
       landValue: plot.askingPrice,
     };
@@ -146,6 +157,23 @@ function compute(inp: Inputs) {
   };
 }
 
+function resolveInputs(d: DisplayInputs): Inputs {
+  return {
+    plotSize: d.plotSize,
+    landValue: d.landValue,
+    constructionCostTotal: typeof d.constructionCostTotal === "number" ? d.constructionCostTotal : 0,
+    ffePlusPreOpening: typeof d.ffePlusPreOpening === "number" ? d.ffePlusPreOpening : 0,
+    numberOfKeys: typeof d.numberOfKeys === "number" ? d.numberOfKeys : 0,
+    adr: typeof d.adr === "number" ? d.adr : 0,
+    occupancy: typeof d.occupancy === "number" ? d.occupancy : 0,
+    fbRevenueAnnual: typeof d.fbRevenueAnnual === "number" ? d.fbRevenueAnnual : 0,
+    baseFeeRevenuePct: typeof d.baseFeeRevenuePct === "number" ? d.baseFeeRevenuePct : 0,
+    incentiveFeeProfitPct: typeof d.incentiveFeeProfitPct === "number" ? d.incentiveFeeProfitPct : 0,
+    operatingCostPct: typeof d.operatingCostPct === "number" ? d.operatingCostPct : 0,
+    landOwnerSplit: typeof d.landOwnerSplit === "number" ? d.landOwnerSplit : 0,
+  };
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmt(n: number): string {
@@ -158,9 +186,9 @@ function fmtAED(n: number) { return `AED ${fmt(n)}`; }
 
 function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
-function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
+function InputRow({ label, value, unit, onChange, placeholder }: { label: string; value: number | ""; unit: string; onChange: (v: number | "") => void; placeholder?: string }) {
   const [focused, setFocused] = useState(false);
-  const display = focused ? String(value) : value.toLocaleString("en-US");
+  const display = value === "" ? "" : focused ? String(value) : value.toLocaleString("en-US");
   return (
     <div className="flex items-center justify-between py-1.5 lg:py-1">
       <span className="text-sm text-muted">{label}</span>
@@ -170,9 +198,14 @@ function InputRow({ label, value, unit, onChange }: { label: string; value: numb
           type="text"
           inputMode="decimal"
           value={display}
+          placeholder={placeholder}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          onChange={e => { const v = Number(e.target.value.replace(/,/g, "")); if (!isNaN(v)) onChange(v); }}
+          onChange={e => {
+            const raw = e.target.value.replace(/,/g, "");
+            if (raw === "") { onChange(""); return; }
+            const v = Number(raw); if (!isNaN(v)) onChange(v);
+          }}
           className="w-36 text-right text-sm font-semibold text-deep-forest bg-mint-white/60 border border-mint-light/60 rounded-lg px-2 py-1 focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none"
         />
       </div>
@@ -189,25 +222,27 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function KPI({ label, value, sub, primary, warn }: { label: string; value: string; sub?: string; primary?: boolean; warn?: boolean }) {
+function KPI({ label, value, sub, primary, warn, ready = true }: { label: string; value: string; sub?: string; primary?: boolean; warn?: boolean; ready?: boolean }) {
   return (
-    <div className={`rounded-xl p-3 flex flex-col ${warn ? "bg-amber-50 border border-amber-200" : primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+    <div className={`rounded-xl p-3 flex flex-col ${warn ? "bg-amber-50 border border-amber-200" : primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"} transition-opacity ${ready ? "opacity-100" : "opacity-50"}`}>
       <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
-      <span className={`text-lg font-bold mt-0.5 ${warn ? "text-amber-700" : primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
-      {sub && <span className="text-[11px] text-muted font-heading mt-0.5">{sub}</span>}
+      {ready ? (
+        <>
+          <span className={`text-lg font-bold mt-0.5 ${warn ? "text-amber-700" : primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
+          {sub && <span className="text-[11px] text-muted font-heading mt-0.5">{sub}</span>}
+        </>
+      ) : (
+        <span className="text-lg font-bold mt-0.5 text-muted/30">—</span>
+      )}
     </div>
   );
 }
 
-function Section({ title, defaultOpen = true, className, children }: { title: string; defaultOpen?: boolean; className?: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen);
+function Section({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
   return (
     <ContentCard className={className}>
-      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left md:pointer-events-none">
-        <h2 className="text-xs uppercase tracking-widest text-muted font-semibold text-center flex-1">{title}</h2>
-        <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
-      </button>
-      <div className={`mt-2 flex-1 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
+      <h2 className="text-xs uppercase tracking-widest text-muted font-semibold text-center">{title}</h2>
+      <div className="mt-2 flex-1">{children}</div>
     </ContentCard>
   );
 }
@@ -216,8 +251,9 @@ function Section({ title, defaultOpen = true, className, children }: { title: st
 
 export default function BuildHotelPage() {
   const [plotInfo, setPlotInfo] = useState<PlotInfo | null>(null);
-  const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
-  const r = useMemo(() => compute(inputs), [inputs]);
+  const [inputs, setInputs] = useState<DisplayInputs>(DEFAULTS);
+  const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
+  const r = useMemo(() => compute(resolved), [resolved]);
 
   useEffect(() => {
     const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
@@ -227,9 +263,26 @@ export default function BuildHotelPage() {
     }
   }, []);
 
-  function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
+  function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
   }
+
+  // Readiness flags
+  const hasOperations = typeof inputs.numberOfKeys === "number" && inputs.numberOfKeys > 0
+    && typeof inputs.adr === "number" && inputs.adr > 0
+    && typeof inputs.occupancy === "number" && inputs.occupancy > 0
+    && typeof inputs.fbRevenueAnnual === "number";
+  const hasOpex = typeof inputs.operatingCostPct === "number";
+  const hasOperatorFees = typeof inputs.baseFeeRevenuePct === "number"
+    && typeof inputs.incentiveFeeProfitPct === "number";
+  const hasDevelopment = typeof inputs.constructionCostTotal === "number" && inputs.constructionCostTotal > 0
+    && typeof inputs.ffePlusPreOpening === "number";
+  const hasJVSplit = typeof inputs.landOwnerSplit === "number";
+
+  const isRevenueReady = hasOperations;
+  const isPLReady = hasOperations && hasOpex && hasOperatorFees;
+  const isJVSplitReady = isPLReady && hasJVSplit;
+  const isKeyMetricsReady = hasDevelopment && isPLReady;
 
   return (
     <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
@@ -248,15 +301,15 @@ export default function BuildHotelPage() {
         <div className="grid grid-cols-3 gap-1.5">
           <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
             <p className="text-[10px] text-muted uppercase tracking-wider">Revenue</p>
-            <p className="text-sm font-bold text-forest">{fmtAED(r.totalRevenue)}</p>
+            <p className="text-sm font-bold text-forest">{isRevenueReady ? fmtAED(r.totalRevenue) : "—"}</p>
           </div>
           <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
             <p className="text-[10px] text-muted uppercase tracking-wider">Net After Op.</p>
-            <p className="text-sm font-bold text-forest">{fmtAED(r.netIncomeAfterOperator)}</p>
+            <p className="text-sm font-bold text-forest">{isPLReady ? fmtAED(r.netIncomeAfterOperator) : "—"}</p>
           </div>
           <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
             <p className="text-[10px] text-muted uppercase tracking-wider">Yield</p>
-            <p className="text-sm font-bold text-deep-forest">{r.yieldPct.toFixed(1)}%</p>
+            <p className="text-sm font-bold text-deep-forest">{isKeyMetricsReady ? `${r.yieldPct.toFixed(1)}%` : "—"}</p>
           </div>
         </div>
       </div>
@@ -283,45 +336,53 @@ export default function BuildHotelPage() {
           </div>
 
           <Section title="Revenue (Annual)" className="flex flex-col">
-            <div className="grid grid-cols-4 gap-1.5">
-              <KPI label="Room Revenue" value={fmtAED(r.roomRevenue)} sub={`${formatNumber(Math.round(r.occupiedNights))} nights × AED ${formatNumber(inputs.adr)}`} />
-              <KPI label="F&B Revenue" value={fmtAED(inputs.fbRevenueAnnual)} />
-              <KPI label="Total Revenue" value={fmtAED(r.totalRevenue)} primary />
-              <KPI label="RevPAR" value={`AED ${formatNumber(Math.round(r.revpar))}`} sub={`${inputs.occupancy}% occupancy`} />
-            </div>
+            {isRevenueReady ? (
+              <div className="grid grid-cols-4 gap-1.5">
+                <KPI label="Room Revenue" value={fmtAED(r.roomRevenue)} sub={`${formatNumber(Math.round(r.occupiedNights))} nights × AED ${formatNumber(resolved.adr)}`} />
+                <KPI label="F&B Revenue" value={fmtAED(resolved.fbRevenueAnnual)} />
+                <KPI label="Total Revenue" value={fmtAED(r.totalRevenue)} primary />
+                <KPI label="RevPAR" value={`AED ${formatNumber(Math.round(r.revpar))}`} sub={`${resolved.occupancy}% occupancy`} />
+              </div>
+            ) : (
+              <p className="text-sm text-muted/40 text-center py-4">Enter hotel operations inputs to see revenue breakdown</p>
+            )}
           </Section>
 
           <Section title="P&amp;L Waterfall" className="flex-1 flex flex-col">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-mint-white/80">
-                <span className="text-sm text-deep-forest">Total Revenue</span>
-                <span className="text-sm font-bold text-deep-forest">{fmtAED(r.totalRevenue)}</span>
+            {isPLReady ? (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-mint-white/80">
+                  <span className="text-sm text-deep-forest">Total Revenue</span>
+                  <span className="text-sm font-bold text-deep-forest">{fmtAED(r.totalRevenue)}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
+                  <span className="text-sm text-muted">− Operating Costs ({resolved.operatingCostPct}%)</span>
+                  <span className="text-sm font-semibold text-red-500">−{fmtAED(r.operatingCosts)}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-forest/5 border border-forest/10">
+                  <span className="text-sm font-semibold text-forest">= Gross Operating Profit (GOP)</span>
+                  <span className="text-sm font-bold text-forest">{fmtAED(r.gop)}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
+                  <span className="text-sm text-muted">− Base Fee ({resolved.baseFeeRevenuePct}% of Revenue)</span>
+                  <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.baseFee)}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
+                  <span className="text-sm text-muted">− Incentive Fee ({resolved.incentiveFeeProfitPct}% of GOP)</span>
+                  <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.incentiveFee)}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <span className="text-sm font-semibold text-amber-700">Total Operator Fees</span>
+                  <span className="text-sm font-bold text-amber-700">{fmtAED(r.totalOperatorFees)}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-forest/10 border border-forest/20">
+                  <span className="text-sm font-bold text-forest">= Net Income After Operator</span>
+                  <span className="text-lg font-bold text-forest">{fmtAED(r.netIncomeAfterOperator)}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
-                <span className="text-sm text-muted">− Operating Costs ({inputs.operatingCostPct}%)</span>
-                <span className="text-sm font-semibold text-red-500">−{fmtAED(r.operatingCosts)}</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-forest/5 border border-forest/10">
-                <span className="text-sm font-semibold text-forest">= Gross Operating Profit (GOP)</span>
-                <span className="text-sm font-bold text-forest">{fmtAED(r.gop)}</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
-                <span className="text-sm text-muted">− Base Fee ({inputs.baseFeeRevenuePct}% of Revenue)</span>
-                <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.baseFee)}</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
-                <span className="text-sm text-muted">− Incentive Fee ({inputs.incentiveFeeProfitPct}% of GOP)</span>
-                <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.incentiveFee)}</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-amber-50 border border-amber-200">
-                <span className="text-sm font-semibold text-amber-700">Total Operator Fees</span>
-                <span className="text-sm font-bold text-amber-700">{fmtAED(r.totalOperatorFees)}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-forest/10 border border-forest/20">
-                <span className="text-sm font-bold text-forest">= Net Income After Operator</span>
-                <span className="text-lg font-bold text-forest">{fmtAED(r.netIncomeAfterOperator)}</span>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted/40 text-center py-4">Enter operations, OpEx, and operator fee inputs to see P&amp;L waterfall</p>
+            )}
           </Section>
         </div>
 
@@ -336,34 +397,34 @@ export default function BuildHotelPage() {
               <div className="flex flex-col justify-between">
                 <div>
                   <p className="text-xs font-semibold text-deep-forest pb-1">Development</p>
-                  <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} />
-                  <InputRow label="FF&E + Pre-Opening" value={inputs.ffePlusPreOpening} unit="AED" onChange={v => update("ffePlusPreOpening", v)} />
+                  <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} placeholder="e.g. 180,000,000" />
+                  <InputRow label="FF&E + Pre-Opening" value={inputs.ffePlusPreOpening} unit="AED" onChange={v => update("ffePlusPreOpening", v)} placeholder="e.g. 25,000,000" />
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hotel Operations</p>
-                  <InputRow label="Number of Keys" value={inputs.numberOfKeys} unit="keys" onChange={v => update("numberOfKeys", v)} />
-                  <InputRow label="ADR" value={inputs.adr} unit="AED" onChange={v => update("adr", v)} />
-                  <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
-                  <InputRow label="F&B Revenue (Annual)" value={inputs.fbRevenueAnnual} unit="AED" onChange={v => update("fbRevenueAnnual", v)} />
+                  <InputRow label="Number of Keys" value={inputs.numberOfKeys} unit="keys" onChange={v => update("numberOfKeys", v)} placeholder="e.g. 200" />
+                  <InputRow label="ADR" value={inputs.adr} unit="AED" onChange={v => update("adr", v)} placeholder="e.g. 800" />
+                  <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} placeholder="e.g. 72" />
+                  <InputRow label="F&B Revenue (Annual)" value={inputs.fbRevenueAnnual} unit="AED" onChange={v => update("fbRevenueAnnual", v)} placeholder="e.g. 15,000,000" />
                 </div>
               </div>
               {/* Inner right: Operator Fees + Operating Costs + JV Split */}
               <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
                 <div>
                   <p className="text-xs font-semibold text-deep-forest pb-1">Operator Fees</p>
-                  <InputRow label="Base Fee (% of Revenue)" value={inputs.baseFeeRevenuePct} unit="%" onChange={v => update("baseFeeRevenuePct", v)} />
-                  <InputRow label="Incentive Fee (% of GOP)" value={inputs.incentiveFeeProfitPct} unit="%" onChange={v => update("incentiveFeeProfitPct", v)} />
+                  <InputRow label="Base Fee (% of Revenue)" value={inputs.baseFeeRevenuePct} unit="%" onChange={v => update("baseFeeRevenuePct", v)} placeholder="e.g. 5" />
+                  <InputRow label="Incentive Fee (% of GOP)" value={inputs.incentiveFeeProfitPct} unit="%" onChange={v => update("incentiveFeeProfitPct", v)} placeholder="e.g. 10" />
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Operating Costs</p>
-                  <InputRow label="Total OpEx (% of Revenue)" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
+                  <InputRow label="Total OpEx (% of Revenue)" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} placeholder="e.g. 55" />
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
-                  <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
+                  <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} placeholder="e.g. 40" />
                   <div className="flex items-center justify-between py-1">
                     <span className="text-xs text-muted">Investor Share</span>
-                    <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
+                    <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
                   </div>
                 </div>
               </div>
@@ -371,28 +432,36 @@ export default function BuildHotelPage() {
           </ContentCard>
 
           <Section title="Joint-Venture Profit Split (Annual)" className="flex flex-col">
-            <div className="grid grid-cols-2 gap-1.5">
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
-                <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                <p className="text-[11px] text-muted font-heading">Annual ROI: {r.landOwnerROI.toFixed(1)}%</p>
+            {isJVSplitReady ? (
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
+                  <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({resolved.landOwnerSplit}%)</span>
+                  <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
+                  <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                  <p className="text-[11px] text-muted font-heading">Annual ROI: {r.landOwnerROI.toFixed(1)}%</p>
+                </div>
+                <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
+                  <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - resolved.landOwnerSplit}%)</span>
+                  <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
+                  <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                  <p className="text-[11px] text-muted font-heading">Annual ROI: {r.investorROI.toFixed(1)}%</p>
+                </div>
               </div>
-              <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
-                <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                <p className="text-[11px] text-muted font-heading">Annual ROI: {r.investorROI.toFixed(1)}%</p>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted/40 text-center py-4">Enter operations, fees, and JV split to see profit breakdown</p>
+            )}
           </Section>
 
           <Section title="Key Metrics" className="flex flex-col">
-            <div className="grid grid-cols-3 gap-1.5">
-              <KPI label="Development Cost" value={fmtAED(r.totalDevelopmentCost)} sub={`Land ${fmtAED(inputs.landValue)} + Build ${fmtAED(inputs.constructionCostTotal)} + FF&E ${fmtAED(inputs.ffePlusPreOpening)}`} />
-              <KPI label="Yield on Cost" value={`${r.yieldPct.toFixed(1)}%`} sub="Net Income ÷ Dev. Cost" primary />
-              <KPI label="Operator Take" value={fmtAED(r.totalOperatorFees)} sub={`${r.totalRevenue > 0 ? ((r.totalOperatorFees / r.totalRevenue) * 100).toFixed(1) : 0}% of revenue`} warn />
-            </div>
+            {isKeyMetricsReady ? (
+              <div className="grid grid-cols-3 gap-1.5">
+                <KPI label="Development Cost" value={fmtAED(r.totalDevelopmentCost)} sub={`Land ${fmtAED(resolved.landValue)} + Build ${fmtAED(resolved.constructionCostTotal)} + FF&E ${fmtAED(resolved.ffePlusPreOpening)}`} />
+                <KPI label="Yield on Cost" value={`${r.yieldPct.toFixed(1)}%`} sub="Net Income ÷ Dev. Cost" primary />
+                <KPI label="Operator Take" value={fmtAED(r.totalOperatorFees)} sub={`${r.totalRevenue > 0 ? ((r.totalOperatorFees / r.totalRevenue) * 100).toFixed(1) : 0}% of revenue`} warn />
+              </div>
+            ) : (
+              <p className="text-sm text-muted/40 text-center py-4">Enter development and operations inputs to see key metrics</p>
+            )}
           </Section>
         </div>
       </div>
