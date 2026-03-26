@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import ContentCard from "@/components/ContentCard";
 import type { Plot } from "@/data/mock";
 
@@ -247,9 +248,19 @@ function Section({ title, className, children }: { title: string; className?: st
   );
 }
 
+// ── Session & Nav ────────────────────────────────────────────────────────────
+
+const SESSION_KEY = "jv_build_hotel_state";
+const JV_MODELS = [
+  { label: "Build & Sell", href: "/JV/build-sell" },
+  { label: "Build & Lease", href: "/JV/build-lease" },
+  { label: "Build & Hotel", href: "/JV/build-hotel" },
+];
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BuildHotelPage() {
+  const pathname = usePathname();
   const [plotInfo, setPlotInfo] = useState<PlotInfo | null>(null);
   const [inputs, setInputs] = useState<DisplayInputs>(DEFAULTS);
   const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
@@ -265,12 +276,27 @@ export default function BuildHotelPage() {
   }, [inputs.landValue, inputs.constructionCostTotal, inputs.ffePlusPreOpening]);
 
   useEffect(() => {
+    // Restore from simulator session
+    try {
+      const stored = sessionStorage.getItem(SESSION_KEY);
+      if (stored) {
+        const { inputs: restored, splitOverridden: overridden } = JSON.parse(stored);
+        if (restored) setInputs(prev => ({ ...prev, ...restored }));
+        if (overridden) setSplitOverridden(true);
+      }
+    } catch {}
+    // Apply current plot data (overwrites plot-derived fields)
     const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
     if (info) {
       setPlotInfo(info);
       setInputs(prev => ({ ...prev, ...plotInputs }));
     }
   }, []);
+
+  // Persist inputs to session for cross-simulator navigation
+  useEffect(() => {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ inputs, splitOverridden })); } catch {}
+  }, [inputs, splitOverridden]);
 
   // Auto-fill split from contribution ratio (unless user overrode)
   useEffect(() => {
@@ -308,7 +334,16 @@ export default function BuildHotelPage() {
           <span>/</span>
           <span className="text-deep-forest font-medium">Build &amp; Hotel</span>
         </div>
-        <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Hotel Model</h1>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Hotel Model</h1>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {JV_MODELS.map(m => (
+              <Link key={m.href} href={m.href} className={`px-3 sm:px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${pathname === m.href ? "bg-forest text-white shadow-sm" : "bg-white border border-mint-light text-muted hover:border-forest/30 hover:text-forest"}`}>
+                {m.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Mobile key results snapshot */}
