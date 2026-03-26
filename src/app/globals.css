@@ -46,8 +46,12 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }
 
-/* Emphasised values (numbers, KPIs, stats) share the heading font */
-.font-bold, .font-semibold {
+/* Emphasised values (numbers, KPIs, stats) and controls share the heading font */
+.font-bold, .font-semibold, .font-medium {
+  font-family: var(--font-heading);
+}
+
+select {
   font-family: var(--font-heading);
 }
 
