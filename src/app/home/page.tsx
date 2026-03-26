@@ -11,16 +11,18 @@ function areaSlug(area: string) {
 
 const SIZE_OPTIONS = [
   { label: "All Sizes", value: "" },
-  { label: "Up to 10,000 sqft", value: "0-10000" },
-  { label: "10,000 – 50,000 sqft", value: "10000-50000" },
-  { label: "50,000+ sqft", value: "50000-" },
+  { label: "10–50k sq ft", value: "10000-50000" },
+  { label: "50–100k sq ft", value: "50000-100000" },
+  { label: "100–200k sq ft", value: "100000-200000" },
+  { label: "200k+ sq ft", value: "200000-" },
 ];
 
 const PRICE_OPTIONS = [
   { label: "All Prices", value: "" },
-  { label: "Up to AED 5M", value: "0-5000000" },
-  { label: "AED 5M – 15M", value: "5000000-15000000" },
-  { label: "AED 15M+", value: "15000000-" },
+  { label: "AED 15–25M", value: "15000000-25000000" },
+  { label: "AED 25–50M", value: "25000000-50000000" },
+  { label: "AED 50–100M", value: "50000000-100000000" },
+  { label: "AED 100M+", value: "100000000-" },
 ];
 
 function loadFilters(): { size: string; price: string } {
