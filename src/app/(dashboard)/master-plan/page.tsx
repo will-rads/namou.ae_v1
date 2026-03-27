@@ -97,7 +97,8 @@ function MasterPlanContent() {
   const [priceFilter, setPriceFilter] = useState(() => {
     try { return sessionStorage.getItem("filter_price") ?? ""; } catch { return ""; }
   });
-  const [editingFilter, setEditingFilter] = useState<"type" | "area" | "size" | "price" | null>(null);
+  const [dealTypeFilter, setDealTypeFilter] = useState("");
+  const [editingFilter, setEditingFilter] = useState<"type" | "area" | "size" | "price" | "dealType" | null>(null);
   const filterPopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -149,13 +150,20 @@ function MasterPlanContent() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setSelectedPlot(null); setComparePlots([]); }, [ctxType, ctxArea]);
 
+  // Derive deal-type options from backend data
+  const dealTypeOptions = React.useMemo(() => {
+    const unique = [...new Set(plots.map(p => (p.jv ?? "").trim()).filter(Boolean))].sort();
+    return [{ label: "All Deal Types", value: "" }, ...unique.map(v => ({ label: v, value: v }))];
+  }, []);
+
   const filteredPlots = plots.filter((p) => {
     const matchesType = !ctxType || !typeToLandUse[ctxType]?.length
       || typeToLandUse[ctxType].some(f => p.landUse.includes(f));
     const matchesArea = !areaName || p.area === areaName;
     const matchesSize = matchesRange(p.plotArea, sizeFilter);
     const matchesPrice = matchesRange(p.askingPrice, priceFilter);
-    return matchesType && matchesArea && matchesSize && matchesPrice;
+    const matchesDealType = !dealTypeFilter || (p.jv ?? "").trim() === dealTypeFilter;
+    return matchesType && matchesArea && matchesSize && matchesPrice && matchesDealType;
   });
 
   const showPanel = selectedPlot && !compareMode;
@@ -296,6 +304,31 @@ function MasterPlanContent() {
                   className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
                 >
                   {PRICE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+          {/* Deal Type filter button */}
+          <div className="relative" ref={editingFilter === "dealType" ? filterPopRef : undefined}>
+            <button
+              onClick={() => setEditingFilter(editingFilter === "dealType" ? null : "dealType")}
+              className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                dealTypeFilter
+                  ? "text-forest bg-forest/10 border border-forest/20 hover:bg-forest/20"
+                  : "text-muted bg-white/80 border border-mint-light hover:border-forest/30 hover:text-forest"
+              }`}
+            >
+              {dealTypeFilter || "Deal Type"}
+              {dealTypeFilter && <span className="ml-1" onClick={(e) => { e.stopPropagation(); setDealTypeFilter(""); setEditingFilter(null); }}>✕</span>}
+            </button>
+            {editingFilter === "dealType" && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-mint-light rounded-xl p-3 shadow-lg z-[900]">
+                <select
+                  value={dealTypeFilter}
+                  onChange={(e) => { setDealTypeFilter(e.target.value); setEditingFilter(null); }}
+                  className="w-full border border-mint-light rounded-lg px-3 py-2 text-sm text-deep-forest"
+                >
+                  {dealTypeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
             )}
