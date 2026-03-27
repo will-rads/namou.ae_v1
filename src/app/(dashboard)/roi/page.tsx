@@ -245,6 +245,7 @@ export default function ROIPage() {
   const isTotalProfitReady = isTotalCostReady && isTotalRevenueReady;
   const isProfitMarginReady = isTotalCostReady && isTotalRevenueReady;
   const allKPIsReady = isTotalCostReady && isTotalRevenueReady;
+  const isEquivPriceReady = hasSalesInput && typeof inputs.efficiency === "number" && inputs.efficiency > 0;
 
   function applyScenario(s: Scenario) {
     setActiveScenario(s);
@@ -387,7 +388,7 @@ export default function ROIPage() {
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix placeholder="e.g. 900" onChange={v => update("constructionCostPerGFA", v)} />
                     <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix placeholder="e.g. 80" onChange={v => update("efficiency", v)} />
-                    <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
+                    <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} ready={isTotalCostReady} />
                   </div>
                 </div>
 
@@ -395,7 +396,7 @@ export default function ROIPage() {
                   <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Sales</p>
                   <div className="divide-y divide-mint-light/60 flex flex-col">
                     <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix placeholder="e.g. 3200" onChange={v => update("sellingPricePerNSA", v)} />
-                    <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
+                    <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} ready={isEquivPriceReady} />
                   </div>
                 </div>
               </div>
@@ -573,49 +574,55 @@ export default function ROIPage() {
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
             <div className="flex flex-col gap-1 lg:gap-1.5 h-full">
-              {/* Investor Metrics + Sensitivity — side by side (shown when all KPIs ready) */}
-              {allKPIsReady && (
-              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0 animate-fade-in">
+              {/* Investor Metrics + Sensitivity — side by side */}
+              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
                 <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold text-center">Investor Metrics</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
-                  <MetricRow label="Return on Cost"      value={`${results.returnOnCost.toFixed(1)}%`} />
-                  <MetricRow label="GDV Multiple"         value={`${results.gdvMultiple.toFixed(2)}×`} />
-                  <MetricRow label="Profit / Land sqft"   value={`AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`} />
+                  <MetricRow label="Return on Cost"      value={`${results.returnOnCost.toFixed(1)}%`} ready={allKPIsReady} />
+                  <MetricRow label="GDV Multiple"         value={`${results.gdvMultiple.toFixed(2)}×`} ready={allKPIsReady} />
+                  <MetricRow label="Profit / Land sqft"   value={`AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`} ready={allKPIsReady} />
                   <MetricRow label="Land Cost"            value={fmtAED(results.landCost)} />
-                  <MetricRow label="Construction Cost"    value={fmtAED(results.constructionCost)} />
-                  <MetricRow label="Residual Land Value"  value={fmtAED(results.rlv)} sub="at 20% margin target" highlight={results.rlv > 0} />
+                  <MetricRow label="Construction Cost"    value={fmtAED(results.constructionCost)} ready={isTotalCostReady} />
+                  <MetricRow label="Residual Land Value"  value={fmtAED(results.rlv)} sub="at 20% margin target" highlight={results.rlv > 0} ready={allKPIsReady} />
                 </div>
               </ContentCard>
 
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
                 <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold text-center">Profit vs. Exit Price</p>
-                <div className="flex items-end gap-3 flex-1 min-h-[48px]">
-                  {sensitivityData.map(d => {
-                    const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
-                    const isCurrent = d.price === resolved.sellingPricePerNSA;
-                    return (
-                      <div key={d.price} className="flex flex-col items-center flex-1 h-full">
-                        <div className="flex-1 flex items-end w-full">
-                          <div
-                            className={`w-full rounded-t transition-all ${isCurrent ? "bg-forest" : "bg-forest/25"}`}
-                            style={{ height: `${Math.max(ratio * 100, 3)}%` }}
-                          />
-                        </div>
-                        <p className={`text-xs mt-1.5 font-medium font-heading ${isCurrent ? "text-forest" : "text-muted"}`}>
-                          {(d.price / 1000).toFixed(1)}K
-                        </p>
-                        <p className={`text-xs font-heading ${isCurrent ? "text-forest font-semibold" : "text-muted"}`}>
-                          {fmtAED(d.profit)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted mt-2 text-center">AED per sqft NSA</p>
+                {allKPIsReady ? (
+                  <>
+                    <div className="flex items-end gap-3 flex-1 min-h-[48px]">
+                      {sensitivityData.map(d => {
+                        const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
+                        const isCurrent = d.price === resolved.sellingPricePerNSA;
+                        return (
+                          <div key={d.price} className="flex flex-col items-center flex-1 h-full">
+                            <div className="flex-1 flex items-end w-full">
+                              <div
+                                className={`w-full rounded-t transition-all ${isCurrent ? "bg-forest" : "bg-forest/25"}`}
+                                style={{ height: `${Math.max(ratio * 100, 3)}%` }}
+                              />
+                            </div>
+                            <p className={`text-xs mt-1.5 font-medium font-heading ${isCurrent ? "text-forest" : "text-muted"}`}>
+                              {(d.price / 1000).toFixed(1)}K
+                            </p>
+                            <p className={`text-xs font-heading ${isCurrent ? "text-forest font-semibold" : "text-muted"}`}>
+                              {fmtAED(d.profit)}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted mt-2 text-center">AED per sqft NSA</p>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-2xl font-bold text-muted/40">—</p>
+                  </div>
+                )}
               </ContentCard>
               </div>
-              )}
 
               {/* Actions — always visible */}
               <ContentCard className="py-2 px-4 shrink-0">
@@ -909,41 +916,56 @@ function NumInput({
   );
 }
 
-function ComputedRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function ComputedRow({ label, value, highlight, ready = true }: { label: string; value: string; highlight?: boolean; ready?: boolean }) {
   return (
     <div className={`flex items-center justify-between py-1 -mx-3 px-3 rounded-lg ${highlight ? "bg-forest/5" : "bg-mint-bg/40"}`}>
       <p className="text-sm text-muted flex items-center gap-1">
         <span className="text-xs text-forest/50">=</span>
         {label}
       </p>
-      <p className={`text-sm font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      {ready ? (
+        <p className={`text-sm font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      ) : (
+        <p className="text-sm font-bold text-muted/40">—</p>
+      )}
     </div>
   );
 }
 
-function MetricRow({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
+function MetricRow({ label, value, sub, highlight, ready = true }: { label: string; value: string; sub?: string; highlight?: boolean; ready?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1.5">
+    <div className={`flex items-center justify-between py-1.5 transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-50"}`}>
       <div>
         <p className="text-sm text-muted">{label}</p>
         {sub && <p className="text-xs text-muted/60">{sub}</p>}
       </div>
-      <p className={`text-base font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      {ready ? (
+        <p className={`text-base font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      ) : (
+        <p className="text-base font-bold text-muted/40">—</p>
+      )}
     </div>
   );
 }
 
-function DualComputedRow({ label, v1, v2 }: { label: string; v1: string; v2: string }) {
+function DualComputedRow({ label, v1, v2, ready = true }: { label: string; v1: string; v2: string; ready?: boolean }) {
   return (
     <div className="flex items-center justify-between py-1 -mx-3 px-3 rounded-lg bg-mint-bg/40">
       <p className="text-xs text-muted flex items-center gap-1">
         <span className="text-[11px] text-forest/50">=</span>
         {label}
       </p>
-      <div className="flex items-center gap-4">
-        <p className="text-xs font-bold text-forest">{v1}</p>
-        <p className="text-xs font-bold text-compare-b">{v2}</p>
-      </div>
+      {ready ? (
+        <div className="flex items-center gap-4">
+          <p className="text-xs font-bold text-forest">{v1}</p>
+          <p className="text-xs font-bold text-compare-b">{v2}</p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-4">
+          <p className="text-xs font-bold text-muted/40">—</p>
+          <p className="text-xs font-bold text-muted/40">—</p>
+        </div>
+      )}
     </div>
   );
 }
