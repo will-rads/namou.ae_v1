@@ -256,6 +256,9 @@ export default function BackendPage() {
                     className={`px-2 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold ${col.width}`}
                   >
                     {col.label}
+                    {col.key === "locationPin" && (
+                      <span className="block normal-case tracking-normal font-normal text-muted/60 mt-0.5">coords or URL</span>
+                    )}
                   </th>
                 ))}
                 <th className="px-2 py-2 text-center text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[44px]" />
@@ -293,6 +296,7 @@ export default function BackendPage() {
                           onChange={(e) => updateField(i, col.key, e.target.value)}
                           className={inputCls}
                           title={row[col.key] ?? ""}
+                          placeholder={col.key === "locationPin" ? "25.665, 55.760 or Google Maps URL" : undefined}
                         />
                       )}
                     </td>
