@@ -44,11 +44,14 @@ const REVIEWS = [
 
 export default function ThankYouPage() {
   const [specialist, setSpecialist] = useState<string | null>(null);
+  const [specialistEmail, setSpecialistEmail] = useState<string | null>(null);
 
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem("Assignee_email");
-      if (stored) setSpecialist(stored);
+      const name = sessionStorage.getItem("Assignee_name");
+      const email = sessionStorage.getItem("Assignee_email");
+      if (name) setSpecialist(name);
+      if (email) setSpecialistEmail(email);
     } catch {}
   }, []);
 
@@ -109,6 +112,9 @@ export default function ThankYouPage() {
             <p className="text-base sm:text-lg font-semibold text-white">
               {specialist ?? "Your Specialist"}
             </p>
+            {specialistEmail && (
+              <p className="text-xs text-white/60 mt-1">{specialistEmail}</p>
+            )}
             <p className="text-xs text-white/50 mt-1 uppercase tracking-widest">
               Namou Properties
             </p>

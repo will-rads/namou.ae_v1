@@ -5,10 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 
 const SPECIALISTS = [
-  "Charlie Daher",
-  "Farid Rahme",
-  "William Radiyeh",
-  "Roni Trad",
+  { name: "Dani Chamoun", email: "dany@namou.ae" },
+  { name: "Charlie Daher", email: "charlie@namou.ae" },
+  { name: "Nadim Salameh", email: "nadim@namou.ae" },
+  { name: "Jad Barghout", email: "jad@namou.ae" },
+  { name: "Sarah berri", email: "sarahberrii@namou.ae" },
+  { name: "Omar Arida", email: "omar@namou.ae" },
 ];
 
 export default function LandingPage() {
@@ -31,10 +33,13 @@ export default function LandingPage() {
     return () => document.removeEventListener("mousedown", handle);
   }, [open]);
 
-  function pick(name: string) {
-    setSelected(name);
+  function pick(specialist: { name: string; email: string }) {
+    setSelected(specialist.name);
     setOpen(false);
-    try { sessionStorage.setItem("Assignee_email", name); } catch {}
+    try {
+      sessionStorage.setItem("Assignee_email", specialist.email);
+      sessionStorage.setItem("Assignee_name", specialist.name);
+    } catch {}
   }
 
   return (
@@ -73,17 +78,17 @@ export default function LandingPage() {
           </button>
           {open && (
             <div className="absolute right-0 top-full mt-2 w-48 bg-deep-forest/95 backdrop-blur-md border border-white/20 rounded-xl p-2 shadow-xl z-20">
-              {SPECIALISTS.map(name => (
+              {SPECIALISTS.map(s => (
                 <button
-                  key={name}
-                  onClick={() => pick(name)}
+                  key={s.email}
+                  onClick={() => pick(s)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    selected === name
+                    selected === s.name
                       ? "bg-white/20 text-white font-medium"
                       : "text-white/80 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  {name}
+                  {s.name}
                 </button>
               ))}
             </div>
