@@ -1,7 +1,45 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+const SPECIALISTS = [
+  "Charlie Daher",
+  "Farid Rahme",
+  "William Radiyeh",
+  "Roni Trad",
+];
+
 export default function LandingPage() {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Restore from session on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("Assignee_email");
+      if (stored) setSelected(stored);
+    } catch {}
+  }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [open]);
+
+  function pick(name: string) {
+    setSelected(name);
+    setOpen(false);
+    try { sessionStorage.setItem("Assignee_email", name); } catch {}
+  }
+
   return (
     <div className="relative flex flex-col min-h-screen overflow-x-hidden">
       {/* Background image */}
@@ -18,10 +56,42 @@ export default function LandingPage() {
       <div className="absolute inset-0 bg-deep-forest/40" />
 
       {/* Top bar */}
-      <header className="relative z-10 flex items-center justify-center px-4 sm:px-12 py-4 sm:py-6">
-        <span className="text-xs tracking-[0.35em] uppercase text-white/60 font-heading">
+      <header className="relative z-10 flex items-center justify-between px-4 sm:px-12 py-4 sm:py-6">
+        <div />
+        <span className="text-xs tracking-[0.35em] uppercase text-white/60 font-heading absolute left-1/2 -translate-x-1/2">
           Real Estate Done Right
         </span>
+
+        {/* Specialist selector */}
+        <div className="relative" ref={ref}>
+          <button
+            onClick={() => setOpen(!open)}
+            className={`text-xs font-medium px-3 py-1.5 rounded-full backdrop-blur-sm transition-colors ${
+              selected
+                ? "text-white bg-white/20 border border-white/40"
+                : "text-white/60 bg-white/10 border border-white/20 hover:text-white hover:border-white/40"
+            }`}
+          >
+            {selected ?? "Specialist"}
+          </button>
+          {open && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-deep-forest/95 backdrop-blur-md border border-white/20 rounded-xl p-2 shadow-xl z-20">
+              {SPECIALISTS.map(name => (
+                <button
+                  key={name}
+                  onClick={() => pick(name)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                    selected === name
+                      ? "bg-white/20 text-white font-medium"
+                      : "text-white/80 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Content — logo + body grouped, CTA separate below */}
