@@ -53,19 +53,23 @@ export default function ThankYouPage() {
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-deep-forest/50" />
 
+      {/* Logo — top-left */}
+      <div className="relative z-10 px-4 sm:px-8 pt-5 sm:pt-6">
+        <Image
+          src="/logo.png"
+          alt="Namou Properties"
+          width={200}
+          height={56}
+          className="object-contain w-auto h-[5vh] sm:h-[7vh]"
+          priority
+        />
+      </div>
+
       {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-10 sm:py-16">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pt-4 sm:pt-6 pb-6 sm:pb-10">
 
         {/* Thank-you heading */}
-        <div className="text-center mb-8 sm:mb-12">
-          <Image
-            src="/logo.png"
-            alt="Namou Properties"
-            width={280}
-            height={80}
-            className="object-contain w-auto h-[8vh] sm:h-[12vh] mx-auto mb-5"
-            priority
-          />
+        <div className="text-center mb-5 sm:mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white font-heading">
             Thank You
           </h1>
