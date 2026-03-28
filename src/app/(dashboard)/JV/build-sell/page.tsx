@@ -422,13 +422,13 @@ export default function BuildSellPage() {
             {isSplitReady ? (
               <div className="grid grid-cols-2 gap-1.5">
                 <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
-                  <span className="text-[10px] text-muted uppercase tracking-wider">Landowner ({resolved.landOwnerSplit}%)</span>
+                  <span className="text-xs text-muted uppercase tracking-wider font-medium">Landowner ({resolved.landOwnerSplit}%)</span>
                   <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.landOwnerProfit)}</p>
                   <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
                   <p className="text-[10px] text-muted font-heading">ROI: {r.landOwnerROI.toFixed(1)}%</p>
                 </div>
                 <div className="rounded-xl p-2.5 bg-forest/5 border border-forest/15">
-                  <span className="text-[10px] text-muted uppercase tracking-wider">Investor ({100 - resolved.landOwnerSplit}%)</span>
+                  <span className="text-xs text-muted uppercase tracking-wider font-medium">Investor ({100 - resolved.landOwnerSplit}%)</span>
                   <p className="text-base font-bold text-forest mt-0.5">{fmtAED(r.investorProfit)}</p>
                   <p className="text-[10px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
                   <p className="text-[10px] text-muted font-heading">ROI: {r.investorROI.toFixed(1)}%</p>

@@ -512,16 +512,18 @@ export default function BuildHotelPage() {
             {isJVSplitReady ? (
               <div className="grid grid-cols-2 gap-1.5">
                 <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                  <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({resolved.landOwnerSplit}%)</span>
+                  <span className="text-xs text-muted uppercase tracking-wider font-medium">Landowner ({resolved.landOwnerSplit}%)</span>
                   <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
                   <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
                   <p className="text-[11px] text-muted font-heading">Annual ROI: {r.landOwnerROI.toFixed(1)}%</p>
+                  <p className="text-[11px] text-muted font-heading">IRR: {r.landOwnerContribution > 0 ? (((r.landOwnerContribution + r.landOwnerIncome * 10) / r.landOwnerContribution) ** (1 / 10) * 100 - 100).toFixed(1) : "0.0"}%</p>
                 </div>
                 <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
-                  <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - resolved.landOwnerSplit}%)</span>
+                  <span className="text-xs text-muted uppercase tracking-wider font-medium">Investor ({100 - resolved.landOwnerSplit}%)</span>
                   <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
                   <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
                   <p className="text-[11px] text-muted font-heading">Annual ROI: {r.investorROI.toFixed(1)}%</p>
+                  <p className="text-[11px] text-muted font-heading">IRR: {r.investorContribution > 0 ? (((r.investorContribution + r.investorIncome * 10) / r.investorContribution) ** (1 / 10) * 100 - 100).toFixed(1) : "0.0"}%</p>
                 </div>
               </div>
             ) : (
