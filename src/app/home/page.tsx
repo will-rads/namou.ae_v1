@@ -53,7 +53,7 @@ export default function LandingPage() {
       <div className="absolute inset-0 bg-deep-forest/40" />
 
       {/* Top bar */}
-      <header className="relative z-10 flex items-center justify-between px-4 sm:px-12 py-4 sm:py-6">
+      <header className="relative z-20 flex items-center justify-between px-4 sm:px-12 py-4 sm:py-6">
         <div />
         <span className="text-xs tracking-[0.35em] uppercase text-white/60 font-heading absolute left-1/2 -translate-x-1/2">
           Real Estate Done Right
