@@ -385,8 +385,8 @@ export default function BuildLeasePage() {
         </div>
       </div>
 
-      {/* 2×2 Quadrant Grid */}
-      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-2 gap-2 flex-1 min-h-0">
+      {/* 2×3 Grid — rows shared across columns for alignment */}
+      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[auto_1fr_1fr] gap-2 flex-1 min-h-0">
         {/* TOP-LEFT: Plot Info (green card) */}
         <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-4 md:p-6 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-4">
@@ -452,70 +452,68 @@ export default function BuildLeasePage() {
           </div>
         </ContentCard>
 
-        {/* BOTTOM-LEFT: Annual Income + Returns */}
-        <div className="flex flex-col gap-2">
-          <Section title="Annual Income" className="flex-1 flex flex-col">
-            {isIncomeReady ? (
-              <div className="grid grid-cols-2 gap-1.5">
-                <KPI label="Gross Rental Income" value={fmtAED(r.grossRentalIncome)} sub={`${formatNumber(Math.round(r.nsa))} NSA × AED ${resolved.rentalPerNSA} × ${resolved.occupancy}%`} />
-                <KPI label="Total Expenses" value={fmtAED(r.totalExpenses)} sub={`Ops ${fmtAED(r.operatingCosts)} + Maint ${fmtAED(r.maintenance)} + Mgmt ${fmtAED(r.propertyMgmtFee)}`} />
-                <KPI label="NOI (Net Operating Income)" value={fmtAED(r.noi)} primary sub="Gross Rent − Expenses" />
-                <KPI label={`Cash Flow${hasHoldYears ? ` (${resolved.holdYears} yrs)` : ""}`} value={hasHoldYears ? fmtAED(r.totalNOI) : "—"} primary={hasHoldYears} sub={hasHoldYears ? `NOI × ${resolved.holdYears} years` : "Enter hold period"} ready={hasHoldYears} />
-              </div>
-            ) : (
-              <p className="text-sm text-muted/40 text-center py-4">Enter construction, rental, and expense inputs to see annual income</p>
-            )}
-          </Section>
+        {/* ROW 2 LEFT: Annual Income */}
+        <Section title="Annual Income" className="flex flex-col">
+          {isIncomeReady ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              <KPI label="Gross Rental Income" value={fmtAED(r.grossRentalIncome)} sub={`${formatNumber(Math.round(r.nsa))} NSA × AED ${resolved.rentalPerNSA} × ${resolved.occupancy}%`} />
+              <KPI label="Total Expenses" value={fmtAED(r.totalExpenses)} sub={`Ops ${fmtAED(r.operatingCosts)} + Maint ${fmtAED(r.maintenance)} + Mgmt ${fmtAED(r.propertyMgmtFee)}`} />
+              <KPI label="NOI (Net Operating Income)" value={fmtAED(r.noi)} primary sub="Gross Rent − Expenses" />
+              <KPI label={`Cash Flow${hasHoldYears ? ` (${resolved.holdYears} yrs)` : ""}`} value={hasHoldYears ? fmtAED(r.totalNOI) : "—"} primary={hasHoldYears} sub={hasHoldYears ? `NOI × ${resolved.holdYears} years` : "Enter hold period"} ready={hasHoldYears} />
+            </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter construction, rental, and expense inputs to see annual income</p>
+          )}
+        </Section>
 
-          <Section title="Returns" className="flex-1 flex flex-col">
-            {isReturnsReady ? (
-              <div className="grid grid-cols-3 gap-1.5">
-                <KPI label="Yield" value={`${r.yieldPct.toFixed(1)}%`} sub="NOI ÷ Dev. Cost" primary />
-                <KPI label={`ROI${hasHoldYears ? ` (${resolved.holdYears} yrs)` : ""}`} value={hasHoldYears ? `${r.totalROI.toFixed(1)}%` : "—"} sub="Total NOI ÷ Dev. Cost" ready={hasHoldYears} />
-                <KPI label="Payback Period" value={r.paybackYears === Infinity ? "N/A" : `${r.paybackYears.toFixed(1)} yrs`} sub="Dev. Cost ÷ NOI" />
+        {/* ROW 2 RIGHT: Profit Split */}
+        <Section title={`Profit Split${hasHoldYears ? ` (${resolved.holdYears}-Year Income)` : ""}`} className="flex flex-col">
+          {isProfitSplitReady ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
+                <span className="text-xs text-muted uppercase tracking-wider font-medium">Landowner ({resolved.landOwnerSplit}%)</span>
+                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
+                <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.landOwnerROI / resolved.holdYears).toFixed(1)}%</p>
+                <p className="text-[11px] text-muted font-heading">Total ROI: {r.landOwnerROI.toFixed(1)}%</p>
               </div>
-            ) : (
-              <p className="text-sm text-muted/40 text-center py-4">Enter construction, rental, and expense inputs to see returns</p>
-            )}
-          </Section>
-        </div>
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
+                <span className="text-xs text-muted uppercase tracking-wider font-medium">Investor ({100 - resolved.landOwnerSplit}%)</span>
+                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
+                <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.investorROI / resolved.holdYears).toFixed(1)}%</p>
+                <p className="text-[11px] text-muted font-heading">Total ROI: {r.investorROI.toFixed(1)}%</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter all inputs including hold period and JV split to see profit breakdown</p>
+          )}
+        </Section>
 
-        {/* BOTTOM-RIGHT: Profit Split + Exit Valuation */}
-        <div className="flex flex-col gap-2">
-          <Section title={`Profit Split${hasHoldYears ? ` (${resolved.holdYears}-Year Income)` : ""}`} className="flex-1 flex flex-col">
-            {isProfitSplitReady ? (
-              <div className="grid grid-cols-2 gap-1.5">
-                <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
-                  <span className="text-xs text-muted uppercase tracking-wider font-medium">Landowner ({resolved.landOwnerSplit}%)</span>
-                  <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
-                  <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                  <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.landOwnerROI / resolved.holdYears).toFixed(1)}%</p>
-                  <p className="text-[11px] text-muted font-heading">Total ROI: {r.landOwnerROI.toFixed(1)}%</p>
-                </div>
-                <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
-                  <span className="text-xs text-muted uppercase tracking-wider font-medium">Investor ({100 - resolved.landOwnerSplit}%)</span>
-                  <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
-                  <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                  <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.investorROI / resolved.holdYears).toFixed(1)}%</p>
-                  <p className="text-[11px] text-muted font-heading">Total ROI: {r.investorROI.toFixed(1)}%</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted/40 text-center py-4">Enter all inputs including hold period and JV split to see profit breakdown</p>
-            )}
-          </Section>
+        {/* ROW 3 LEFT: Returns */}
+        <Section title="Returns" className="flex flex-col">
+          {isReturnsReady ? (
+            <div className="grid grid-cols-3 gap-1.5">
+              <KPI label="Yield" value={`${r.yieldPct.toFixed(1)}%`} sub="NOI ÷ Dev. Cost" primary />
+              <KPI label={`ROI${hasHoldYears ? ` (${resolved.holdYears} yrs)` : ""}`} value={hasHoldYears ? `${r.totalROI.toFixed(1)}%` : "—"} sub="Total NOI ÷ Dev. Cost" ready={hasHoldYears} />
+              <KPI label="Payback Period" value={r.paybackYears === Infinity ? "N/A" : `${r.paybackYears.toFixed(1)} yrs`} sub="Dev. Cost ÷ NOI" />
+            </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter construction, rental, and expense inputs to see returns</p>
+          )}
+        </Section>
 
-          <Section title="Exit Valuation" className="flex-1 flex flex-col">
-            {isExitReady ? (
-              <div className="grid grid-cols-2 gap-1.5">
-                <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${resolved.capRate}% cap rate`} primary />
-                <KPI label="Exit Profit" value={fmtAED(r.exitProfit)} sub="Exit Value − Dev. Cost" primary={r.exitProfit >= 0} />
-              </div>
-            ) : (
-              <p className="text-sm text-muted/40 text-center py-4">Enter income inputs and exit cap rate to see exit valuation</p>
-            )}
-          </Section>
-        </div>
+        {/* ROW 3 RIGHT: Exit Valuation */}
+        <Section title="Exit Valuation" className="flex flex-col">
+          {isExitReady ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${resolved.capRate}% cap rate`} primary />
+              <KPI label="Exit Profit" value={fmtAED(r.exitProfit)} sub="Exit Value − Dev. Cost" primary={r.exitProfit >= 0} />
+            </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter income inputs and exit cap rate to see exit valuation</p>
+          )}
+        </Section>
       </div>
     </div>
   );
