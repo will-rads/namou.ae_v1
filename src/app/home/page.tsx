@@ -16,12 +16,9 @@ export default function LandingPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Restore from session on mount
+  // Landing on /home starts a new session — clear previous session data
   useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem("Assignee_email");
-      if (stored) setSelected(stored);
-    } catch {}
+    try { sessionStorage.clear(); } catch {}
   }, []);
 
   // Close on outside click
