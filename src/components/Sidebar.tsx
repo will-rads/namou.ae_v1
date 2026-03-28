@@ -114,6 +114,11 @@ export default function Sidebar() {
               />
             </Link>
             <SidebarNav pathname={pathname} navItems={navItems} onNavigate={() => setMobileOpen(false)} />
+            <div className="px-2 pt-2 mt-1 border-t border-white/10">
+              <NavLink href="/thank-you" label="End Simulation" active={pathname === "/thank-you"} onNavigate={() => setMobileOpen(false)}>
+                <ExitIcon className="w-4 h-4 shrink-0" />
+              </NavLink>
+            </div>
           </div>
         </div>
       )}
@@ -136,6 +141,11 @@ export default function Sidebar() {
         </Link>
 
         <SidebarNav pathname={pathname} navItems={navItems} />
+        <div className="px-2 pt-2 mt-1 border-t border-white/10">
+          <NavLink href="/thank-you" label="End Simulation" active={pathname === "/thank-you"}>
+            <ExitIcon className="w-4 h-4 shrink-0" />
+          </NavLink>
+        </div>
       </aside>
     </>
   );
@@ -253,6 +263,16 @@ function CheckIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function ExitIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }
