@@ -354,73 +354,71 @@ export default function BuildSellPage() {
         </div>
       </div>
 
-      {/* Two-column layout — each column stacks independently */}
-      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[1fr] gap-2 flex-1 min-h-0">
-        {/* LEFT COLUMN */}
-        <div className="flex flex-col gap-2">
-          {/* Plot Info (green card) */}
-          <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-4 md:p-6 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-4">
-              <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
-              <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
-            </div>
-            <div className="bg-white/60 rounded-lg px-4 py-3 border border-mint-light/30">
-              <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
-              <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
-              <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
-              <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
-              <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
-              <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
-            </div>
-            <p className="text-[10px] text-muted mt-3">Pre-filled from selected plot. Simulation inputs are editable.</p>
-          </div>
+      {/* Two-column, two-row grid — rows align across columns */}
+      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[auto_1fr] gap-2 flex-1 min-h-0">
 
-          {/* Project Summary */}
-          <Section title="Project Summary" className="flex flex-col flex-1 !pb-2">
-            <div className="flex flex-col gap-2 flex-1">
-              <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-2 flex-1">
-                <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center justify-center" ready={isGFAReady} />
-                <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} sub={`${formatNumber(Math.round(r.gfa))} GFA × ${resolved.efficiency}%`} className="items-center text-center justify-center" ready={isGFAReady} />
-                <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} className="items-center text-center justify-center" ready={isCostReady} />
-                <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(resolved.sellingPricePerNSA)}`} className="items-center text-center justify-center" ready={isGDVReady} />
-              </div>
-              <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="items-center text-center py-4" ready={isProfitReady} />
-            </div>
-          </Section>
+        {/* TOP-LEFT: Green card */}
+        <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-4 md:p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-4 h-4 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
+            <span className="text-base font-bold text-forest">{plotInfo?.name ?? "—"}</span>
+          </div>
+          <div className="bg-white/60 rounded-lg px-4 py-3 border border-mint-light/30">
+            <InfoRow label="Plot Size" value={`${formatNumber(inputs.plotSize)} sqft`} />
+            <InfoRow label="Land Value" value={fmtAED(inputs.landValue)} />
+            <InfoRow label="FAR" value={plotInfo?.far?.toFixed(2) ?? "—"} />
+            <InfoRow label="Location" value={plotInfo?.location ?? "—"} />
+            <InfoRow label="Zoning" value={plotInfo?.zoning ?? "—"} />
+            <InfoRow label="Deal Type" value={plotInfo?.dealType ?? "—"} />
+          </div>
+          <p className="text-[10px] text-muted mt-3">Pre-filled from selected plot. Simulation inputs are editable.</p>
         </div>
 
-        {/* RIGHT COLUMN */}
-        <div className="flex flex-col gap-1.5">
-          {/* Simulation Inputs */}
-          <ContentCard className="flex flex-col">
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1 text-center">
-              Simulation Inputs
-            </h2>
-            <div className="flex flex-col divide-y divide-mint-light/40">
-              {/* Row 1: Construction */}
-              <div className="pb-2">
-                <p className="text-sm font-semibold text-deep-forest pb-1">Construction</p>
-                <InputRow label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} placeholder="e.g. 80" />
-                <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} placeholder="e.g. 900" />
-                <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} placeholder="e.g. 20" />
-              </div>
-              {/* Row 2: Sales */}
-              <div className="py-2">
-                <p className="text-sm font-semibold text-deep-forest pb-1">Sales</p>
-                <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} placeholder="e.g. 3200" />
-              </div>
-              {/* Row 3: Joint-Venture Split */}
-              <div className="pt-2">
-                <p className="text-sm font-semibold text-deep-forest pb-1">Joint-Venture Split</p>
-                <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => { setSplitOverridden(true); update("landOwnerSplit", v); }} placeholder="auto" />
-                <div className="flex items-center justify-between py-1.5">
-                  <span className="text-sm text-muted">Investor Profit Share</span>
-                  <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
-                </div>
+        {/* TOP-RIGHT: Simulation Inputs */}
+        <ContentCard className="flex flex-col">
+          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1 text-center">
+            Simulation Inputs
+          </h2>
+          <div className="flex flex-col divide-y divide-mint-light/40">
+            {/* Row 1: Construction */}
+            <div className="pb-2">
+              <p className="text-sm font-semibold text-deep-forest pb-1">Construction</p>
+              <InputRow label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} placeholder="e.g. 80" />
+              <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} placeholder="e.g. 900" />
+              <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} placeholder="e.g. 20" />
+            </div>
+            {/* Row 2: Sales */}
+            <div className="py-2">
+              <p className="text-sm font-semibold text-deep-forest pb-1">Sales</p>
+              <InputRow label="Selling Price / NSA sqft" value={inputs.sellingPricePerNSA} unit="AED" onChange={v => update("sellingPricePerNSA", v)} placeholder="e.g. 3200" />
+            </div>
+            {/* Row 3: Joint-Venture Split */}
+            <div className="pt-2">
+              <p className="text-sm font-semibold text-deep-forest pb-1">Joint-Venture Split</p>
+              <InputRow label="Landowner Profit Share" value={inputs.landOwnerSplit} unit="%" onChange={v => { setSplitOverridden(true); update("landOwnerSplit", v); }} placeholder="auto" />
+              <div className="flex items-center justify-between py-1.5">
+                <span className="text-sm text-muted">Investor Profit Share</span>
+                <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
               </div>
             </div>
-          </ContentCard>
+          </div>
+        </ContentCard>
 
+        {/* BOTTOM-LEFT: Project Summary */}
+        <Section title="Project Summary" className="flex flex-col !pb-2 min-h-0">
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-2 flex-1">
+              <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center justify-center" ready={isGFAReady} />
+              <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} sub={`${formatNumber(Math.round(r.gfa))} GFA × ${resolved.efficiency}%`} className="items-center text-center justify-center" ready={isGFAReady} />
+              <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} className="items-center text-center justify-center" ready={isCostReady} />
+              <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(resolved.sellingPricePerNSA)}`} className="items-center text-center justify-center" ready={isGDVReady} />
+            </div>
+            <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="items-center text-center py-4" ready={isProfitReady} />
+          </div>
+        </Section>
+
+        {/* BOTTOM-RIGHT: Profit Split + Sell Today vs JV */}
+        <div className="flex flex-col gap-1.5 min-h-0">
           {/* Profit Split */}
           <Section title="Profit Split">
             {isSplitReady ? (
@@ -472,6 +470,7 @@ export default function BuildSellPage() {
             )}
           </Section>
         </div>
+
       </div>
     </div>
   );
