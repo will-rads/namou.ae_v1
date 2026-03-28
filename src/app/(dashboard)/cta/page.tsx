@@ -8,30 +8,30 @@ import ContentCard from "@/components/ContentCard";
 const actions = [
   {
     title: "Schedule a Site Visit",
-    description: "Tour Al Marjan Island and meet the development team in person.",
+    description: "Visit the plot to assess access, context, and development positioning.",
     href: "/site-visit",
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
       </svg>
     ),
-    timeline: "2-3 business days to arrange",
-    prep: "Valid passport / Emirates ID required",
-    details: "Includes helicopter tour, plot walkthrough, and lunch with the project director.",
+    timeline: "Coordinated with your specialist",
+    prep: "On-site",
+    details: "Review the plot, surroundings, and infrastructure in person.",
     hasCalendar: true,
   },
   {
     title: "Schedule a Follow-up Meeting",
-    description: "Connect remotely to review plots, ROI models, or deal terms.",
+    description: "Continue the conversation on pricing, structure, or remaining questions.",
     href: "#",
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" />
       </svg>
     ),
-    timeline: "Next available slot within 24 hours",
-    prep: "Stable internet connection recommended",
-    details: "Screen-share walkthrough of your customized ROI model with a senior analyst.",
+    timeline: "Scheduled on request",
+    prep: "Remote call",
+    details: "Short session to align on next steps and open items.",
     hasCalendar: true,
   },
 ];
@@ -162,7 +162,7 @@ export default function CTAPage() {
       <div className="shrink-0">
         <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">Next Steps</h1>
         <p className="text-sm text-muted mt-1">
-          Ready to move forward? Choose your preferred next action.
+          Choose how to move forward with this opportunity.
         </p>
       </div>
 
@@ -238,7 +238,7 @@ export default function CTAPage() {
         {/* Submit Your Offer — spans full width of bottom row */}
         <Link href="/offer" className="group flex md:col-span-2">
           <ContentCard className="w-full flex flex-col transition-all group-hover:shadow-md group-hover:border-forest/30">
-            <div className="flex items-start gap-3">
+            <div className="flex flex-col items-center text-center gap-3">
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-forest/10 text-forest">
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
@@ -246,24 +246,24 @@ export default function CTAPage() {
               </div>
               <div className="flex-1">
                 <h2 className="text-lg font-semibold text-deep-forest text-center">Submit Your Offer</h2>
-                <p className="text-sm mt-1.5 text-muted leading-relaxed">Review your payment plan and confirm your offer to proceed.</p>
+                <p className="text-sm mt-1.5 text-muted leading-relaxed text-center">Confirm the deal structure and submit for formal review.</p>
               </div>
             </div>
 
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-2 justify-center">
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                Instant confirmation
+                Specialist review
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-deep-forest bg-mint-bg border border-mint-light/60 px-2.5 py-1 rounded-full">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-                Select a plot first
+                Selected plot required
               </span>
             </div>
 
-            <p className="mt-2 text-xs text-muted leading-relaxed">Generate a secure deal link. Your specialist will review and prepare the documentation for signing.</p>
+            <p className="mt-2 text-xs text-muted leading-relaxed text-center">Proceeds to offer submission for the selected plot.</p>
 
-            <div className="mt-auto pt-2 flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="mt-auto pt-2 flex items-center justify-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
               Go to offer
               <svg className="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <polyline points="9 18 15 12 9 6" />
