@@ -489,13 +489,15 @@ export default function BuildLeasePage() {
                   <span className="text-xs text-muted uppercase tracking-wider font-medium">Landowner ({resolved.landOwnerSplit}%)</span>
                   <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
                   <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                  <p className="text-[11px] text-muted font-heading">ROI: {r.landOwnerROI.toFixed(1)}%</p>
+                  <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.landOwnerROI / resolved.holdYears).toFixed(1)}%</p>
+                  <p className="text-[11px] text-muted font-heading">Total ROI: {r.landOwnerROI.toFixed(1)}%</p>
                 </div>
                 <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
                   <span className="text-xs text-muted uppercase tracking-wider font-medium">Investor ({100 - resolved.landOwnerSplit}%)</span>
                   <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
                   <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                  <p className="text-[11px] text-muted font-heading">ROI: {r.investorROI.toFixed(1)}%</p>
+                  <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.investorROI / resolved.holdYears).toFixed(1)}%</p>
+                  <p className="text-[11px] text-muted font-heading">Total ROI: {r.investorROI.toFixed(1)}%</p>
                 </div>
               </div>
             ) : (
