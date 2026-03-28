@@ -386,7 +386,7 @@ export default function BuildLeasePage() {
       </div>
 
       {/* 2×3 Grid — rows shared across columns for alignment */}
-      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[auto_1fr_1fr] gap-2 flex-1 min-h-0">
+      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[auto_1.15fr_0.85fr] gap-2 flex-1 min-h-0">
         {/* TOP-LEFT: Plot Info (green card) */}
         <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-4 md:p-6 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-4">
