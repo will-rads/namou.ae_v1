@@ -172,17 +172,17 @@ export default function CTAPage() {
             <ContentCard
               className="w-full flex flex-col py-5 px-5 transition-all group-hover:shadow-md group-hover:border-forest/30"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-forest/10 text-forest">
                   {action.icon}
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-deep-forest text-center">{action.title}</h2>
-                  <p className="text-sm mt-2.5 text-muted leading-relaxed">{action.description}</p>
+                <div>
+                  <h2 className="text-lg font-semibold text-deep-forest">{action.title}</h2>
+                  <p className="text-sm mt-2 text-muted leading-relaxed">{action.description}</p>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2 justify-center">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                   {action.timeline}
@@ -193,9 +193,9 @@ export default function CTAPage() {
                 </span>
               </div>
 
-              <p className="mt-4 text-xs text-muted leading-relaxed">{action.details}</p>
+              <p className="mt-4 text-xs text-muted leading-relaxed text-center">{action.details}</p>
 
-              <div className="mt-auto pt-4 flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-auto pt-4 flex items-center justify-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
                 Get started
                 <svg className="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <polyline points="9 18 15 12 9 6" />
