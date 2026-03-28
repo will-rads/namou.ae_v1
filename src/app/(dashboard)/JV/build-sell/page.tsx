@@ -406,14 +406,12 @@ export default function BuildSellPage() {
 
         {/* BOTTOM-LEFT: Project Summary */}
         <Section title="Project Summary" className="flex flex-col !pb-2 min-h-0">
-          <div className="flex flex-col gap-2 flex-1">
-            <div className="grid grid-cols-2 grid-rows-[1fr_1fr] gap-2 flex-1">
-              <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center justify-center" ready={isGFAReady} />
-              <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} sub={`${formatNumber(Math.round(r.gfa))} GFA × ${resolved.efficiency}%`} className="items-center text-center justify-center" ready={isGFAReady} />
-              <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} className="items-center text-center justify-center" ready={isCostReady} />
-              <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(resolved.sellingPricePerNSA)}`} className="items-center text-center justify-center" ready={isGDVReady} />
-            </div>
-            <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="items-center text-center py-4" ready={isProfitReady} />
+          <div className="grid grid-cols-2 grid-rows-[1fr_1fr_1fr] gap-2 flex-1">
+            <KPI label="GFA" value={`${formatNumber(Math.round(r.gfa))} sqft`} sub={`${formatNumber(inputs.plotSize)} sqft × ${inputs.farRatio} FAR`} className="items-center text-center justify-center" ready={isGFAReady} />
+            <KPI label="NSA" value={`${formatNumber(Math.round(r.nsa))} sqft`} sub={`${formatNumber(Math.round(r.gfa))} GFA × ${resolved.efficiency}%`} className="items-center text-center justify-center" ready={isGFAReady} />
+            <KPI label="Total Cost" value={fmtAED(r.totalCost)} sub={`Land ${fmtAED(r.landOwnerContribution)} + Constr. ${fmtAED(r.constructionCost)}`} className="items-center text-center justify-center" ready={isCostReady} />
+            <KPI label="Total Sales (GDV)" value={fmtAED(r.gdv)} sub={`${formatNumber(Math.round(r.nsa))} sqft × AED ${formatNumber(resolved.sellingPricePerNSA)}`} className="items-center text-center justify-center" ready={isGDVReady} />
+            <KPI label="Net Profit" value={fmtAED(r.netProfit)} primary sub={`Margin ${r.gdv > 0 ? ((r.netProfit / r.gdv) * 100).toFixed(1) : 0}%`} className="col-span-2 items-center text-center justify-center" ready={isProfitReady} />
           </div>
         </Section>
 
