@@ -388,9 +388,10 @@ export default function BuildHotelPage() {
         </div>
       </div>
 
-      {/* Two-column layout — each column stacks independently */}
-      <div className="flex flex-col md:grid md:grid-cols-2 gap-2 flex-1 min-h-0">
-        {/* LEFT COLUMN: Green card → Revenue → P&L Waterfall */}
+      {/* Two-column, two-row grid — rows align across columns */}
+      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[auto_1fr] gap-2 flex-1 min-h-0">
+
+        {/* TOP-LEFT: Green card + Revenue */}
         <div className="flex flex-col gap-2">
           {/* Plot Info (green card) */}
           <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 px-3 py-1 md:px-4 md:py-1.5 flex flex-col justify-center">
@@ -409,7 +410,7 @@ export default function BuildHotelPage() {
             <p className="text-[10px] text-muted mt-1">Pre-filled from selected plot. Simulation inputs are editable.</p>
           </div>
 
-          <Section title="Revenue (Annual)" className="flex flex-col">
+          <Section title="Revenue (Annual)" className="flex-1 flex flex-col">
             {isRevenueReady ? (
               <div className="grid grid-cols-4 gap-1.5">
                 <KPI label="Room Revenue" value={fmtAED(r.roomRevenue)} sub={`${formatNumber(Math.round(r.occupiedNights))} nights × AED ${formatNumber(resolved.adr)}`} />
@@ -421,91 +422,93 @@ export default function BuildHotelPage() {
               <p className="text-sm text-muted/40 text-center py-4">Enter hotel operations inputs to see revenue breakdown</p>
             )}
           </Section>
-
-          <Section title="P&amp;L Waterfall" className="flex-1 flex flex-col">
-            {isPLReady ? (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-mint-white/80">
-                  <span className="text-sm text-deep-forest">Total Revenue</span>
-                  <span className="text-sm font-bold text-deep-forest">{fmtAED(r.totalRevenue)}</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
-                  <span className="text-sm text-muted">− Operating Costs ({resolved.operatingCostPct}%)</span>
-                  <span className="text-sm font-semibold text-red-500">−{fmtAED(r.operatingCosts)}</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-forest/5 border border-forest/10">
-                  <span className="text-sm font-semibold text-forest">= Gross Operating Profit (GOP)</span>
-                  <span className="text-sm font-bold text-forest">{fmtAED(r.gop)}</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
-                  <span className="text-sm text-muted">− Base Fee ({resolved.baseFeeRevenuePct}% of Revenue)</span>
-                  <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.baseFee)}</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
-                  <span className="text-sm text-muted">− Incentive Fee ({resolved.incentiveFeeProfitPct}% of GOP)</span>
-                  <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.incentiveFee)}</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-amber-50 border border-amber-200">
-                  <span className="text-sm font-semibold text-amber-700">Total Operator Fees</span>
-                  <span className="text-sm font-bold text-amber-700">{fmtAED(r.totalOperatorFees)}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-forest/10 border border-forest/20">
-                  <span className="text-sm font-bold text-forest">= Net Income After Operator</span>
-                  <span className="text-lg font-bold text-forest">{fmtAED(r.netIncomeAfterOperator)}</span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted/40 text-center py-4">Enter operations, OpEx, and operator fee inputs to see P&amp;L waterfall</p>
-            )}
-          </Section>
         </div>
 
-        {/* RIGHT COLUMN: Simulation Inputs → JV Profit Split → Key Metrics */}
-        <div className="flex flex-col gap-1.5">
-          <ContentCard className="flex flex-col">
-            <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2 text-center">
-              Simulation Inputs
-            </h2>
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
-              {/* Inner left: Development + Hotel Operations */}
-              <div className="flex flex-col justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-deep-forest pb-1">Development</p>
-                  <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} placeholder="e.g. 180,000,000" />
-                  <InputRow label="FF&E + Pre-Opening" value={inputs.ffePlusPreOpening} unit="AED" onChange={v => update("ffePlusPreOpening", v)} placeholder="e.g. 25,000,000" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hotel Operations</p>
-                  <InputRow label="Number of Keys" value={inputs.numberOfKeys} unit="keys" onChange={v => update("numberOfKeys", v)} placeholder="e.g. 200" />
-                  <InputRow label="ADR" value={inputs.adr} unit="AED" onChange={v => update("adr", v)} placeholder="e.g. 800" />
-                  <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} placeholder="e.g. 72" />
-                  <InputRow label="F&B Revenue (Annual)" value={inputs.fbRevenueAnnual} unit="AED" onChange={v => update("fbRevenueAnnual", v)} placeholder="e.g. 15,000,000" />
-                </div>
+        {/* TOP-RIGHT: Simulation Inputs */}
+        <ContentCard className="flex flex-col">
+          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2 text-center">
+            Simulation Inputs
+          </h2>
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
+            {/* Inner left: Development + Hotel Operations */}
+            <div className="flex flex-col justify-between">
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pb-1">Development</p>
+                <InputRow label="Construction Cost" value={inputs.constructionCostTotal} unit="AED" onChange={v => update("constructionCostTotal", v)} placeholder="e.g. 180,000,000" />
+                <InputRow label="FF&E + Pre-Opening" value={inputs.ffePlusPreOpening} unit="AED" onChange={v => update("ffePlusPreOpening", v)} placeholder="e.g. 25,000,000" />
               </div>
-              {/* Inner right: Operator Fees + Operating Costs + JV Split */}
-              <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
-                <div>
-                  <p className="text-xs font-semibold text-deep-forest pb-1">Operator Fees</p>
-                  <InputRow label="Base Fee (% of Revenue)" value={inputs.baseFeeRevenuePct} unit="%" onChange={v => update("baseFeeRevenuePct", v)} placeholder="e.g. 5" />
-                  <InputRow label="Incentive Fee (% of GOP)" value={inputs.incentiveFeeProfitPct} unit="%" onChange={v => update("incentiveFeeProfitPct", v)} placeholder="e.g. 10" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Operating Costs</p>
-                  <InputRow label="Total OpEx (% of Revenue)" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} placeholder="e.g. 55" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
-                  <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => { setSplitOverridden(true); update("landOwnerSplit", v); }} placeholder="auto" />
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-xs text-muted">Investor Share</span>
-                    <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
-                  </div>
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hotel Operations</p>
+                <InputRow label="Number of Keys" value={inputs.numberOfKeys} unit="keys" onChange={v => update("numberOfKeys", v)} placeholder="e.g. 200" />
+                <InputRow label="ADR" value={inputs.adr} unit="AED" onChange={v => update("adr", v)} placeholder="e.g. 800" />
+                <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} placeholder="e.g. 72" />
+                <InputRow label="F&B Revenue (Annual)" value={inputs.fbRevenueAnnual} unit="AED" onChange={v => update("fbRevenueAnnual", v)} placeholder="e.g. 15,000,000" />
+              </div>
+            </div>
+            {/* Inner right: Operator Fees + Operating Costs + JV Split */}
+            <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pb-1">Operator Fees</p>
+                <InputRow label="Base Fee (% of Revenue)" value={inputs.baseFeeRevenuePct} unit="%" onChange={v => update("baseFeeRevenuePct", v)} placeholder="e.g. 5" />
+                <InputRow label="Incentive Fee (% of GOP)" value={inputs.incentiveFeeProfitPct} unit="%" onChange={v => update("incentiveFeeProfitPct", v)} placeholder="e.g. 10" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Operating Costs</p>
+                <InputRow label="Total OpEx (% of Revenue)" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} placeholder="e.g. 55" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Joint-Venture Split</p>
+                <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => { setSplitOverridden(true); update("landOwnerSplit", v); }} placeholder="auto" />
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-muted">Investor Share</span>
+                  <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
                 </div>
               </div>
             </div>
-          </ContentCard>
+          </div>
+        </ContentCard>
 
-          <Section title="Joint-Venture Profit Split (Annual)" className="flex flex-col">
+        {/* BOTTOM-LEFT: P&L Waterfall */}
+        <Section title="P&amp;L Waterfall" className="flex flex-col min-h-0">
+          {isPLReady ? (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-mint-white/80">
+                <span className="text-sm text-deep-forest">Total Revenue</span>
+                <span className="text-sm font-bold text-deep-forest">{fmtAED(r.totalRevenue)}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
+                <span className="text-sm text-muted">− Operating Costs ({resolved.operatingCostPct}%)</span>
+                <span className="text-sm font-semibold text-red-500">−{fmtAED(r.operatingCosts)}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-forest/5 border border-forest/10">
+                <span className="text-sm font-semibold text-forest">= Gross Operating Profit (GOP)</span>
+                <span className="text-sm font-bold text-forest">{fmtAED(r.gop)}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
+                <span className="text-sm text-muted">− Base Fee ({resolved.baseFeeRevenuePct}% of Revenue)</span>
+                <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.baseFee)}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg">
+                <span className="text-sm text-muted">− Incentive Fee ({resolved.incentiveFeeProfitPct}% of GOP)</span>
+                <span className="text-sm font-semibold text-amber-600">−{fmtAED(r.incentiveFee)}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-amber-50 border border-amber-200">
+                <span className="text-sm font-semibold text-amber-700">Total Operator Fees</span>
+                <span className="text-sm font-bold text-amber-700">{fmtAED(r.totalOperatorFees)}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-forest/10 border border-forest/20">
+                <span className="text-sm font-bold text-forest">= Net Income After Operator</span>
+                <span className="text-lg font-bold text-forest">{fmtAED(r.netIncomeAfterOperator)}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter operations, OpEx, and operator fee inputs to see P&amp;L waterfall</p>
+          )}
+        </Section>
+
+        {/* BOTTOM-RIGHT: JV Profit Split + Key Metrics */}
+        <div className="flex flex-col gap-1.5 min-h-0">
+          <Section title="Joint-Venture Profit Split (Annual)" className="flex-1 flex flex-col">
             {isJVSplitReady ? (
               <div className="grid grid-cols-2 gap-1.5">
                 <div className="rounded-xl p-3 bg-forest/5 border border-forest/15">
@@ -526,7 +529,7 @@ export default function BuildHotelPage() {
             )}
           </Section>
 
-          <Section title="Key Metrics" className="flex flex-col">
+          <Section title="Key Metrics" className="flex-1 flex flex-col">
             {isKeyMetricsReady ? (
               <div className="grid grid-cols-3 gap-1.5">
                 <KPI label="Development Cost" value={fmtAED(r.totalDevelopmentCost)} sub={`Land ${fmtAED(resolved.landValue)} + Build ${fmtAED(resolved.constructionCostTotal)} + FF&E ${fmtAED(resolved.ffePlusPreOpening)}`} />
@@ -538,6 +541,7 @@ export default function BuildHotelPage() {
             )}
           </Section>
         </div>
+
       </div>
     </div>
   );
