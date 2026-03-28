@@ -170,19 +170,19 @@ export default function CTAPage() {
         {actions.map((action) => {
           const inner = (
             <ContentCard
-              className="w-full flex flex-col transition-all group-hover:shadow-md group-hover:border-forest/30"
+              className="w-full flex flex-col py-5 px-5 transition-all group-hover:shadow-md group-hover:border-forest/30"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-forest/10 text-forest">
                   {action.icon}
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold text-deep-forest text-center">{action.title}</h2>
-                  <p className="text-sm mt-1.5 text-muted leading-relaxed">{action.description}</p>
+                  <p className="text-sm mt-2.5 text-muted leading-relaxed">{action.description}</p>
                 </div>
               </div>
 
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                   {action.timeline}
@@ -193,9 +193,9 @@ export default function CTAPage() {
                 </span>
               </div>
 
-              <p className="mt-2 text-xs text-muted leading-relaxed">{action.details}</p>
+              <p className="mt-4 text-xs text-muted leading-relaxed">{action.details}</p>
 
-              <div className="mt-auto pt-2 flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-auto pt-4 flex items-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
                 Get started
                 <svg className="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <polyline points="9 18 15 12 9 6" />
@@ -237,8 +237,8 @@ export default function CTAPage() {
 
         {/* Submit Your Offer — spans full width of bottom row */}
         <Link href="/offer" className="group flex md:col-span-2">
-          <ContentCard className="w-full flex flex-col transition-all group-hover:shadow-md group-hover:border-forest/30">
-            <div className="flex flex-col items-center text-center gap-3">
+          <ContentCard className="w-full flex flex-col py-5 px-5 transition-all group-hover:shadow-md group-hover:border-forest/30">
+            <div className="flex flex-col items-center text-center gap-4">
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-forest/10 text-forest">
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
@@ -246,11 +246,11 @@ export default function CTAPage() {
               </div>
               <div className="flex-1">
                 <h2 className="text-lg font-semibold text-deep-forest text-center">Submit Your Offer</h2>
-                <p className="text-sm mt-1.5 text-muted leading-relaxed text-center">Confirm the deal structure and submit for formal review.</p>
+                <p className="text-sm mt-2.5 text-muted leading-relaxed text-center">Confirm the deal structure and submit for formal review.</p>
               </div>
             </div>
 
-            <div className="mt-2 flex flex-wrap gap-2 justify-center">
+            <div className="mt-5 flex flex-wrap gap-2 justify-center">
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-forest bg-forest/8 border border-forest/15 px-2.5 py-1 rounded-full">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                 Specialist review
@@ -261,9 +261,9 @@ export default function CTAPage() {
               </span>
             </div>
 
-            <p className="mt-2 text-xs text-muted leading-relaxed text-center">Proceeds to offer submission for the selected plot.</p>
+            <p className="mt-4 text-xs text-muted leading-relaxed text-center">Proceeds to offer submission for the selected plot.</p>
 
-            <div className="mt-auto pt-2 flex items-center justify-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="mt-auto pt-4 flex items-center justify-center text-xs font-medium text-forest opacity-0 group-hover:opacity-100 transition-opacity">
               Go to offer
               <svg className="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <polyline points="9 18 15 12 9 6" />
