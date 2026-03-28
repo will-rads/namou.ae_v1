@@ -178,32 +178,23 @@ export function formatAED(n: number): string {
 }
 
 /* ── Land categories (Jad: bundle by TYPE not area) ── */
-export const landCategories: LandCategoryInfo[] = [
-  {
-    slug: "residential",
-    label: "Residential",
-    description: "High-density and villa residential plots across RAK's prime districts.",
-    plotCount: plots.filter((p) => p.category === "residential").length,
-  },
-  {
-    slug: "commercial",
-    label: "Commercial",
-    description: "Hospitality, convention, and retail-zoned plots with strong ROI potential.",
-    plotCount: plots.filter((p) => p.category === "commercial").length,
-  },
-  {
-    slug: "industrial",
-    label: "Industrial",
-    description: "Logistically connected industrial plots near ports and free zones.",
-    plotCount: plots.filter((p) => p.category === "industrial").length,
-  },
-  {
-    slug: "mixed-use",
-    label: "Mixed-use",
-    description: "Combined residential, retail, and hospitality zoning for versatile development.",
-    plotCount: plots.filter((p) => p.category === "mixed-use").length,
-  },
+const _ALL_CATEGORIES: LandCategoryInfo[] = [
+  { slug: "residential", label: "Residential", description: "High-density and villa residential plots across RAK's prime districts.", plotCount: 0 },
+  { slug: "commercial", label: "Commercial", description: "Hospitality, convention, and retail-zoned plots with strong ROI potential.", plotCount: 0 },
+  { slug: "industrial", label: "Industrial", description: "Logistically connected industrial plots near ports and free zones.", plotCount: 0 },
+  { slug: "mixed-use", label: "Mixed-use", description: "Combined residential, retail, and hospitality zoning for versatile development.", plotCount: 0 },
 ];
+
+/** Live categories — rebuilt on every data load to include only types with ≥1 plot. */
+export const landCategories: LandCategoryInfo[] = [];
+
+function rebuildCategories(): void {
+  landCategories.length = 0;
+  for (const cat of _ALL_CATEGORIES) {
+    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
+    if (cat.plotCount > 0) landCategories.push(cat);
+  }
+}
 
 /* ── ROI calculation helper ── */
 export function calculateROI(inputs: ROIInputs, gfa: number): ROIOutputs {
@@ -242,10 +233,7 @@ function applyPlotsOverride(parsed: Plot[]): void {
   const plotAreas = [...new Set(parsed.map((p) => p.area).filter(Boolean))];
   areas.length = 0;
   areas.push(...plotAreas);
-  // Update category counts
-  for (const cat of landCategories) {
-    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
-  }
+  rebuildCategories();
 }
 
 function restoreDefaults(): void {
@@ -253,9 +241,7 @@ function restoreDefaults(): void {
   plots.push(...JSON.parse(JSON.stringify(_BOOTSTRAP_PLOTS)));
   areas.length = 0;
   areas.push(..._BOOTSTRAP_AREAS);
-  for (const cat of landCategories) {
-    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
-  }
+  rebuildCategories();
 }
 
 /** Load backend-managed plot data.  Priority:
