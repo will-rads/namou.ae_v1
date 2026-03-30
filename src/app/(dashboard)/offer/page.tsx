@@ -171,6 +171,11 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
       setSubmitting(true);
       setSubmitError(null);
       try {
+        let specName = "";
+        let specEmail = "";
+        try { specName = sessionStorage.getItem("Assignee_name") ?? ""; } catch {}
+        try { specEmail = sessionStorage.getItem("Assignee_email") ?? ""; } catch {}
+
         const properties = selectedPlots.length > 0
           ? selectedPlots.map(p => ({
               id: p.id,
@@ -187,7 +192,8 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
               sourcePage: "/offer",
               sourceAction: "offer-popup-submit",
               agreement_type: "a2a",
-              assignee_email: "undefined",
+              assignee_name: specName || "undefined",
+              assignee_email: specEmail || "undefined",
               phone_number: a2aForm.phone || "-",
               src: "webpage",
               data: {
@@ -213,7 +219,8 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
               agreement_type: "b2a",
               phone_number: piForm.mobile || "-",
               src: "webpage",
-              assignee_email: "undefined",
+              assignee_name: specName || "undefined",
+              assignee_email: specEmail || "undefined",
               data: {
                 investor_name: piForm.fullName || "-",
                 investor_number: piForm.mobile || "null",
