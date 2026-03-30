@@ -581,8 +581,8 @@ function buildGallerySlots(plot: Plot) {
     ? [
         { label: "Satellite Close", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=18&output=embed` },
         { label: "Satellite Wide", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=14&output=embed` },
-        { label: "Street View 1", src: `https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=12,0,,0,0&output=embed` },
-        { label: "Street View 2", src: `https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=12,180,,0,0&output=embed` },
+        { label: "Satellite Detail", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=16&output=embed` },
+        { label: "Area Context", src: `https://maps.google.com/maps?q=${lat},${lng}&t=h&z=13&output=embed` },
       ]
     : [];
 
