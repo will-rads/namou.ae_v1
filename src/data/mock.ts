@@ -29,6 +29,10 @@ export interface Plot {
   lng?: number; // WGS84 longitude (decimal degrees)
   googleMapsUrl?: string;
   jv?: string; // Joint-venture eligibility from backend
+  galleryImage1?: string;
+  galleryImage2?: string;
+  galleryImage3?: string;
+  galleryImage4?: string;
 }
 
 export interface Landmark {

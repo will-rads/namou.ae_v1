@@ -41,6 +41,11 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { key: "adminFee", label: "Admin Fee", width: "min-w-[130px]" },
   { key: "adminFeePct", label: "Admin Fee %", width: "min-w-[100px]" },
   { key: "annualServiceCharge", label: "Annual Service/Community Charge", width: "min-w-[180px]" },
+  // ── Gallery images (per-plot, managed via /backend) ──
+  { key: "galleryImage1", label: "Gallery Image 1", width: "min-w-[250px]" },
+  { key: "galleryImage2", label: "Gallery Image 2", width: "min-w-[250px]" },
+  { key: "galleryImage3", label: "Gallery Image 3", width: "min-w-[250px]" },
+  { key: "galleryImage4", label: "Gallery Image 4", width: "min-w-[250px]" },
   // ── Site-essential fields (used by the frontend Plot model) ──
   { key: "category", label: "Category", width: "min-w-[140px]" },
 ];
@@ -559,6 +564,10 @@ export function spreadsheetRowsToPlots(rows: SpreadsheetRow[]): Plot[] {
         ...(lngVal != null ? { lng: lngVal } : {}),
         ...(row.locationPin ? { googleMapsUrl: row.locationPin } : {}),
         ...(row.jv ? { jv: row.jv } : {}),
+        ...(row.galleryImage1 ? { galleryImage1: row.galleryImage1 } : {}),
+        ...(row.galleryImage2 ? { galleryImage2: row.galleryImage2 } : {}),
+        ...(row.galleryImage3 ? { galleryImage3: row.galleryImage3 } : {}),
+        ...(row.galleryImage4 ? { galleryImage4: row.galleryImage4 } : {}),
       } satisfies Plot;
     });
 }
