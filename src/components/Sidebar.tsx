@@ -79,9 +79,9 @@ export default function Sidebar() {
           <Image
             src="/logo-sidebar.png"
             alt="Namou"
-            width={120}
-            height={40}
-            className="object-contain object-left h-8 w-auto"
+            width={36}
+            height={36}
+            className="object-contain h-8 w-8 rounded-lg"
             priority
           />
         </Link>
@@ -107,9 +107,9 @@ export default function Sidebar() {
               <Image
                 src="/logo-sidebar.png"
                 alt="Namou"
-                width={168}
-                height={56}
-                className="object-contain object-left h-10 w-auto"
+                width={40}
+                height={40}
+                className="object-contain h-10 w-10 rounded-lg"
                 priority
               />
             </Link>
@@ -126,18 +126,15 @@ export default function Sidebar() {
       {/* Desktop sidebar */}
       <aside className="group hidden md:flex flex-col w-[42px] lg:w-[52px] hover:w-[200px] min-h-screen bg-forest text-white py-4 lg:py-8 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out">
         {/* Logo */}
-        <Link href="/home" className="mb-4 lg:mb-10 px-2 flex items-center">
-          {/* Collapsed: small square crop; expanded: full logo */}
-          <div className="w-[36px] group-hover:w-[168px] transition-[width] duration-200 ease-in-out overflow-hidden shrink-0">
-            <Image
-              src="/logo-sidebar.png"
-              alt="Namou"
-              width={168}
-              height={56}
-              className="object-contain object-left h-10 w-auto min-w-[168px]"
-              priority
-            />
-          </div>
+        <Link href="/home" className="mb-4 lg:mb-10 px-1 lg:px-2 flex items-center">
+          <Image
+            src="/logo-sidebar.png"
+            alt="Namou"
+            width={36}
+            height={36}
+            className="object-contain h-[28px] w-[28px] lg:h-[36px] lg:w-[36px] rounded-lg shrink-0"
+            priority
+          />
         </Link>
 
         <SidebarNav pathname={pathname} navItems={navItems} />
