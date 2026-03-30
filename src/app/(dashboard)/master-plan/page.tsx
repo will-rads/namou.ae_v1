@@ -571,15 +571,47 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
   );
 }
 
+function buildGallerySlots(plot: Plot) {
+  const imgs = [plot.galleryImage1, plot.galleryImage2, plot.galleryImage3, plot.galleryImage4];
+  const lat = plot.lat;
+  const lng = plot.lng;
+  const hasCoords = lat != null && lng != null;
+
+  const fallbacks = hasCoords
+    ? [
+        { label: "Satellite Close", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=18&output=embed` },
+        { label: "Satellite Wide", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=14&output=embed` },
+        { label: "Street View 1", src: `https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=12,0,,0,0&output=embed` },
+        { label: "Street View 2", src: `https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=12,180,,0,0&output=embed` },
+      ]
+    : [];
+
+  const slots: { label: string; imgSrc: string | null; iframeSrc: string | null }[] = [];
+  let fbIdx = 0;
+  for (let i = 0; i < 4; i++) {
+    const img = imgs[i]?.trim();
+    if (img) {
+      slots.push({ label: `Image ${i + 1}`, imgSrc: img, iframeSrc: null });
+    } else {
+      const fb = fallbacks[fbIdx++];
+      slots.push({ label: fb?.label ?? `View ${i + 1}`, imgSrc: null, iframeSrc: fb?.src ?? null });
+    }
+  }
+  return slots;
+}
+
 function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onClose: () => void; dealAvailability: { showRoi: boolean; showJv: boolean } }) {
   const [openSection, setOpenSection] = useState<string>("land-info");
+  const [lightbox, setLightbox] = useState<number | null>(null);
   function toggle(key: string) {
     setOpenSection(prev => (prev === key ? "" : key));
   }
 
+  const gallerySlots = buildGallerySlots(plot);
+
   return (
     <div className="md:w-1/2 flex flex-col min-h-0">
-      <ContentCard className="flex-1 overflow-y-auto flex flex-col">
+      <ContentCard className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col min-h-0">
         {/* Header — plot name */}
         <div className="flex items-start justify-between mb-2 shrink-0">
           <div>
@@ -597,10 +629,8 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
           </button>
         </div>
 
-        {/* Accordion sections */}
-        <div className="flex-1 flex flex-col gap-1">
-
-          {/* 1. Land Info */}
+        {/* Land Info — collapsible */}
+        <div className="shrink-0">
           <AccordionSection
             title="Land Info"
             icon={<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>}
@@ -623,33 +653,44 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
               )}
             </div>
           </AccordionSection>
+        </div>
 
-          {/* 2. Land Gallery */}
-          <AccordionSection
-            title="Land Gallery"
-            icon={<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>}
-            isOpen={openSection === "gallery"}
-            onToggle={() => toggle("gallery")}
-          >
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map(i => (
-                <div
-                  key={i}
-                  className="aspect-[4/3] rounded-lg bg-mint-bg border border-mint-light/40 flex items-center justify-center"
-                >
-                  <div className="text-center text-muted">
-                    <svg className="w-6 h-6 mx-auto mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                    <p className="text-[10px]">{plot.name} — View {i}</p>
+        {/* Land Gallery — fills remaining space */}
+        <div className="flex-1 flex flex-col min-h-0 mt-1.5">
+          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5 flex items-center gap-2">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+            Land Gallery
+          </p>
+          <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0">
+            {gallerySlots.map((slot, i) => (
+              <button
+                key={i}
+                onClick={() => setLightbox(i)}
+                className="rounded-lg overflow-hidden border border-mint-light/40 hover:border-forest/30 transition-colors cursor-pointer relative group min-h-0"
+              >
+                {slot.imgSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={slot.imgSrc} alt={slot.label} className="w-full h-full object-cover" />
+                ) : slot.iframeSrc ? (
+                  <iframe
+                    src={slot.iframeSrc}
+                    className="w-full h-full border-0 pointer-events-none"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={slot.label}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-mint-bg flex items-center justify-center">
+                    <span className="text-[10px] text-muted">{slot.label}</span>
                   </div>
+                )}
+                {/* Hover overlay with label */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-[10px] font-medium text-white">{slot.label}</p>
                 </div>
-              ))}
-            </div>
-          </AccordionSection>
-
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* CTAs — based on selected plot's Deal Type */}
@@ -672,6 +713,51 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
           )}
         </div>
       </ContentCard>
+
+      {/* Lightbox */}
+      {lightbox !== null && (() => {
+        const slot = gallerySlots[lightbox];
+        return (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setLightbox(null)}>
+            <div className="relative w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={() => setLightbox(null)}
+                className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+              {slot?.imgSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={slot.imgSrc} alt={slot.label} className="w-full h-full max-h-[90vh] object-contain bg-black" />
+              ) : slot?.iframeSrc ? (
+                <iframe
+                  src={slot.iframeSrc}
+                  className="w-full border-0 bg-white"
+                  style={{ height: "80vh" }}
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={slot.label}
+                />
+              ) : null}
+              {/* Navigation */}
+              {lightbox > 0 && (
+                <button onClick={() => setLightbox(lightbox - 1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+              )}
+              {lightbox < gallerySlots.length - 1 && (
+                <button onClick={() => setLightbox(lightbox + 1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+              )}
+              {/* Label */}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/50 to-transparent px-5 py-3">
+                <p className="text-sm font-medium text-white">{slot?.label} — {plot.name}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
