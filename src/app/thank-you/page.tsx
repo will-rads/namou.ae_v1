@@ -63,7 +63,7 @@ export default function ThankYouPage() {
     <div className="relative flex flex-col min-h-screen overflow-x-hidden">
       {/* Background image — RAK aerial */}
       <Image
-        src="/rak-hero.jpg"
+        src="/Thank-you-background.webp"
         alt=""
         fill
         priority
