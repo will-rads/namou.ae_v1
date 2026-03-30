@@ -56,6 +56,8 @@ export default function CTAPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   /* Brochure form state */
   const [brochureOpen, setBrochureOpen] = useState(false);
@@ -153,7 +155,66 @@ export default function CTAPage() {
     return d < today;
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
+    if (!selectedDate || !selectedTime || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+
+    // Convert "01:30 PM" → "13:30"
+    const timeParts = selectedTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    let time24 = selectedTime;
+    if (timeParts) {
+      let h = parseInt(timeParts[1]);
+      const m = timeParts[2];
+      const ampm = timeParts[3].toUpperCase();
+      if (ampm === "PM" && h !== 12) h += 12;
+      if (ampm === "AM" && h === 12) h = 0;
+      time24 = `${String(h).padStart(2, "0")}:${m}`;
+    }
+
+    // Format date as YYYY-MM-DD
+    const y = selectedDate.getFullYear();
+    const mo = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const da = String(selectedDate.getDate()).padStart(2, "0");
+    const dayStr = `${y}-${mo}-${da}`;
+
+    // Determine meeting type from calendar action
+    const meetingType = calendarAction === "Schedule a Site Visit" ? "Site-Visit" : "Video-Call";
+
+    // Read available context from sessionStorage
+    let userName = "";
+    let userPhone = "";
+    try { userName = sessionStorage.getItem("Assignee_name") ?? ""; } catch {}
+    try { userPhone = sessionStorage.getItem("user_phone") ?? ""; } catch {}
+
+    const payload = {
+      sourcePage: "/cta",
+      sourceAction: "booking-confirm",
+      name: userName || calendarAction || "Booking",
+      phone_number: userPhone || "",
+      scheduled_day: dayStr,
+      scheduled_time: time24,
+      meeting_type: meetingType,
+      src: "Webpage",
+    };
+
+    try {
+      const res = await fetch("/api/booking/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(body.error || `Request failed (${res.status})`);
+      }
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : "Booking failed");
+      setSubmitting(false);
+      return;
+    }
+
+    setSubmitting(false);
     setConfirmed(true);
   }
 
@@ -406,16 +467,21 @@ export default function CTAPage() {
                   </div>
                   {/* Confirm */}
                   <div className="px-4 sm:px-5 py-4 sm:py-5 border-t border-mint-light/40">
+                    {submitError && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-600 mb-2">
+                        {submitError}
+                      </div>
+                    )}
                     <button
                       onClick={handleConfirm}
-                      disabled={!selectedDate || !selectedTime}
+                      disabled={!selectedDate || !selectedTime || submitting}
                       className={`w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-colors ${
-                        selectedDate && selectedTime
+                        selectedDate && selectedTime && !submitting
                           ? "bg-forest text-white hover:bg-deep-forest"
                           : "bg-mint-light/50 text-muted cursor-not-allowed"
                       }`}
                     >
-                      Confirm
+                      {submitting ? "Confirming…" : "Confirm"}
                     </button>
                   </div>
                 </div>
