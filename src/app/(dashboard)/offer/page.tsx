@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ContentCard from "@/components/ContentCard";
@@ -394,27 +394,21 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
 }
 
 export default function FinalOfferPage() {
-  const [roiData] = useState<ROIData | null>(() => {
-    if (typeof window === "undefined") return null;
-    try { const s = sessionStorage.getItem("roi_results"); return s ? JSON.parse(s) : null; } catch { return null; }
-  });
-  const [sourcePlot] = useState<Plot | null>(() => {
-    if (typeof window === "undefined") return null;
-    try { const s = sessionStorage.getItem("selected_plot"); return s ? JSON.parse(s) : null; } catch { return null; }
-  });
-  const [selectedPlotId, setSelectedPlotId] = useState(() => {
-    if (typeof window === "undefined") return plots[0].id;
-    try { const s = sessionStorage.getItem("selected_plot"); if (s) { const p: Plot = JSON.parse(s); return p.id; } } catch { /* ignore */ }
-    return plots[0].id;
-  });
-  const [comparePlots] = useState<Plot[]>(() => {
-    if (typeof window === "undefined") return [];
-    try { const s = sessionStorage.getItem("compare_plots"); if (s) { const cp: Plot[] = JSON.parse(s); if (cp.length === 2) return cp; } } catch { /* ignore */ }
-    return [];
-  });
+  const [roiData, setRoiData] = useState<ROIData | null>(null);
+  const [sourcePlot, setSourcePlot] = useState<Plot | null>(null);
+  const [selectedPlotId, setSelectedPlotId] = useState(plots[0]?.id ?? "");
+  const [comparePlots, setComparePlots] = useState<Plot[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [dealRef, setDealRef] = useState<string | null>(null);
   const [showNextSteps, setShowNextSteps] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try { const s = sessionStorage.getItem("roi_results"); if (s) setRoiData(JSON.parse(s)); } catch {}
+    try { const s = sessionStorage.getItem("selected_plot"); if (s) { const p: Plot = JSON.parse(s); setSourcePlot(p); setSelectedPlotId(p.id); } } catch {}
+    try { const s = sessionStorage.getItem("compare_plots"); if (s) { const cp: Plot[] = JSON.parse(s); if (cp.length === 2) setComparePlots(cp); } } catch {}
+    setHydrated(true);
+  }, []);
 
   const selectedPlot = plots.find((p) => p.id === selectedPlotId) || plots[0];
   const selectedPlots = comparePlots.length === 2 ? comparePlots : [selectedPlot];
@@ -466,6 +460,8 @@ export default function FinalOfferPage() {
     if (!selectedPlot.paymentPlan) return [];
     return parsePaymentStages(selectedPlot.paymentPlan, offerSummary.landCost);
   }, [selectedPlot, offerSummary.landCost]);
+
+  if (!hydrated) return null;
 
   return (
     <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
