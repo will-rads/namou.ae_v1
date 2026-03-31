@@ -14,6 +14,16 @@ interface GallerySlot {
   fallbackSrc: string | null;
 }
 
+function driveToDirectUrl(url: string): string {
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (fileMatch) return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+  const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (openMatch) return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
+  return url;
+}
+
+const FALLBACK_LABELS = ["Satellite Close", "Satellite Wide", "Satellite Detail", "Area Context"];
+
 function buildSlots(plot: Plot | null): GallerySlot[] {
   const imgs = [
     plot?.galleryImage1,
@@ -26,33 +36,22 @@ function buildSlots(plot: Plot | null): GallerySlot[] {
   const lng = plot?.lng;
   const hasCoords = lat != null && lng != null;
 
-  const fallbacks: { label: string; src: string | null }[] = hasCoords
+  const fallbackSrcs = hasCoords
     ? [
-        { label: "Satellite Close", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=18&output=embed` },
-        { label: "Satellite Wide", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=14&output=embed` },
-        { label: "Satellite Detail", src: `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=16&output=embed` },
-        { label: "Area Context", src: `https://maps.google.com/maps?q=${lat},${lng}&t=h&z=13&output=embed` },
+        `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=18&output=embed`,
+        `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=14&output=embed`,
+        `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=16&output=embed`,
+        `https://maps.google.com/maps?q=${lat},${lng}&t=h&z=13&output=embed`,
       ]
-    : [
-        { label: "View 1", src: null },
-        { label: "View 2", src: null },
-        { label: "View 3", src: null },
-        { label: "View 4", src: null },
-      ];
+    : [null, null, null, null];
 
-  // Fill 4 slots: backend images first, then fallbacks for remaining
-  const slots: GallerySlot[] = [];
-  let fallbackIdx = 0;
-  for (let i = 0; i < 4; i++) {
-    const img = imgs[i]?.trim();
+  return imgs.map((raw, i) => {
+    const img = raw?.trim();
     if (img) {
-      slots.push({ label: `Image ${i + 1}`, src: img, fallbackSrc: null });
-    } else {
-      const fb = fallbacks[fallbackIdx++] ?? fallbacks[fallbacks.length - 1];
-      slots.push({ label: fb.label, src: null, fallbackSrc: fb.src });
+      return { label: `Image ${i + 1}`, src: driveToDirectUrl(img), fallbackSrc: null };
     }
-  }
-  return slots;
+    return { label: FALLBACK_LABELS[i], src: null, fallbackSrc: fallbackSrcs[i] };
+  });
 }
 
 export default function GalleryPage() {
