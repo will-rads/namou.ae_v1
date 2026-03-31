@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        auth: webhookAuth,
+        authorization: webhookAuth,
       },
       body: JSON.stringify(outbound),
       signal: controller.signal,
