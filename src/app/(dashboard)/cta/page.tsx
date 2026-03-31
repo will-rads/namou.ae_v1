@@ -58,6 +58,9 @@ export default function CTAPage() {
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [bookingName, setBookingName] = useState("");
+  const [bookingEmail, setBookingEmail] = useState("");
+  const [bookingPhone, setBookingPhone] = useState("");
 
   /* Brochure form state */
   const [brochureOpen, setBrochureOpen] = useState(false);
@@ -110,6 +113,10 @@ export default function CTAPage() {
     setSelectedDate(null);
     setSelectedTime(null);
     setConfirmed(false);
+    setSubmitError(null);
+    setBookingName("");
+    setBookingEmail("");
+    setBookingPhone("");
     setCalendarAction(actionTitle);
   }
 
@@ -181,21 +188,21 @@ export default function CTAPage() {
     // Determine meeting type from calendar action
     const meetingType = calendarAction === "Schedule a Site Visit" ? "Site-Visit" : "Video-Call";
 
-    // Read available context from sessionStorage
-    let userName = "";
-    let userPhone = "";
-    try { userName = sessionStorage.getItem("Assignee_name") ?? ""; } catch {}
-    try { userPhone = sessionStorage.getItem("user_phone") ?? ""; } catch {}
+    // Read specialist email from session (selected on /home)
+    let assignee = "";
+    try { assignee = sessionStorage.getItem("Assignee_email") ?? ""; } catch {}
 
     const payload = {
       sourcePage: "/cta",
       sourceAction: "booking-confirm",
-      name: userName || calendarAction || "Booking",
-      phone_number: userPhone || "",
+      phone_number: bookingPhone,
       scheduled_day: dayStr,
       scheduled_time: time24,
       meeting_type: meetingType,
       src: "Webpage",
+      email: bookingEmail,
+      name: bookingName,
+      assignee: assignee,
     };
 
     try {
@@ -465,8 +472,11 @@ export default function CTAPage() {
                       </button>
                     ))}
                   </div>
-                  {/* Confirm */}
-                  <div className="px-4 sm:px-5 py-4 sm:py-5 border-t border-mint-light/40">
+                  {/* Contact details + Confirm */}
+                  <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-mint-light/40 space-y-2">
+                    <input type="text" placeholder="Your name" value={bookingName} onChange={e => setBookingName(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-mint-light/60 text-sm text-deep-forest placeholder:text-muted/50 outline-none focus:border-forest/40 focus:ring-1 focus:ring-forest/10" />
+                    <input type="email" placeholder="Your email" value={bookingEmail} onChange={e => setBookingEmail(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-mint-light/60 text-sm text-deep-forest placeholder:text-muted/50 outline-none focus:border-forest/40 focus:ring-1 focus:ring-forest/10" />
+                    <input type="tel" placeholder="Phone number" value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-mint-light/60 text-sm text-deep-forest placeholder:text-muted/50 outline-none focus:border-forest/40 focus:ring-1 focus:ring-forest/10" />
                     {submitError && (
                       <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-600 mb-2">
                         {submitError}
