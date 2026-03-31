@@ -58,9 +58,15 @@ export default function CTAPage() {
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [bookingName, setBookingName] = useState("");
-  const [bookingEmail, setBookingEmail] = useState("");
-  const [bookingPhone, setBookingPhone] = useState("");
+  const [bookingName, setBookingName] = useState(() => {
+    try { return sessionStorage.getItem("client_name") ?? ""; } catch { return ""; }
+  });
+  const [bookingEmail, setBookingEmail] = useState(() => {
+    try { return sessionStorage.getItem("client_email") ?? ""; } catch { return ""; }
+  });
+  const [bookingPhone, setBookingPhone] = useState(() => {
+    try { return sessionStorage.getItem("client_phone") ?? ""; } catch { return ""; }
+  });
 
   /* Brochure form state */
   const [brochureOpen, setBrochureOpen] = useState(false);
@@ -114,9 +120,10 @@ export default function CTAPage() {
     setSelectedTime(null);
     setConfirmed(false);
     setSubmitError(null);
-    setBookingName("");
-    setBookingEmail("");
-    setBookingPhone("");
+    // Re-read session in case user just came from agreement flow
+    try { setBookingName(prev => prev || sessionStorage.getItem("client_name") || ""); } catch {}
+    try { setBookingEmail(prev => prev || sessionStorage.getItem("client_email") || ""); } catch {}
+    try { setBookingPhone(prev => prev || sessionStorage.getItem("client_phone") || ""); } catch {}
     setCalendarAction(actionTitle);
   }
 

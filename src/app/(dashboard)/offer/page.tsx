@@ -251,6 +251,13 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
       setSubmitting(false);
     }
 
+    // Store client details for /cta pre-fill
+    try {
+      sessionStorage.setItem("client_name", isBroker ? (a2aForm.contactPerson || piForm.fullName) : piForm.fullName);
+      sessionStorage.setItem("client_email", isBroker ? (a2aForm.email || piForm.email) : piForm.email);
+      sessionStorage.setItem("client_phone", isBroker ? (a2aForm.phone || piForm.mobile) : piForm.mobile);
+    } catch {}
+
     setSubmitted(true);
     router.push("/cta");
   }
