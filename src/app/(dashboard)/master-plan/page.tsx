@@ -571,14 +571,24 @@ function ComparisonTable({ plots: cPlots, onRemove }: { plots: Plot[]; onRemove:
   );
 }
 
-/** Convert Google Drive sharing URLs to direct image URLs */
-function driveToDirectUrl(url: string): string {
+/** Extract Google Drive file ID from various sharing URL formats */
+function extractDriveId(url: string): string | null {
   // https://drive.google.com/file/d/FILE_ID/view?...
-  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-  if (fileMatch) return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+  if (fileMatch) return fileMatch[1];
   // https://drive.google.com/open?id=FILE_ID
   const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-  if (openMatch) return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
+  if (openMatch) return openMatch[1];
+  // https://drive.google.com/uc?id=FILE_ID&...
+  const ucMatch = url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/);
+  if (ucMatch) return ucMatch[1];
+  return null;
+}
+
+/** Convert Google Drive sharing URLs to direct renderable image URLs */
+function driveToDirectUrl(url: string): string {
+  const id = extractDriveId(url);
+  if (id) return `https://lh3.googleusercontent.com/d/${id}=s1600`;
   return url;
 }
 

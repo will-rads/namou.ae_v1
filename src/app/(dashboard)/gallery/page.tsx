@@ -14,11 +14,19 @@ interface GallerySlot {
   fallbackSrc: string | null;
 }
 
-function driveToDirectUrl(url: string): string {
-  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-  if (fileMatch) return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+function extractDriveId(url: string): string | null {
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+  if (fileMatch) return fileMatch[1];
   const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-  if (openMatch) return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
+  if (openMatch) return openMatch[1];
+  const ucMatch = url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/);
+  if (ucMatch) return ucMatch[1];
+  return null;
+}
+
+function driveToDirectUrl(url: string): string {
+  const id = extractDriveId(url);
+  if (id) return `https://lh3.googleusercontent.com/d/${id}=s1600`;
   return url;
 }
 
