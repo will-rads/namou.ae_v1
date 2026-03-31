@@ -594,6 +594,27 @@ function driveToDirectUrl(url: string): string {
 
 const FALLBACK_LABELS = ["Satellite Close", "Satellite Wide", "Satellite Detail", "Area Context"];
 
+const VIDEO_EXTS = /\.(mp4|webm|ogg|mov)(\?|$)/i;
+const VIDEO_HOSTS = /youtube\.com|youtu\.be|vimeo\.com/i;
+
+function isVideoUrl(url: string): boolean {
+  if (VIDEO_EXTS.test(url)) return true;
+  if (VIDEO_HOSTS.test(url)) return true;
+  if (url.startsWith("data:video/")) return true;
+  return false;
+}
+
+/** Convert YouTube/Vimeo URLs to embeddable URLs */
+function toEmbedUrl(url: string): string | null {
+  // YouTube: youtube.com/watch?v=ID or youtu.be/ID
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  // Vimeo: vimeo.com/ID
+  const vmMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
+  return null;
+}
+
 function buildGallerySlots(plot: Plot) {
   const imgs = [plot.galleryImage1, plot.galleryImage2, plot.galleryImage3, plot.galleryImage4];
   const lat = plot.lat;
@@ -610,11 +631,20 @@ function buildGallerySlots(plot: Plot) {
     : [null, null, null, null];
 
   return imgs.map((raw, i) => {
-    const img = raw?.trim();
-    if (img) {
-      return { label: `Image ${i + 1}`, imgSrc: driveToDirectUrl(img), iframeSrc: null };
+    const src = raw?.trim();
+    if (src) {
+      if (isVideoUrl(src)) {
+        const embed = toEmbedUrl(src);
+        if (embed) {
+          // YouTube/Vimeo → iframe embed
+          return { label: `Video ${i + 1}`, imgSrc: null, videoSrc: null, iframeSrc: embed };
+        }
+        // Direct video file / data URL
+        return { label: `Video ${i + 1}`, imgSrc: null, videoSrc: src, iframeSrc: null };
+      }
+      return { label: `Image ${i + 1}`, imgSrc: driveToDirectUrl(src), videoSrc: null, iframeSrc: null };
     }
-    return { label: FALLBACK_LABELS[i], imgSrc: null, iframeSrc: fallbackSrcs[i] };
+    return { label: FALLBACK_LABELS[i], imgSrc: null, videoSrc: null, iframeSrc: fallbackSrcs[i] };
   });
 }
 
@@ -689,6 +719,8 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
                 {slot.imgSrc ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={slot.imgSrc} alt={slot.label} className="w-full h-full object-contain bg-mint-bg" />
+                ) : slot.videoSrc ? (
+                  <video src={slot.videoSrc} muted playsInline className="w-full h-full object-contain bg-black" />
                 ) : slot.iframeSrc ? (
                   <iframe
                     src={slot.iframeSrc}
@@ -747,6 +779,8 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
               {slot?.imgSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={slot.imgSrc} alt={slot.label} className="w-full h-full max-h-[90vh] object-contain bg-black" />
+              ) : slot?.videoSrc ? (
+                <video src={slot.videoSrc} controls autoPlay className="w-full max-h-[90vh] object-contain bg-black" />
               ) : slot?.iframeSrc ? (
                 <iframe
                   src={slot.iframeSrc}

@@ -296,13 +296,13 @@ export default function BackendPage() {
                           onChange={(e) => updateField(i, col.key, e.target.value)}
                           className={inputCls}
                           title={row[col.key] ?? ""}
-                          placeholder={col.key === "locationPin" ? "25.665, 55.760 or Google Maps URL" : col.key.startsWith("galleryImage") ? "Image URL or drag & drop" : undefined}
+                          placeholder={col.key === "locationPin" ? "25.665, 55.760 or Google Maps URL" : col.key.startsWith("galleryImage") ? "Image/video URL or drag & drop" : undefined}
                           onDragOver={col.key.startsWith("galleryImage") ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
                           onDrop={col.key.startsWith("galleryImage") ? (e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             const file = e.dataTransfer.files?.[0];
-                            if (file && file.type.startsWith("image/")) {
+                            if (file && (file.type.startsWith("image/") || file.type.startsWith("video/"))) {
                               const reader = new FileReader();
                               reader.onload = () => { if (typeof reader.result === "string") updateField(i, col.key, reader.result); };
                               reader.readAsDataURL(file);
