@@ -11,13 +11,6 @@ const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
 const IS_VERCEL = !!process.env.VERCEL;
 const BLOB_KEY = "spreadsheet-override.json";
 
-/** Throw a clear error when running on Vercel without blob storage configured. */
-function assertNotEphemeralFs(): void {
-  if (IS_VERCEL && !USE_BLOB) {
-    throw new Error("BLOB_READ_WRITE_TOKEN is not configured — filesystem storage is ephemeral on Vercel");
-  }
-}
-
 // ── Filesystem helpers (local dev only) ─────────────────────────────────────
 
 async function fsRead(): Promise<SpreadsheetRow[] | null> {
@@ -104,13 +97,13 @@ export async function readRowsOrSeed(): Promise<SpreadsheetRow[]> {
 /** Write rows to persistent store. */
 export async function writeRows(rows: SpreadsheetRow[]): Promise<void> {
   if (USE_BLOB) return blobWrite(rows);
-  assertNotEphemeralFs();
+  if (IS_VERCEL) return; // no blob token — skip silently, localStorage handles client-side
   return fsWrite(rows);
 }
 
 /** Delete stored rows (next readRowsOrSeed will re-seed). */
 export async function deleteRows(): Promise<void> {
   if (USE_BLOB) return blobDelete();
-  assertNotEphemeralFs();
+  if (IS_VERCEL) return; // no blob token — skip silently
   return fsDelete();
 }
