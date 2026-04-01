@@ -659,7 +659,9 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
 
   return (
     <div className="md:w-1/2 flex flex-col min-h-0">
-      <ContentCard className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col min-h-0">
+      <ContentCard className="flex-1 flex flex-col min-h-0">
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto min-h-0">
         {/* Header — plot name */}
         <div className="flex items-start justify-between mb-2 shrink-0">
           <div>
@@ -746,7 +748,9 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
           </AccordionSection>
         </div>
 
-        {/* CTAs — based on selected plot's Deal Type */}
+        </div>{/* end scrollable content area */}
+
+        {/* CTAs — sticky at bottom */}
         <div className={`mt-2 pt-2 border-t border-mint-light/60 shrink-0 flex gap-2 ${dealAvailability.showRoi && dealAvailability.showJv ? "flex-row" : "flex-col"}`}>
           {dealAvailability.showRoi && (
             <Link
