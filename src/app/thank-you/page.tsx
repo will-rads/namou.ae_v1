@@ -45,13 +45,16 @@ const REVIEWS = [
 export default function ThankYouPage() {
   const [specialist, setSpecialist] = useState<string | null>(null);
   const [specialistEmail, setSpecialistEmail] = useState<string | null>(null);
+  const [specialistImage, setSpecialistImage] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const name = sessionStorage.getItem("Assignee_name");
       const email = sessionStorage.getItem("Assignee_email");
+      const image = sessionStorage.getItem("Assignee_image");
       if (name) setSpecialist(name);
       if (email) setSpecialistEmail(email);
+      if (image) setSpecialistImage(image);
     } catch {}
   }, []);
 
@@ -63,7 +66,7 @@ export default function ThankYouPage() {
     <div className="relative flex flex-col min-h-screen overflow-x-hidden">
       {/* Background image — RAK aerial */}
       <Image
-        src="/Thank-you-background.webp"
+        src="/thank-you-bg.jpg"
         alt=""
         fill
         priority
@@ -104,10 +107,20 @@ export default function ThankYouPage() {
 
           {/* Specialist frame */}
           <div className="md:w-[260px] shrink-0 bg-white/8 backdrop-blur-md border border-white/15 rounded-2xl p-5 sm:p-6 flex flex-col items-center text-center">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/15 border-2 border-white/30 flex items-center justify-center mb-3">
-              <span className="text-xl sm:text-2xl font-bold text-white/80 font-heading">
-                {initials}
-              </span>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/15 border-2 border-white/30 flex items-center justify-center mb-3 overflow-hidden">
+              {specialistImage ? (
+                <Image
+                  src={specialistImage}
+                  alt={specialist ?? "Specialist"}
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-xl sm:text-2xl font-bold text-white/80 font-heading">
+                  {initials}
+                </span>
+              )}
             </div>
             <p className="text-base sm:text-lg font-semibold text-white">
               {specialist ?? "Your Specialist"}

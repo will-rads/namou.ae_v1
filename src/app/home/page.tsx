@@ -6,7 +6,7 @@ import Image from "next/image";
 
 const SPECIALISTS = [
   { name: "Dani Chamoun", email: "dany@namou.ae" },
-  { name: "Charlie Daher", email: "charlie@namou.ae" },
+  { name: "Charlie Daher", email: "charlie@namou.ae", image: "/charlie-daher-profile.jpeg" },
   { name: "Nadim Salameh", email: "nadim@namou.ae" },
   { name: "Jad Barghout", email: "jad@namou.ae" },
   { name: "Sarah berri", email: "sarahberrii@namou.ae" },
@@ -33,12 +33,14 @@ export default function LandingPage() {
     return () => document.removeEventListener("mousedown", handle);
   }, [open]);
 
-  function pick(specialist: { name: string; email: string }) {
+  function pick(specialist: { name: string; email: string; image?: string }) {
     setSelected(specialist.name);
     setOpen(false);
     try {
       sessionStorage.setItem("Assignee_email", specialist.email);
       sessionStorage.setItem("Assignee_name", specialist.name);
+      if (specialist.image) sessionStorage.setItem("Assignee_image", specialist.image);
+      else sessionStorage.removeItem("Assignee_image");
     } catch {}
   }
 
