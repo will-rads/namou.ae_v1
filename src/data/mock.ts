@@ -28,6 +28,7 @@ export interface Plot {
   lat?: number; // WGS84 latitude (decimal degrees)
   lng?: number; // WGS84 longitude (decimal degrees)
   googleMapsUrl?: string;
+  images?: string[]; // up to 4 gallery image URLs
 }
 
 export interface Landmark {
@@ -73,20 +74,11 @@ export interface ROIOutputs {
   gfaPrice: number;
 }
 
-/* ── Derive default plots from the spreadsheet (source of truth for /backend) ── */
-const _defaultPlots: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
+/* ── Plots (derived from CSV — single source of truth) ── */
+export const plots: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
 
-/* ── Areas (derived from spreadsheet plots) ── */
-export const areas: string[] = [...new Set(_defaultPlots.map(p => p.area).filter(Boolean))];
-
-/* ── Frozen copy of original areas (before any localStorage overrides) ── */
-const ORIGINAL_AREAS: readonly string[] = Object.freeze([...areas]);
-
-/* ── Plots (derived from spreadsheet — /backend is the source of truth) ── */
-export const plots: Plot[] = [..._defaultPlots];
-
-/* ── Frozen copy of the original plots (before any localStorage overrides) ── */
-export const ORIGINAL_PLOTS: readonly Plot[] = JSON.parse(JSON.stringify(plots));
+/* ── Areas (derived from plots) ── */
+export const areas: string[] = [...new Set(plots.map(p => p.area).filter(Boolean))];
 
 /* ── Filter categories for Master Plan ── */
 export const masterPlanFilters = [
@@ -240,56 +232,3 @@ export const exampleDealDefaults: ROIInputs = {
 
 export const exampleDealGFA = 2_000_000; // sq ft — RAK Central tower
 
-// ── Apply a Plot[] override to the in-memory data (plots, areas, category counts) ──
-function applyPlotsOverride(parsed: Plot[]): void {
-  plots.length = 0;
-  plots.push(...parsed);
-  // Rebuild areas from actual plot data
-  const plotAreas = [...new Set(parsed.map((p) => p.area).filter(Boolean))];
-  areas.length = 0;
-  areas.push(...plotAreas);
-  // Update category counts
-  for (const cat of landCategories) {
-    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
-  }
-}
-
-function restoreDefaults(): void {
-  plots.length = 0;
-  plots.push(...JSON.parse(JSON.stringify(ORIGINAL_PLOTS)));
-  areas.length = 0;
-  areas.push(...ORIGINAL_AREAS);
-  for (const cat of landCategories) {
-    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
-  }
-}
-
-/** Re-read localStorage and update the in-memory plots/areas/categories.
- *  Call after saving or clearing the plots override from /backend. */
-export function reloadPlotsFromStorage(): void {
-  if (typeof window === "undefined") return;
-  try {
-    const stored = localStorage.getItem("namou_plots_override");
-    if (stored) {
-      const parsed: Plot[] = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        applyPlotsOverride(parsed);
-        return;
-      }
-    }
-  } catch { /* ignore */ }
-  restoreDefaults();
-}
-
-// ── Client-side: apply localStorage overrides if present ──────────────────────
-if (typeof window !== "undefined") {
-  try {
-    const stored = localStorage.getItem("namou_plots_override");
-    if (stored) {
-      const parsed: Plot[] = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        applyPlotsOverride(parsed);
-      }
-    }
-  } catch { /* SSR or parse error — use defaults */ }
-}

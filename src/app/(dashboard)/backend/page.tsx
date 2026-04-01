@@ -6,14 +6,8 @@ import {
   SPREADSHEET_COLUMNS,
   ORIGINAL_SPREADSHEET_ROWS,
   newSpreadsheetRow,
-  saveSpreadsheetRows,
-  loadSpreadsheetRows,
-  clearSpreadsheetRows,
-  spreadsheetRowsToPlots,
   type SpreadsheetRow,
 } from "@/data/spreadsheetData";
-import { savePlots, clearPlots } from "@/data/plotsStore";
-import { reloadPlotsFromStorage } from "@/data/mock";
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -23,13 +17,7 @@ export default function BackendPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
-    const stored = loadSpreadsheetRows();
-    if (stored) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration (SSR-safe)
-      setRows(stored);
-    } else {
-      setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
-    }
+    setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
   }, []);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
@@ -66,27 +54,16 @@ export default function BackendPage() {
     setIsDirty(true);
   }
 
-  // ── Apply changes ──
+  // ── Apply changes (disabled — CSV is the source of truth) ──
 
   function applyChanges() {
-    saveSpreadsheetRows(rows);
-    savePlots(spreadsheetRowsToPlots(rows));
-    reloadPlotsFromStorage();
-    setIsDirty(false);
-    showToast("Changes saved and published to website.", "success");
+    showToast("Backend editing is disabled. Update plots.csv to change data.", "error");
   }
 
-  // ── Reset to default ──
-
   function resetToDefault() {
-    if (!window.confirm("Reset all data to the original spreadsheet? This will discard all your edits.")) return;
-    clearSpreadsheetRows();
-    clearPlots();
-    reloadPlotsFromStorage();
-    const original: SpreadsheetRow[] = JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS));
-    setRows(original);
+    setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
     setIsDirty(false);
-    showToast("Data reset to defaults.", "success");
+    showToast("Data reset to CSV defaults.", "success");
   }
 
   // ── Cell renderer ──
@@ -159,8 +136,8 @@ export default function BackendPage() {
                           title={row[col.key] ?? ""}
                         >
                           <option value="">—</option>
-                          <option value="Joint-venture Only">Joint-venture Only</option>
                           <option value="Sale Only">Sale Only</option>
+                          <option value="Joint-venture Only">Joint-venture Only</option>
                           <option value="Sale + Joint-venture">Sale + Joint-venture</option>
                         </select>
                       ) : (

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ContentCard from "@/components/ContentCard";
 import { plots, areas, landCategories, type Plot, formatNumber } from "@/data/mock";
+import { driveUrlToImage } from "@/data/spreadsheetData";
 
 const PlotMap = dynamic(() => import("@/components/PlotMap"), {
   ssr: false,
@@ -419,7 +420,15 @@ function PlotDetailPanel({ plot, onClose }: { plot: Plot; onClose: () => void })
             onToggle={() => toggle("gallery")}
           >
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map(i => (
+              {(plot.images && plot.images.length > 0) ? plot.images.map((src, i) => (
+                <img
+                  key={i}
+                  src={driveUrlToImage(src)}
+                  alt={`${plot.name} — View ${i + 1}`}
+                  className="aspect-[4/3] rounded-lg object-cover border border-mint-light/40 bg-mint-bg"
+                  referrerPolicy="no-referrer"
+                />
+              )) : [1, 2, 3, 4].map(i => (
                 <div
                   key={i}
                   className="aspect-[4/3] rounded-lg bg-mint-bg border border-mint-light/40 flex items-center justify-center"
