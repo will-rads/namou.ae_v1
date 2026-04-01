@@ -703,13 +703,15 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
           </AccordionSection>
         </div>
 
-        {/* Land Gallery — fills remaining space */}
-        <div className="flex-1 flex flex-col min-h-0 mt-1.5">
-          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5 flex items-center gap-2">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-            Land Gallery
-          </p>
-          <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0">
+        {/* Land Gallery — accordion, mutually exclusive with Land Info */}
+        <div className="flex-1 flex flex-col min-h-0 mt-1">
+          <AccordionSection
+            title="Land Gallery"
+            icon={<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>}
+            isOpen={openSection === "gallery"}
+            onToggle={() => toggle("gallery")}
+          >
+          <div className="grid grid-cols-2 gap-1.5">
             {gallerySlots.map((slot, i) => (
               <button
                 key={i}
@@ -741,6 +743,7 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
               </button>
             ))}
           </div>
+          </AccordionSection>
         </div>
 
         {/* CTAs — based on selected plot's Deal Type */}
