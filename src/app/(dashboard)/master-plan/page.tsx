@@ -711,12 +711,12 @@ function PlotDetailPanel({ plot, onClose, dealAvailability }: { plot: Plot; onCl
             isOpen={openSection === "gallery"}
             onToggle={() => toggle("gallery")}
           >
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
             {gallerySlots.map((slot, i) => (
               <button
                 key={i}
                 onClick={() => setLightbox(i)}
-                className="rounded-lg overflow-hidden border border-mint-light/40 hover:border-forest/30 transition-colors cursor-pointer relative group min-h-0"
+                className="aspect-[4/3] rounded-lg overflow-hidden border border-mint-light/40 hover:border-forest/30 transition-colors cursor-pointer relative group"
               >
                 {slot.imgSrc ? (
                   // eslint-disable-next-line @next/next/no-img-element
