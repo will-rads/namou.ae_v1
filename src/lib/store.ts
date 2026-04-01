@@ -43,21 +43,26 @@ async function fsDelete(): Promise<void> {
 // ── Blob helpers (Vercel production) ────────────────────────────────────────
 
 async function blobRead(): Promise<SpreadsheetRow[] | null> {
-  const { list, get } = await import("@vercel/blob");
-  const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
-  if (blobs.length === 0) return null;
-  // Use SDK get() instead of fetch(downloadUrl) to bypass CDN caching
-  const result = await get(blobs[0].url, { access: "private" });
-  if (!result || !result.stream) return null;
-  const reader = result.stream.getReader();
-  const chunks: Uint8Array[] = [];
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
+  try {
+    const { list, get } = await import("@vercel/blob");
+    const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
+    if (blobs.length === 0) return null;
+    // Use SDK get() instead of fetch(downloadUrl) to bypass CDN caching
+    const result = await get(blobs[0].url, { access: "private" });
+    if (!result || !result.stream) return null;
+    const reader = result.stream.getReader();
+    const chunks: Uint8Array[] = [];
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    const text = new TextDecoder().decode(Buffer.concat(chunks));
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("[store] blobRead failed, falling back to seeded rows", error);
+    return null;
   }
-  const text = new TextDecoder().decode(Buffer.concat(chunks));
-  return JSON.parse(text);
 }
 
 async function blobWrite(rows: SpreadsheetRow[]): Promise<void> {
@@ -80,17 +85,24 @@ async function blobDelete(): Promise<void> {
 
 /** Read rows from persistent store. Returns null if nothing is stored. */
 export async function readRows(): Promise<SpreadsheetRow[] | null> {
-  return USE_BLOB ? blobRead() : fsRead();
+  try {
+    return USE_BLOB ? await blobRead() : await fsRead();
+  } catch (e) {
+    console.error("[store] readRows failed, returning null", e);
+    return null;
+  }
 }
 
 /** Read rows, auto-seeding from ORIGINAL_SPREADSHEET_ROWS if nothing stored.
  *  If seeding fails (e.g. missing blob token), still returns seed data so the
  *  site can load — writes will surface the real error separately. */
 export async function readRowsOrSeed(): Promise<SpreadsheetRow[]> {
-  const existing = await readRows();
-  if (existing && existing.length > 0) return existing;
+  try {
+    const existing = await readRows();
+    if (existing && existing.length > 0) return existing;
+  } catch { /* fall through to seed */ }
   // Try to persist the seed; if it fails, return seed data anyway
-  try { await writeRows(ORIGINAL_SPREADSHEET_ROWS); } catch { /* write will fail again on next save and surface the error */ }
+  try { await writeRows(ORIGINAL_SPREADSHEET_ROWS); } catch { /* ignore */ }
   return ORIGINAL_SPREADSHEET_ROWS;
 }
 
