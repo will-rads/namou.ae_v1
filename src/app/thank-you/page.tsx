@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
+const SPECIALIST_IMAGES: Record<string, string> = {
+  "charlie daher": "/charlie-daher-profile.jpeg",
+  "charlie@namou.ae": "/charlie-daher-profile.jpeg",
+};
+
 const REVIEWS = [
   {
     name: "Ahmad K.",
@@ -46,6 +51,7 @@ export default function ThankYouPage() {
   const [specialist, setSpecialist] = useState<string | null>(null);
   const [specialistEmail, setSpecialistEmail] = useState<string | null>(null);
   const [specialistImage, setSpecialistImage] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
 
   useEffect(() => {
     try {
@@ -61,6 +67,15 @@ export default function ThankYouPage() {
   const initials = specialist
     ? specialist.split(" ").map(w => w[0]).join("")
     : "NP";
+  const specialistImagePath =
+    specialistImage
+    || SPECIALIST_IMAGES[specialist?.trim().toLowerCase() ?? ""]
+    || SPECIALIST_IMAGES[specialistEmail?.trim().toLowerCase() ?? ""]
+    || null;
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [specialistImagePath]);
 
   return (
     <div className="relative flex flex-col min-h-screen overflow-x-hidden">
@@ -108,13 +123,12 @@ export default function ThankYouPage() {
           {/* Specialist frame */}
           <div className="md:w-[260px] shrink-0 bg-white/8 backdrop-blur-md border border-white/15 rounded-2xl p-5 sm:p-6 flex flex-col items-center text-center">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/15 border-2 border-white/30 flex items-center justify-center mb-3 overflow-hidden">
-              {specialistImage ? (
-                <Image
-                  src={specialistImage}
-                  alt={specialist ?? "Specialist"}
-                  width={96}
-                  height={96}
+              {specialistImagePath && !avatarError ? (
+                <img
+                  src={specialistImagePath}
+                  alt=""
                   className="w-full h-full object-cover"
+                  onError={() => setAvatarError(true)}
                 />
               ) : (
                 <span className="text-xl sm:text-2xl font-bold text-white/80 font-heading">
