@@ -4,8 +4,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 
 const SPECIALIST_IMAGES: Record<string, string> = {
-  "charlie daher": "/charlie-daher-profile.jpeg",
-  "charlie@namou.ae": "/charlie-daher-profile.jpeg",
+  "charlie daher": "/specialist-charlie.jpeg",
+  "charlie@namou.ae": "/specialist-charlie.jpeg",
+  "dani chamoun": "/specialist-dani.jpeg",
+  "dany@namou.ae": "/specialist-dani.jpeg",
+  "nadim salameh": "/specialist-nadim.jpeg",
+  "nadim@namou.ae": "/specialist-nadim.jpeg",
 };
 
 const REVIEWS = [
