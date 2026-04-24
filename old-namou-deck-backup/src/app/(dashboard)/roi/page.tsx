@@ -1,0 +1,940 @@
+"use client";
+
+import { useState, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import React from "react";
+import ContentCard from "@/components/ContentCard";
+import { formatNumber, plots, type Plot } from "@/data/mock";
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+type PricingMethod = "per-plot" | "per-gfa";
+type Scenario = "conservative" | "base" | "optimistic";
+
+interface Inputs {
+  plotSize: number;
+  pricingMethod: PricingMethod;
+  pricePerPlotSqft: number;
+  pricePerGFA: number;
+  gfaRatio: number;
+  efficiency: number;
+  constructionCostPerGFA: number;
+  softCostPct: number;
+  sellingPricePerNSA: number;
+}
+
+type DisplayInputs = Omit<Inputs, "constructionCostPerGFA" | "efficiency" | "sellingPricePerNSA"> & {
+  constructionCostPerGFA: number | "";
+  efficiency: number | "";
+  sellingPricePerNSA: number | "";
+};
+
+interface OfferSim {
+  method: PricingMethod;
+  pricePerGFA: number;
+  pricePerPlotSqft: number;
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const SENSITIVITY_PRICES = [2500, 2800, 3200, 3600, 4000];
+const RLV_TARGET_MARGIN = 20;
+
+const DEFAULT_SELLING_PRICE = 3200;
+const DEFAULT_CONSTRUCTION_COST = 900;
+const DEFAULT_EFFICIENCY = 80;
+
+const BASE_INPUTS: DisplayInputs = {
+  plotSize: 50000,
+  pricingMethod: "per-gfa",
+  pricePerPlotSqft: 500,
+  pricePerGFA: 300,
+  gfaRatio: 3.0,
+  efficiency: "",
+  constructionCostPerGFA: "",
+  softCostPct: 20,
+  sellingPricePerNSA: "",
+};
+
+const SCENARIO_OVERRIDES: Record<Scenario, Partial<Inputs>> = {
+  conservative: { sellingPricePerNSA: Math.round(DEFAULT_SELLING_PRICE * 0.9), constructionCostPerGFA: Math.round(DEFAULT_CONSTRUCTION_COST * 1.1), efficiency: 75, softCostPct: 20 },
+  base:         { sellingPricePerNSA: DEFAULT_SELLING_PRICE, constructionCostPerGFA: DEFAULT_CONSTRUCTION_COST, efficiency: DEFAULT_EFFICIENCY, softCostPct: 20 },
+  optimistic:   { sellingPricePerNSA: Math.round(DEFAULT_SELLING_PRICE * 1.1), constructionCostPerGFA: Math.round(DEFAULT_CONSTRUCTION_COST * 0.9), efficiency: 85, softCostPct: 20 },
+};
+
+const SCENARIO_META: Record<Scenario, { label: string; description: string; riskLevel: string; riskColor: string; suitedFor: string; marketOutlook: string }> = {
+  conservative: {
+    label: "Conservative",
+    description: "Lower exit price, higher construction cost, tighter efficiency",
+    riskLevel: "Low Risk",
+    riskColor: "text-forest bg-forest/10",
+    suitedFor: "Risk-averse investors seeking capital preservation with steady returns",
+    marketOutlook: "Assumes slower market absorption, premium construction standards, and conservative pricing benchmarks",
+  },
+  base: {
+    label: "Base Case",
+    description: "Market-standard assumptions for a balanced projection",
+    riskLevel: "Moderate Risk",
+    riskColor: "text-amber-700 bg-amber-50",
+    suitedFor: "Balanced investors targeting market-rate returns with manageable exposure",
+    marketOutlook: "Reflects current market conditions, standard construction specs, and median comparable pricing",
+  },
+  optimistic: {
+    label: "Optimistic",
+    description: "Premium exit price, lean construction, higher efficiency",
+    riskLevel: "Higher Risk",
+    riskColor: "text-blue-700 bg-blue-50",
+    suitedFor: "Growth-focused investors comfortable with higher exposure for outsized returns",
+    marketOutlook: "Projects strong demand, value-engineered construction, and premium positioning in a bullish market",
+  },
+};
+
+// ── Calculations ──────────────────────────────────────────────────────────────
+
+function compute(inp: Inputs) {
+  const gfa = inp.plotSize * inp.gfaRatio;
+  const nsa = gfa * (inp.efficiency / 100);
+  const landCost = inp.pricingMethod === "per-plot"
+    ? inp.plotSize * inp.pricePerPlotSqft
+    : gfa * inp.pricePerGFA;
+  const constructionCost = gfa * inp.constructionCostPerGFA * (1 + inp.softCostPct / 100);
+  const totalCost = landCost + constructionCost;
+  const revenue = nsa * inp.sellingPricePerNSA;
+  const profit = revenue - totalCost;
+  const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
+  const returnOnCost = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+  const gdvMultiple = totalCost > 0 ? revenue / totalCost : 0;
+  const profitPerPlotSqft = inp.plotSize > 0 ? profit / inp.plotSize : 0;
+  const equivPricePerGFA = inp.sellingPricePerNSA * (inp.efficiency / 100);
+  const rlv = revenue * (1 - RLV_TARGET_MARGIN / 100) - constructionCost;
+  return { gfa, nsa, landCost, constructionCost, totalCost, revenue, profit, profitMargin, returnOnCost, gdvMultiple, profitPerPlotSqft, equivPricePerGFA, rlv };
+}
+
+function resolveInputs(d: DisplayInputs): Inputs {
+  return {
+    ...d,
+    constructionCostPerGFA: typeof d.constructionCostPerGFA === "number" ? d.constructionCostPerGFA : 0,
+    efficiency: typeof d.efficiency === "number" ? d.efficiency : 0,
+    sellingPricePerNSA: typeof d.sellingPricePerNSA === "number" ? d.sellingPricePerNSA : 0,
+  };
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtM(n: number): string {
+  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+  return n.toFixed(0);
+}
+
+function fmtAED(n: number): string {
+  return `AED ${fmtM(n)}`;
+}
+
+function getDealLabel(margin: number): { label: string; bg: string; text: string } {
+  if (margin < 15) return { label: "Weak Deal",            bg: "bg-red-50",    text: "text-red-600" };
+  if (margin < 20) return { label: "Acceptable",           bg: "bg-amber-50",  text: "text-amber-600" };
+  if (margin < 25) return { label: "Good Deal",            bg: "bg-blue-50",   text: "text-blue-700" };
+  if (margin < 30) return { label: "Strong Deal",          bg: "bg-mint-bg",   text: "text-forest" };
+  return              { label: "Exceptional Opportunity", bg: "bg-forest/10", text: "text-forest" };
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+function deriveInputsFromPlot(plot: Plot, base: DisplayInputs): DisplayInputs {
+  const derivedFAR = plot.far ?? (plot.gfa ? plot.gfa / plot.plotArea : base.gfaRatio);
+  const derivedPricePerGFA = plot.gfa
+    ? plot.askingPrice / plot.gfa
+    : plot.askingPrice / (plot.plotArea * derivedFAR);
+  return {
+    ...base,
+    plotSize: plot.plotArea,
+    pricingMethod: "per-plot",
+    pricePerPlotSqft: plot.pricePerSqFt,
+    pricePerGFA: Math.round(derivedPricePerGFA),
+    gfaRatio: parseFloat(derivedFAR.toFixed(2)),
+  };
+}
+
+function loadInitialROIState() {
+  if (typeof window === "undefined") return { inputs: BASE_INPUTS, offer: { method: "per-gfa" as PricingMethod, pricePerGFA: 200, pricePerPlotSqft: 400 }, sourcePlot: null as Plot | null, comparePlots: [] as Plot[] };
+  let inputs = BASE_INPUTS;
+  let offer: OfferSim = { method: "per-gfa", pricePerGFA: 200, pricePerPlotSqft: 400 };
+  let sourcePlot: Plot | null = null;
+  let comparePlots: Plot[] = [];
+  try {
+    const cStored = sessionStorage.getItem("compare_plots");
+    if (cStored) { const cp: Plot[] = JSON.parse(cStored); if (cp.length === 2) { comparePlots = cp; const farA = cp[0].far ?? (cp[0].gfa ? cp[0].gfa / cp[0].plotArea : inputs.gfaRatio); inputs = { ...inputs, plotSize: cp[0].plotArea, gfaRatio: parseFloat(farA.toFixed(2)) }; } }
+  } catch { /* ignore */ }
+  try {
+    const stored = sessionStorage.getItem("selected_plot");
+    if (stored) {
+      const plot: Plot = JSON.parse(stored);
+      sourcePlot = plot;
+      inputs = deriveInputsFromPlot(plot, inputs);
+      const derivedPricePerGFA = plot.gfa
+        ? plot.askingPrice / plot.gfa
+        : plot.askingPrice / (plot.plotArea * (plot.far ?? BASE_INPUTS.gfaRatio));
+      offer = { method: "per-gfa", pricePerGFA: Math.round(derivedPricePerGFA * 0.8), pricePerPlotSqft: Math.round(plot.pricePerSqFt * 0.8) };
+    }
+  } catch { /* ignore */ }
+  return { inputs, offer, sourcePlot, comparePlots };
+}
+
+export default function ROIPage() {
+  const router = useRouter();
+  const [inputs, setInputs] = useState<DisplayInputs>(() => loadInitialROIState().inputs);
+  const [activeScenario, setActiveScenario] = useState<Scenario>("base");
+  const _offer = loadInitialROIState().offer; // kept for sessionStorage seeding
+  const [sourcePlot, setSourcePlot] = useState<Plot | null>(() => loadInitialROIState().sourcePlot);
+  const [comparePlots, setComparePlots] = useState<Plot[]>(() => loadInitialROIState().comparePlots);
+  const [showPlotPicker, setShowPlotPicker] = useState(false);
+  const [pickerPos, setPickerPos] = useState<{ left: number; bottom: number } | null>(null);
+  const compareBtnRef = useRef<HTMLButtonElement>(null);
+
+  const openPlotPicker = useCallback(() => {
+    setShowPlotPicker(v => {
+      if (!v && compareBtnRef.current) {
+        const rect = compareBtnRef.current.getBoundingClientRect();
+        setPickerPos({ left: Math.min(rect.left, window.innerWidth - 280), bottom: window.innerHeight - rect.top + 8 });
+      }
+      return !v;
+    });
+  }, []);
+
+  const isCompareMode = comparePlots.length === 2;
+
+  const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
+  const results = useMemo(() => compute(resolved), [resolved]);
+  void _offer; // used only for initial load
+  const dealLabel = getDealLabel(results.profitMargin);
+
+  const inputs2 = useMemo(() => {
+    if (!isCompareMode) return null;
+    const plot = comparePlots[1];
+    const derivedFAR = plot.far ?? (plot.gfa ? plot.gfa / plot.plotArea : inputs.gfaRatio);
+    return { ...inputs, plotSize: plot.plotArea, gfaRatio: parseFloat(derivedFAR.toFixed(2)) };
+  }, [isCompareMode, comparePlots, inputs]);
+
+  const results2 = useMemo(() => inputs2 ? compute(resolveInputs(inputs2)) : null, [inputs2]);
+  const dealLabel2 = results2 ? getDealLabel(results2.profitMargin) : null;
+
+  const sensitivityData = useMemo(() =>
+    SENSITIVITY_PRICES.map(price => ({ price, ...compute({ ...resolved, sellingPricePerNSA: price }) })),
+    [resolved]
+  );
+  const closestSensPrice = SENSITIVITY_PRICES.reduce((c, p) =>
+    Math.abs(p - resolved.sellingPricePerNSA) < Math.abs(c - resolved.sellingPricePerNSA) ? p : c,
+    SENSITIVITY_PRICES[0]
+  );
+  const maxAbsProfit = Math.max(...sensitivityData.map(d => Math.abs(d.profit)), 1);
+
+  function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
+    setInputs(prev => ({ ...prev, [key]: value }));
+  }
+
+  const hasConstructionInputs = typeof inputs.constructionCostPerGFA === "number" && inputs.constructionCostPerGFA > 0
+    && typeof inputs.efficiency === "number" && inputs.efficiency > 0;
+  const hasSalesInput = typeof inputs.sellingPricePerNSA === "number" && inputs.sellingPricePerNSA > 0;
+  const isTotalCostReady = hasConstructionInputs;
+  const isTotalRevenueReady = hasSalesInput && hasConstructionInputs;
+  const isTotalProfitReady = isTotalCostReady && isTotalRevenueReady;
+  const isProfitMarginReady = isTotalCostReady && isTotalRevenueReady;
+  const allKPIsReady = isTotalCostReady && isTotalRevenueReady;
+
+  function applyScenario(s: Scenario) {
+    setActiveScenario(s);
+    setInputs(prev => ({ ...prev, ...SCENARIO_OVERRIDES[s] }));
+  }
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto md:overflow-y-hidden animate-fade-in">
+
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 mb-1 lg:mb-1">
+        <div>
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <h1 className="text-xl lg:text-3xl font-bold text-forest font-heading">ROI Simulator</h1>
+            {isCompareMode ? (
+              <>
+                {comparePlots.map((cp, ci) => (
+                  <span key={cp.id} className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${ci === 0 ? "text-forest bg-forest/10 border-forest/20" : "text-compare-b bg-compare-b/10 border-compare-b/20"}`}>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {cp.name}
+                  </span>
+                ))}
+                <button
+                  onClick={() => { setComparePlots([]); sessionStorage.removeItem("compare_plots"); }}
+                  className="text-xs text-muted hover:text-forest ml-1"
+                  aria-label="Clear comparison"
+                >×</button>
+              </>
+            ) : sourcePlot && (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-forest bg-forest/10 border border-forest/20 px-3 py-1.5 rounded-full">
+                <button
+                  onClick={() => router.push("/master-plan")}
+                  className="flex items-center gap-1.5 hover:underline"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+                  </svg>
+                  {sourcePlot.name}
+                </button>
+                <button
+                  onClick={() => { setSourcePlot(null); setInputs(BASE_INPUTS); sessionStorage.removeItem("selected_plot"); }}
+                  className="ml-0.5 text-forest/60 hover:text-forest"
+                  aria-label="Clear plot"
+                >×</button>
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted mt-1">
+            {isCompareMode
+              ? `Comparing ${comparePlots[0].name} vs ${comparePlots[1].name} — same scenario, side-by-side results.`
+              : sourcePlot
+                ? `Modelling ${sourcePlot.area} — choose a scenario, then fine-tune if needed.`
+                : "Choose a scenario to start, adjust variables if needed, then review your returns."}
+          </p>
+        </div>
+
+        {/* Scenario buttons */}
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+          {(["conservative", "base", "optimistic"] as Scenario[]).map(s => {
+            const meta = SCENARIO_META[s];
+            const isActive = activeScenario === s;
+            return (
+              <button
+                key={s}
+                onClick={() => applyScenario(s)}
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-forest text-white shadow-sm"
+                    : "bg-white border border-mint-light text-muted hover:border-forest/30 hover:text-forest"
+                }`}
+              >
+                {meta.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Top/bottom: top = variables, bottom = results ── */}
+      <div className={`flex-1 min-h-0 flex flex-col ${isCompareMode ? "gap-0.5" : "gap-0.5 lg:gap-1"} overflow-visible`}>
+
+        {/* ═══════════ TOP: Variables ═══════════ */}
+        <div className={`flex flex-col ${isCompareMode ? "gap-0.5 min-h-0" : "gap-1 shrink-0"}`}>
+
+          {/* Active scenario info */}
+          <div className="bg-mint-bg/50 rounded-lg px-3 sm:px-4 py-1 sm:py-0.5 border border-mint-light/40 shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted">Active:</span>
+              <span className="text-sm font-bold text-forest">{SCENARIO_META[activeScenario].label}</span>
+              <span className={`text-[11px] font-semibold px-1.5 py-0 rounded-full ${SCENARIO_META[activeScenario].riskColor}`}>{SCENARIO_META[activeScenario].riskLevel}</span>
+              <span className="text-[11px] text-muted hidden sm:inline">— {SCENARIO_META[activeScenario].description}</span>
+            </div>
+            {isCompareMode && (
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-forest" />
+                  <span className="text-[11px] font-semibold text-forest">{comparePlots[0].name}</span>
+                  <span className="text-[10px] text-muted hidden sm:inline">{comparePlots[0].area}</span>
+                </div>
+                <span className="text-muted text-[10px]">vs</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-compare-b" />
+                  <span className="text-[11px] font-semibold text-compare-b">{comparePlots[1].name}</span>
+                  <span className="text-[10px] text-muted hidden sm:inline">{comparePlots[1].area}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Input variables */}
+          {isCompareMode && inputs2 && results2 ? (
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-1 min-h-0">
+            {/* Left: Variables — own frame */}
+            <ContentCard className="flex flex-col py-1 px-3">
+              <div className="flex flex-col justify-between flex-1">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0.5">Land</p>
+                  <div className="divide-y divide-mint-light/60 flex flex-col">
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-sm text-muted">Pricing Method</span>
+                      <TogglePair
+                        optA={{ key: "per-plot", label: "/ Plot sqft" }}
+                        optB={{ key: "per-gfa",  label: "/ GFA" }}
+                        value={inputs.pricingMethod}
+                        onChange={v => update("pricingMethod", v as PricingMethod)}
+                      />
+                    </div>
+                    {inputs.pricingMethod === "per-plot"
+                      ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v as number)} />
+                      : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v as number)} />
+                    }
+                    <DualComputedRow label="Total Land Cost" v1={fmtAED(results.landCost)} v2={fmtAED(results2.landCost)} />
+                  </div>
+                </div>
+
+                <div className="pt-0.5 border-t border-mint-light/40">
+                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
+                  <div className="divide-y divide-mint-light/60 flex flex-col">
+                    <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix placeholder="e.g. 900" onChange={v => update("constructionCostPerGFA", v)} />
+                    <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix placeholder="e.g. 80" onChange={v => update("efficiency", v)} />
+                    <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
+                  </div>
+                </div>
+
+                <div className="pt-0.5 border-t border-mint-light/40">
+                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Sales</p>
+                  <div className="divide-y divide-mint-light/60 flex flex-col">
+                    <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix placeholder="e.g. 3200" onChange={v => update("sellingPricePerNSA", v)} />
+                    <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
+                  </div>
+                </div>
+              </div>
+            </ContentCard>
+
+            {/* Right: KPI results — own frame */}
+            <ContentCard className="py-0.5 px-1">
+              <div className="grid grid-cols-2 gap-0.5 auto-rows-fr">
+                <KPICard label="Revenue (GDV)" value="" ready={isTotalRevenueReady}
+                  compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }}
+                  tooltipFormula="Revenue = NSA × Selling Price/sqft"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: ${formatNumber(Math.round(results.nsa))} NSA × AED ${formatNumber(resolved.sellingPricePerNSA)}`,
+                    `= ${fmtAED(results.revenue)}`,
+                    "---",
+                    `${comparePlots[1].name}: ${formatNumber(Math.round(results2.nsa))} NSA × AED ${formatNumber(resolved.sellingPricePerNSA)}`,
+                    `= ${fmtAED(results2.revenue)}`,
+                  ]}
+                />
+                <KPICard label="Total Cost" value="" ready={isTotalCostReady}
+                  compareValues={{ v1: fmtAED(results.totalCost), v2: fmtAED(results2.totalCost), label1: comparePlots[0].name, label2: comparePlots[1].name }}
+                  tooltipFormula="Total Cost = Land + Construction"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: Land ${fmtAED(results.landCost)} + Constr. ${fmtAED(results.constructionCost)}`,
+                    `= ${fmtAED(results.totalCost)}`,
+                    "---",
+                    `${comparePlots[1].name}: Land ${fmtAED(results2.landCost)} + Constr. ${fmtAED(results2.constructionCost)}`,
+                    `= ${fmtAED(results2.totalCost)}`,
+                  ]}
+                />
+                <KPICard label="Total Profit" value="" primary ready={isTotalProfitReady}
+                  compareValues={{ v1: fmtAED(results.profit), v2: fmtAED(results2.profit), label1: comparePlots[0].name, label2: comparePlots[1].name }}
+                  tooltipFormula="Profit = Revenue − Total Cost"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: ${fmtAED(results.revenue)} − ${fmtAED(results.totalCost)}`,
+                    `= ${fmtAED(results.profit)}`,
+                    "---",
+                    `${comparePlots[1].name}: ${fmtAED(results2.revenue)} − ${fmtAED(results2.totalCost)}`,
+                    `= ${fmtAED(results2.profit)}`,
+                  ]}
+                />
+                <KPICard label="Margin" value="" primary ready={isProfitMarginReady}
+                  compareValues={{ v1: `${results.profitMargin.toFixed(1)}%`, v2: `${results2.profitMargin.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name, badge1: dealLabel, badge2: dealLabel2! }}
+                  tooltipFormula="Margin = (Profit ÷ Revenue) × 100"
+                  tooltipLines={[
+                    `${comparePlots[0].name}: ${fmtAED(results.profit)} ÷ ${fmtAED(results.revenue)}`,
+                    `= ${results.profitMargin.toFixed(1)}%`,
+                    "---",
+                    `${comparePlots[1].name}: ${fmtAED(results2.profit)} ÷ ${fmtAED(results2.revenue)}`,
+                    `= ${results2.profitMargin.toFixed(1)}%`,
+                  ]}
+                />
+                <KPICard label="Return on Cost" value="" ready={allKPIsReady}
+                  compareValues={{ v1: `${results.returnOnCost.toFixed(1)}%`, v2: `${results2.returnOnCost.toFixed(1)}%`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="GDV Multiple" value="" ready={allKPIsReady}
+                  compareValues={{ v1: `${results.gdvMultiple.toFixed(2)}×`, v2: `${results2.gdvMultiple.toFixed(2)}×`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="Profit / Land sqft" value="" ready={allKPIsReady}
+                  compareValues={{ v1: `AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`, v2: `AED ${formatNumber(Math.round(results2.profitPerPlotSqft))}`, label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+                <KPICard label="Residual Land Value" value="" ready={allKPIsReady}
+                  compareValues={{ v1: fmtAED(results.rlv), v2: fmtAED(results2.rlv), label1: comparePlots[0].name, label2: comparePlots[1].name }} />
+              </div>
+            </ContentCard>
+          </div>
+          ) : (
+          <div className="flex flex-col md:flex-row gap-2 lg:gap-3">
+            {/* Left: Variables — own frame */}
+            <ContentCard className="flex-1 p-3 flex flex-col">
+              <div className="flex-1 flex flex-col justify-evenly">
+                <div>
+                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Land Acquisition</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted">Pricing Method</span>
+                    <TogglePair
+                      optA={{ key: "per-plot", label: "/ Plot sqft" }}
+                      optB={{ key: "per-gfa",  label: "/ GFA" }}
+                      value={inputs.pricingMethod}
+                      onChange={v => update("pricingMethod", v as PricingMethod)}
+                    />
+                  </div>
+                  {inputs.pricingMethod === "per-plot"
+                    ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v as number)} />
+                    : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v as number)} />
+                  }
+                </div>
+                <div className="pt-3 border-t border-mint-light/40">
+                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
+                  <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix placeholder="e.g. 900" onChange={v => update("constructionCostPerGFA", v)} />
+                  <NumInput label="Efficiency (NSA / GFA)" value={inputs.efficiency} unit="%" suffix placeholder="e.g. 80" onChange={v => update("efficiency", v)} />
+                </div>
+                <div className="pt-3 border-t border-mint-light/40">
+                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Sales</p>
+                  <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix placeholder="e.g. 3200" onChange={v => update("sellingPricePerNSA", v)} />
+                </div>
+              </div>
+            </ContentCard>
+
+            {/* Right: KPI results — own frame, 2×2 grid */}
+            <ContentCard className="flex-1 py-2 px-2">
+              <div className="grid grid-cols-2 gap-2 auto-rows-fr h-full">
+                <KPICard
+                  label="Total Revenue (GDV)"
+                  value={fmtAED(results.revenue)}
+                  sub={`${formatNumber(Math.round(results.nsa))} sqft NSA`}
+                  ready={isTotalRevenueReady}
+                  tooltipFormula="Revenue = Plot × FAR × Efficiency × Price/sqft"
+                  tooltipLines={[
+                    `Plot Size: ${formatNumber(inputs.plotSize)} sqft`,
+                    `× FAR: ${inputs.gfaRatio}`,
+                    `= GFA: ${formatNumber(Math.round(results.gfa))} sqft`,
+                    `× Efficiency: ${resolved.efficiency}%`,
+                    `= NSA: ${formatNumber(Math.round(results.nsa))} sqft`,
+                    `× Selling Price: AED ${formatNumber(resolved.sellingPricePerNSA)}/sqft`,
+                    "---",
+                    `= Revenue: ${fmtAED(results.revenue)}`,
+                  ]}
+                />
+                <KPICard
+                  label="Total Cost"
+                  value={fmtAED(results.totalCost)}
+                  sub="Land + Construction"
+                  ready={isTotalCostReady}
+                  tooltipFormula="Total Cost = Land Cost + Construction Cost"
+                  tooltipLines={[
+                    inputs.pricingMethod === "per-plot"
+                      ? `Land: ${formatNumber(inputs.plotSize)} sqft × AED ${formatNumber(inputs.pricePerPlotSqft)}/sqft`
+                      : `Land: ${formatNumber(Math.round(results.gfa))} GFA × AED ${formatNumber(inputs.pricePerGFA)}/sqft`,
+                    `= Land Cost: ${fmtAED(results.landCost)}`,
+                    "---",
+                    `Construction: ${formatNumber(Math.round(results.gfa))} GFA × AED ${formatNumber(resolved.constructionCostPerGFA)}`,
+                    `× (1 + ${inputs.softCostPct}% hard + soft cost)`,
+                    `= Construction Cost: ${fmtAED(results.constructionCost)}`,
+                    "---",
+                    `= Total Cost: ${fmtAED(results.totalCost)}`,
+                  ]}
+                />
+                <KPICard
+                  label="Total Profit"
+                  value={fmtAED(results.profit)}
+                  sub={`${results.returnOnCost.toFixed(1)}% ROC`}
+                  primary
+                  ready={isTotalProfitReady}
+                  tooltipFormula="Profit = Revenue − Total Cost"
+                  tooltipLines={[
+                    `Revenue: ${fmtAED(results.revenue)}`,
+                    `− Total Cost: ${fmtAED(results.totalCost)}`,
+                    "---",
+                    `= Profit: ${fmtAED(results.profit)}`,
+                  ]}
+                />
+                <KPICard
+                  label="Profit Margin"
+                  value={`${results.profitMargin.toFixed(1)}%`}
+                  badge={dealLabel}
+                  primary
+                  ready={isProfitMarginReady}
+                  tooltipFormula="Margin = (Profit ÷ Revenue) × 100"
+                  tooltipLines={[
+                    `Profit: ${fmtAED(results.profit)}`,
+                    `÷ Revenue: ${fmtAED(results.revenue)}`,
+                    `× 100`,
+                    "---",
+                    `= Margin: ${results.profitMargin.toFixed(1)}%`,
+                  ]}
+                />
+              </div>
+            </ContentCard>
+          </div>
+          )}
+
+        </div>
+
+        {/* ═══════════ BOTTOM: Results ═══════════ */}
+        <div className={`flex-1 flex flex-col min-h-0 ${isCompareMode ? "gap-0.5" : "overflow-y-auto gap-1 lg:gap-1.5"}`}>
+
+          {/* ── Single-plot results ── */}
+          {!isCompareMode && (
+            <div className="flex flex-col gap-1 lg:gap-1.5 h-full">
+              {/* Investor Metrics + Sensitivity — side by side (shown when all KPIs ready) */}
+              {allKPIsReady && (
+              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0 animate-fade-in">
+              <ContentCard className="py-2 px-4 flex-1 flex flex-col">
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Investor Metrics</p>
+                <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
+                  <MetricRow label="Return on Cost"      value={`${results.returnOnCost.toFixed(1)}%`} />
+                  <MetricRow label="GDV Multiple"         value={`${results.gdvMultiple.toFixed(2)}×`} />
+                  <MetricRow label="Profit / Land sqft"   value={`AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`} />
+                  <MetricRow label="Land Cost"            value={fmtAED(results.landCost)} />
+                  <MetricRow label="Construction Cost"    value={fmtAED(results.constructionCost)} />
+                  <MetricRow label="Residual Land Value"  value={fmtAED(results.rlv)} sub="at 20% margin target" highlight={results.rlv > 0} />
+                </div>
+              </ContentCard>
+
+              <ContentCard className="py-2 px-4 flex-1 flex flex-col">
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Profit vs. Exit Price</p>
+                <div className="flex items-end gap-3 flex-1 min-h-[48px]">
+                  {sensitivityData.map(d => {
+                    const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
+                    const isCurrent = d.price === closestSensPrice;
+                    return (
+                      <div key={d.price} className="flex flex-col items-center flex-1 h-full">
+                        <div className="flex-1 flex items-end w-full">
+                          <div
+                            className={`w-full rounded-t transition-all ${isCurrent ? "bg-forest" : "bg-forest/25"}`}
+                            style={{ height: `${Math.max(ratio * 100, 3)}%` }}
+                          />
+                        </div>
+                        <p className={`text-xs mt-1.5 font-medium ${isCurrent ? "text-forest" : "text-muted"}`}>
+                          {(d.price / 1000).toFixed(1)}K
+                        </p>
+                        <p className={`text-xs ${isCurrent ? "text-forest font-semibold" : "text-muted"}`}>
+                          {fmtAED(d.profit)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted mt-2 text-center">AED per sqft NSA</p>
+              </ContentCard>
+              </div>
+              )}
+
+              {/* Actions — always visible */}
+              <ContentCard className="py-2 px-4 shrink-0">
+                <div className="flex justify-between relative">
+                  <div>
+                    <button
+                      ref={compareBtnRef}
+                      onClick={openPlotPicker}
+                      className="flex items-center gap-2 px-4 py-2.5 border border-forest/30 text-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
+                      Compare Plots
+                    </button>
+                    {showPlotPicker && pickerPos && createPortal(
+                      <div
+                        className="fixed z-50 bg-white border border-mint-light rounded-2xl shadow-lg p-4 min-w-[260px]"
+                        style={{ left: pickerPos.left, bottom: pickerPos.bottom }}
+                      >
+                        <p className="text-xs uppercase tracking-wider text-muted font-semibold mb-3">Select a plot to compare</p>
+                        <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                          {plots.filter(p => p.id !== sourcePlot?.id).map(p => (
+                            <button
+                              key={p.id}
+                              onClick={() => {
+                                const plotA = sourcePlot ?? plots[0];
+                                const both = [plotA, p];
+                                setComparePlots(both);
+                                const farA = plotA.far ?? (plotA.gfa ? plotA.gfa / plotA.plotArea : inputs.gfaRatio);
+                                setInputs(prev => ({ ...prev, plotSize: plotA.plotArea, gfaRatio: parseFloat(farA.toFixed(2)) }));
+                                sessionStorage.setItem("compare_plots", JSON.stringify(both));
+                                setShowPlotPicker(false);
+                              }}
+                              className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-mint-bg transition-colors border border-transparent hover:border-mint-light/60"
+                            >
+                              <p className="text-sm font-semibold text-forest">{p.name}</p>
+                              <p className="text-xs text-muted mt-0.5">{p.area} · AED {formatNumber(p.askingPrice)}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>,
+                      document.body
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
+                      router.push("/offer");
+                    }}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+                  >
+                    Payment Plan
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+                  </button>
+                </div>
+              </ContentCard>
+            </div>
+          )}
+
+          {/* ── Comparison results ── */}
+          {isCompareMode && results2 && inputs2 && (
+            <>
+              {/* Detailed comparison table */}
+              <ContentCard className="py-0.5 px-3">
+                <div className="grid gap-0" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+                  <div className="py-0.5 text-xs font-semibold text-muted">Metric</div>
+                  <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-forest" /></div>
+                  <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-compare-b" /></div>
+
+                  {[
+                    { label: "Plot Size", v1: `${formatNumber(inputs.plotSize)} sqft`, v2: `${formatNumber(inputs2.plotSize)} sqft`, section: "Fixed (Per Plot)" },
+                    { label: "FAR", v1: `${inputs.gfaRatio}×`, v2: `${inputs2.gfaRatio}×` },
+                    { label: "GFA", v1: `${formatNumber(Math.round(results.gfa))} sqft`, v2: `${formatNumber(Math.round(results2.gfa))} sqft` },
+                    { label: "NSA", v1: `${formatNumber(Math.round(results.nsa))} sqft`, v2: `${formatNumber(Math.round(results2.nsa))} sqft`, section: "Development" },
+                  ].map((row, ri) => (
+                    <React.Fragment key={row.label}>
+                      {row.section && (
+                        <div className={`col-span-3 text-[10px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-1 pt-1 border-t border-mint-light/40" : ""} pb-0.5`}>
+                          {row.section}
+                        </div>
+                      )}
+                      <div className="py-0.5 text-xs text-muted">{row.label}</div>
+                      <div className="py-0.5 text-xs text-right font-semibold text-deep-forest">{row.v1}</div>
+                      <div className="py-0.5 text-xs text-right font-semibold text-deep-forest">{row.v2}</div>
+                    </React.Fragment>
+                  ))}
+                </div>
+
+                {/* Payment Plan button */}
+                <div className="flex justify-end mt-1 pt-1 border-t border-mint-light/40">
+                  <button
+                    onClick={() => {
+                      sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
+                      router.push("/offer");
+                    }}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+                  >
+                    Payment Plan
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+                  </button>
+                </div>
+              </ContentCard>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function KPICard({
+  label, value, sub, primary, badge, tooltipFormula, tooltipLines,
+  compareValues, ready = true,
+}: {
+  label: string; value: string; sub?: string; primary?: boolean;
+  badge?: { label: string; bg: string; text: string };
+  tooltipFormula?: string;
+  tooltipLines?: string[];
+  compareValues?: { v1: string; v2: string; label1: string; label2: string; badge1?: { label: string; bg: string; text: string }; badge2?: { label: string; bg: string; text: string } };
+  ready?: boolean;
+}) {
+  const [show, setShow] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [tipStyle, setTipStyle] = useState<React.CSSProperties>({});
+  const [above, setAbove] = useState(false);
+
+  function handleEnter() {
+    if (!ready) return;
+    if (!(tooltipLines || tooltipFormula) || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const goAbove = rect.bottom + 220 > window.innerHeight;
+    setAbove(goAbove);
+    setTipStyle({
+      position: "fixed",
+      left: rect.left + rect.width / 2,
+      transform: "translateX(-50%)",
+      zIndex: 9999,
+      ...(goAbove
+        ? { bottom: window.innerHeight - rect.top + 8 }
+        : { top: rect.bottom + 8 }),
+    });
+    setShow(true);
+  }
+
+  const cardBg = primary
+    ? "bg-forest/10 border-forest/25 ring-1 ring-forest/10"
+    : "";
+  const valueSz = value.length <= 7 ? "text-3xl" : "text-2xl";
+  return (
+    <div
+      ref={ref}
+      className={`relative h-full transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-50"}`}
+      onMouseEnter={handleEnter}
+      onMouseLeave={() => setShow(false)}
+    >
+      <ContentCard className={`${cardBg} ${compareValues ? "py-0.5 px-1.5" : "py-2 px-3"} h-full flex flex-col justify-center`}>
+        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-[10px] mb-0" : "text-xs mb-1"}`}>{label}</p>
+        {compareValues ? (
+          <div className="flex items-stretch gap-1.5">
+            <div className="flex-1 text-center min-w-0">
+              <p className="text-[10px] font-medium text-forest leading-normal mb-0">{compareValues.label1}</p>
+              {ready ? (
+                <>
+                  <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
+                  {compareValues.badge1 && (
+                    <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
+                      {compareValues.badge1.label}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-muted/40`}>—</p>
+              )}
+            </div>
+            <div className="w-px shrink-0 bg-mint-light/60" />
+            <div className="flex-1 text-center min-w-0">
+              <p className="text-[10px] font-medium text-compare-b leading-normal mb-0">{compareValues.label2}</p>
+              {ready ? (
+                <>
+                  <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
+                  {compareValues.badge2 && (
+                    <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
+                      {compareValues.badge2.label}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-muted/40`}>—</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center">
+            {ready ? (
+              <>
+                <p className={`${valueSz} font-bold font-heading leading-tight ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+                {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
+                {badge && (
+                  <span className={`mt-1 inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
+                    {badge.label}
+                  </span>
+                )}
+              </>
+            ) : (
+              <p className={`${valueSz} font-bold font-heading leading-tight text-muted/40`}>—</p>
+            )}
+          </div>
+        )}
+      </ContentCard>
+      {ready && (tooltipLines || tooltipFormula) && show && createPortal(
+        <div className="bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[300px] pointer-events-none" style={tipStyle}>
+          <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-deep-forest rotate-45 rounded-sm ${above ? "-bottom-1.5" : "-top-1.5"}`} />
+          {tooltipFormula && (
+            <p className="text-sm font-bold text-mint mb-2 tracking-wide font-mono">{tooltipFormula}</p>
+          )}
+          {tooltipLines?.map((line, i) => {
+            const isSeparator = line === "---";
+            const isBold = line.startsWith("=");
+            if (isSeparator) return <hr key={i} className="border-white/20 my-2" />;
+            const display = isBold ? line.slice(1) : line;
+            return (
+              <p key={i} className={`text-[13px] leading-relaxed ${isBold ? "font-bold text-white mt-1" : "text-white/80"}`}>
+                {display}
+              </p>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+function TogglePair({
+  optA, optB, value, onChange, fullWidth,
+}: {
+  optA: { key: string; label: string };
+  optB: { key: string; label: string };
+  value: string;
+  onChange: (v: string) => void;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div className={`flex rounded-lg border border-mint-light overflow-hidden text-sm ${fullWidth ? "w-full" : ""}`}>
+      {[optA, optB].map((opt, i) => (
+        <button
+          key={opt.key}
+          onClick={() => onChange(opt.key)}
+          className={`${fullWidth ? "flex-1" : ""} px-3 py-2 transition-colors ${i > 0 ? "border-l border-mint-light" : ""} ${
+            value === opt.key ? "bg-forest text-white" : "text-muted bg-white hover:bg-mint-bg"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function NumInput({
+  label, value, unit, prefix, suffix, onChange, placeholder,
+}: {
+  label: string; value: number | ""; unit: string; prefix?: boolean; suffix?: boolean;
+  onChange: (v: number | "") => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between py-0.5">
+      <label className="text-sm text-muted">{label}</label>
+      <div className="flex items-center border border-mint-light rounded-lg overflow-hidden focus-within:border-forest transition-colors">
+        {(prefix || suffix) && <span className="px-2 py-1 text-sm text-muted bg-mint-bg border-r border-mint-light">{unit}</span>}
+        <input
+          type="number"
+          value={value}
+          placeholder={placeholder}
+          onChange={e => {
+            if (e.target.value === "") { onChange(placeholder ? "" : 0); return; }
+            const v = Number(e.target.value); if (!isNaN(v)) onChange(v);
+          }}
+          className="w-28 px-2 py-1 text-sm font-semibold text-forest bg-white text-right outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ComputedRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={`flex items-center justify-between py-1 -mx-3 px-3 rounded-lg ${highlight ? "bg-forest/5" : "bg-mint-bg/40"}`}>
+      <p className="text-sm text-muted flex items-center gap-1">
+        <span className="text-xs text-forest/50">=</span>
+        {label}
+      </p>
+      <p className={`text-sm font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+    </div>
+  );
+}
+
+function MetricRow({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <div>
+        <p className="text-sm text-muted">{label}</p>
+        {sub && <p className="text-xs text-muted/60">{sub}</p>}
+      </div>
+      <p className={`text-base font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+    </div>
+  );
+}
+
+function DualComputedRow({ label, v1, v2 }: { label: string; v1: string; v2: string }) {
+  return (
+    <div className="flex items-center justify-between py-1 -mx-3 px-3 rounded-lg bg-mint-bg/40">
+      <p className="text-xs text-muted flex items-center gap-1">
+        <span className="text-[11px] text-forest/50">=</span>
+        {label}
+      </p>
+      <div className="flex items-center gap-4">
+        <p className="text-xs font-bold text-forest">{v1}</p>
+        <p className="text-xs font-bold text-compare-b">{v2}</p>
+      </div>
+    </div>
+  );
+}

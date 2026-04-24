@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
+import { plotDealAvailability, type Plot } from "@/data/mock";
 
 const mainNavItems = [
   { href: "/master-plan", baseHref: "/master-plan", label: "Master Plan", icon: PlanIcon },
@@ -12,61 +13,20 @@ const mainNavItems = [
   { href: "/cta", baseHref: "/cta", label: "Next Steps", icon: RocketIcon },
 ];
 
-function ContextLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
-  const searchParams = useSearchParams();
-  const urlType = searchParams.get("type");
-  const urlArea = searchParams.get("area");
-
-  const [ctxType, setCtxType] = useState<string | null>(() => {
-    if (urlType) return urlType;
-    try { return sessionStorage.getItem("ctx_type"); } catch { return null; }
-  });
-  const [ctxArea, setCtxArea] = useState<string | null>(() => {
-    if (urlArea) return urlArea;
-    try { return sessionStorage.getItem("ctx_area"); } catch { return null; }
-  });
-
-  useEffect(() => {
-    if (urlType) {
-      sessionStorage.setItem("ctx_type", urlType);
-      if (urlArea) sessionStorage.setItem("ctx_area", urlArea);
-      if (urlType !== ctxType) setCtxType(urlType);
-      if (urlArea !== ctxArea) setCtxArea(urlArea);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlType, urlArea]);
-
-  const otherAreasHref = ctxType
-    ? `/other-areas?type=${encodeURIComponent(ctxType)}${ctxArea ? `&area=${encodeURIComponent(ctxArea)}` : ""}`
-    : "/other-areas";
-  const otherTypesHref = ctxType
-    ? `/other-types?type=${encodeURIComponent(ctxType)}${ctxArea ? `&area=${encodeURIComponent(ctxArea)}` : ""}`
-    : "/other-types";
-
-  const activeOtherAreas = pathname === "/other-areas";
-  const activeOtherTypes = pathname === "/other-types";
-
-  return (
-    <>
-      <div className="mx-2 my-2 border-t border-white/10" />
-      <NavLink href={otherAreasHref} label="Other Areas" active={activeOtherAreas} onNavigate={onNavigate}>
-        <MapPinIcon className="w-4 h-4 shrink-0" />
-      </NavLink>
-      <NavLink href={otherTypesHref} label="Other Land Types" active={activeOtherTypes} onNavigate={onNavigate}>
-        <LayersIcon className="w-4 h-4 shrink-0" />
-      </NavLink>
-    </>
-  );
-}
 
 function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navItems: typeof mainNavItems; onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1 px-2 flex-1">
       {navItems.map((item) => {
-        const active =
-          item.baseHref === "/roi"
-            ? pathname === "/roi" || pathname === "/roi/calculator"
-            : pathname.startsWith(item.baseHref);
+        if (item.baseHref === "/roi") {
+          // ROI + JV visibility controlled by area deal-type rules
+          return (
+            <Suspense key={item.baseHref} fallback={null}>
+              <DealNavItems pathname={pathname} onNavigate={onNavigate} />
+            </Suspense>
+          );
+        }
+        const active = pathname.startsWith(item.baseHref);
         return (
           <NavLink key={item.baseHref} href={item.href} label={item.label} active={active} onNavigate={onNavigate}>
             <item.icon className="w-4 h-4 shrink-0" />
@@ -74,11 +34,6 @@ function SidebarNav({ pathname, navItems, onNavigate }: { pathname: string; navI
         );
       })}
 
-
-      {/* Context-sensitive bottom links */}
-      <Suspense fallback={null}>
-        <ContextLinks pathname={pathname} onNavigate={onNavigate} />
-      </Suspense>
     </nav>
   );
 }
@@ -124,9 +79,9 @@ export default function Sidebar() {
           <Image
             src="/logo-sidebar.png"
             alt="Namou"
-            width={120}
-            height={40}
-            className="object-contain object-left h-8 w-auto"
+            width={36}
+            height={36}
+            className="object-contain h-8 w-8 rounded-lg"
             priority
           />
         </Link>
@@ -152,35 +107,42 @@ export default function Sidebar() {
               <Image
                 src="/logo-sidebar.png"
                 alt="Namou"
-                width={168}
-                height={56}
-                className="object-contain object-left h-10 w-auto"
+                width={40}
+                height={40}
+                className="object-contain h-10 w-10 rounded-lg"
                 priority
               />
             </Link>
             <SidebarNav pathname={pathname} navItems={navItems} onNavigate={() => setMobileOpen(false)} />
+            <div className="px-2 pt-2 mt-1 border-t border-white/10">
+              <NavLink href="/thank-you" label="End Simulation" active={pathname === "/thank-you"} onNavigate={() => setMobileOpen(false)}>
+                <ExitIcon className="w-4 h-4 shrink-0" />
+              </NavLink>
+            </div>
           </div>
         </div>
       )}
 
       {/* Desktop sidebar */}
-      <aside className="group hidden md:flex flex-col w-[42px] lg:w-[52px] hover:w-[200px] min-h-screen bg-forest text-white py-4 lg:py-8 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out">
+      <aside className="group hidden md:flex flex-col w-[42px] lg:w-[52px] hover:w-[200px] h-full bg-forest text-white py-4 lg:py-8 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out">
         {/* Logo */}
-        <Link href="/home" className="mb-4 lg:mb-10 px-2 flex items-center">
-          {/* Collapsed: small square crop; expanded: full logo */}
-          <div className="w-[36px] group-hover:w-[168px] transition-[width] duration-200 ease-in-out overflow-hidden shrink-0">
-            <Image
-              src="/logo-sidebar.png"
-              alt="Namou"
-              width={168}
-              height={56}
-              className="object-contain object-left h-10 w-auto min-w-[168px]"
-              priority
-            />
-          </div>
+        <Link href="/home" className="mb-4 lg:mb-10 px-1 lg:px-2 flex items-center">
+          <Image
+            src="/logo-sidebar.png"
+            alt="Namou"
+            width={36}
+            height={36}
+            className="object-contain h-[28px] w-[28px] lg:h-[36px] lg:w-[36px] rounded-lg shrink-0"
+            priority
+          />
         </Link>
 
         <SidebarNav pathname={pathname} navItems={navItems} />
+        <div className="px-2 pt-2 mt-1 border-t border-white/10">
+          <NavLink href="/thank-you" label="End Simulation" active={pathname === "/thank-you"}>
+            <ExitIcon className="w-4 h-4 shrink-0" />
+          </NavLink>
+        </div>
       </aside>
     </>
   );
@@ -198,23 +160,6 @@ function PlanIcon({ className }: { className?: string }) {
   );
 }
 
-function MapPinIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-    </svg>
-  );
-}
-
-function LayersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  );
-}
 
 function TrendIcon({ className }: { className?: string }) {
   return (
@@ -260,11 +205,71 @@ function NavLink({ href, label, active, children, onNavigate }: { href: string; 
   );
 }
 
+/* ── Deal-context nav items — ROI and/or JV based on selected plot's Deal Type ── */
+
+function readSelectedPlot(): Plot | null {
+  try {
+    const stored = sessionStorage.getItem("selected_plot");
+    return stored ? JSON.parse(stored) : null;
+  } catch { return null; }
+}
+
+function DealNavItems({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(readSelectedPlot);
+
+  useEffect(() => {
+    function onPlotChanged() { setSelectedPlot(readSelectedPlot()); }
+    window.addEventListener("plot-selected", onPlotChanged);
+    return () => window.removeEventListener("plot-selected", onPlotChanged);
+  }, []);
+
+  const { showRoi, showJv } = useMemo(() => plotDealAvailability(selectedPlot), [selectedPlot]);
+
+  const roiActive = pathname === "/roi" || pathname === "/roi/calculator";
+  const jvActive = pathname.startsWith("/JV");
+
+  return (
+    <>
+      {showRoi && (
+        <NavLink href="/roi" label="ROI" active={roiActive} onNavigate={onNavigate}>
+          <TrendIcon className="w-4 h-4 shrink-0" />
+        </NavLink>
+      )}
+      {showJv && (
+        <NavLink href="/JV" label="Joint Venture" active={jvActive} onNavigate={onNavigate}>
+          <JvIcon className="w-4 h-4 shrink-0" />
+        </NavLink>
+      )}
+    </>
+  );
+}
+
+function JvIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  );
+}
+
 function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function ExitIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ContentCard from "@/components/ContentCard";
@@ -34,9 +34,7 @@ interface ROIData {
 }
 
 function fmtAED(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `AED ${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `AED ${(n / 1_000).toFixed(0)}K`;
-  return `AED ${n.toFixed(0)}`;
+  return `AED ${Math.round(n).toLocaleString("en-US")}`;
 }
 
 /* ── Agreement-style helpers (match /agreement page) ── */
@@ -146,7 +144,6 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
     if (!piForm.fullName.trim()) errs.fullName = true;
     if (!piForm.mobile.trim()) errs.mobile = true;
     if (!piForm.email.trim() || !emailRe.test(piForm.email)) errs.email = true;
-    if (!piForm.passportId.trim()) errs.passportId = true;
     if (!piForm.city.trim()) errs.city = true;
     if (!piForm.country.trim()) errs.country = true;
     // Broker A2A fields — required only in Broker mode
@@ -171,6 +168,11 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
       setSubmitting(true);
       setSubmitError(null);
       try {
+        let specName = "";
+        let specEmail = "";
+        try { specName = sessionStorage.getItem("Assignee_name") ?? ""; } catch {}
+        try { specEmail = sessionStorage.getItem("Assignee_email") ?? ""; } catch {}
+
         const properties = selectedPlots.length > 0
           ? selectedPlots.map(p => ({
               id: p.id,
@@ -187,24 +189,25 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
               sourcePage: "/offer",
               sourceAction: "offer-popup-submit",
               agreement_type: "a2a",
-              assignee_email: "undefined",
-              phone_number: a2aForm.phone || "-",
+              assignee_name: specName || "undefined",
+              assignee_email: specEmail || "undefined",
+              phone_number: piForm.mobile || a2aForm.phone || "-",
               src: "webpage",
+              commission: "2%",
+              properties: properties,
               data: {
-                name: a2aForm.contactPerson || "-",
-                email: a2aForm.email || "-",
-                broker_number: a2aForm.phone || "-",
-                company_name: a2aForm.companyName || "-",
-                agent_id_number: "-",
-                trade_license: a2aForm.tradeLicense || "-",
+                full_name: piForm.fullName || "-",
+                mobile_number: piForm.mobile || "-",
+                email: piForm.email || "-",
                 id_number: piForm.passportId || "-",
-                city: piForm.city || "null",
-                country: a2aForm.address || "-",
-                investor_name: piForm.fullName || "-",
-                investor_email: piForm.email || "-",
-                investor_number: piForm.mobile || "null",
-                properties: properties,
-                broker_commision_cut: "2",
+                city: piForm.city || "-",
+                country: piForm.country || "-",
+                broker_company_name: a2aForm.companyName || "-",
+                broker_trade_license_no: a2aForm.tradeLicense || "-",
+                broker_contact_person: a2aForm.contactPerson || "-",
+                broker_phone: a2aForm.phone || "-",
+                broker_address: a2aForm.address || "-",
+                broker_email: a2aForm.email || "-",
               },
             }
           : {
@@ -213,7 +216,8 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
               agreement_type: "b2a",
               phone_number: piForm.mobile || "-",
               src: "webpage",
-              assignee_email: "undefined",
+              assignee_name: specName || "undefined",
+              assignee_email: specEmail || "undefined",
               data: {
                 investor_name: piForm.fullName || "-",
                 investor_number: piForm.mobile || "null",
@@ -243,6 +247,13 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
       }
       setSubmitting(false);
     }
+
+    // Store client details for /cta pre-fill
+    try {
+      sessionStorage.setItem("client_name", isBroker ? (a2aForm.contactPerson || piForm.fullName) : piForm.fullName);
+      sessionStorage.setItem("client_email", isBroker ? (a2aForm.email || piForm.email) : piForm.email);
+      sessionStorage.setItem("client_phone", isBroker ? (a2aForm.phone || piForm.mobile) : piForm.mobile);
+    } catch {}
 
     setSubmitted(true);
     router.push("/cta");
@@ -301,8 +312,8 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
               <div className={`grid gap-2 ${isBroker ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
                 <div><p className="text-[11px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plotName}</p></div>
                 {isBroker && <div><p className="text-[11px] text-muted">Company</p><p className="text-xs font-semibold text-deep-forest">Namou Properties LLC</p></div>}
-                {isBroker && <div><p className="text-[11px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">RAK-XXXX-XXXX</p></div>}
-                <div><p className="text-[11px] text-muted">{isBroker ? "Contact" : "Commission"}</p><p className="text-xs font-semibold text-deep-forest">{isBroker ? "info@namou.ae" : "2%"}</p></div>
+                {isBroker && <div><p className="text-[11px] text-muted">Trade License</p><p className="text-xs font-semibold text-deep-forest">61781</p></div>}
+                <div><p className="text-[11px] text-muted">{isBroker ? "Contact" : "Commission"}</p><p className="text-xs font-semibold text-deep-forest">{isBroker ? "reachus@namou.ae" : "2%"}</p></div>
               </div>
             </div>
 
@@ -317,8 +328,8 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
               <Field label="Email" required error={errors.email}>
                 <input type="email" value={piForm.email} onChange={(e) => setPi("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="investor@email.com" />
               </Field>
-              <Field label="Passport No / ID" required error={errors.passportId}>
-                <input type="text" value={piForm.passportId} onChange={(e) => setPi("passportId", e.target.value)} maxLength={30} className={inputCls(errors.passportId)} placeholder="A12345678" />
+              <Field label="Passport No / ID">
+                <input type="text" value={piForm.passportId} onChange={(e) => setPi("passportId", e.target.value)} maxLength={30} className={inputCls(false)} placeholder="A12345678" />
               </Field>
               <Field label="City" required error={errors.city}>
                 <input type="text" value={piForm.city} onChange={(e) => setPi("city", e.target.value)} maxLength={80} className={inputCls(errors.city)} placeholder="Dubai" />
@@ -379,28 +390,181 @@ function NextStepsModal({ onClose, plotName, selectedPlots, enableOfferWebhook =
   );
 }
 
+/* ── Submit Offer Form Modal ── */
+
+function SubmitOfferModal({ plot, onClose, onSubmitted }: { plot: Plot; onClose: () => void; onSubmitted: (priceOffer: string, paymentPlan: string) => void }) {
+  const [form, setForm] = useState({
+    fullName: "", mobile: "", email: "", passportId: "", city: "", country: "",
+    priceOffer: plot.askingPrice ? formatNumber(plot.askingPrice) : "",
+    paymentInstallments: plot.paymentPlan ?? "",
+  });
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  function setF(field: string, value: string) {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }));
+  }
+
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const errs: Record<string, boolean> = {};
+    if (!form.fullName.trim()) errs.fullName = true;
+    if (!form.mobile.trim()) errs.mobile = true;
+    if (!form.email.trim() || !emailRe.test(form.email)) errs.email = true;
+    if (!form.city.trim()) errs.city = true;
+    if (!form.country.trim()) errs.country = true;
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    if (submitting) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    let specName = ""; let specEmail = "";
+    try { specName = sessionStorage.getItem("Assignee_name") ?? ""; } catch {}
+    try { specEmail = sessionStorage.getItem("Assignee_email") ?? ""; } catch {}
+
+    // Store client details for /cta pre-fill
+    try {
+      sessionStorage.setItem("client_name", form.fullName);
+      sessionStorage.setItem("client_email", form.email);
+      sessionStorage.setItem("client_phone", form.mobile);
+    } catch {}
+
+    const payload = {
+      sourcePage: "/offer",
+      sourceAction: "offer-popup-submit",
+      agreement_type: "b2a",
+      phone_number: form.mobile || "-",
+      src: "webpage",
+      assignee_name: specName || "undefined",
+      assignee_email: specEmail || "undefined",
+      data: {
+        investor_name: form.fullName || "-",
+        investor_number: form.mobile || "null",
+        email: form.email || "-",
+        id_number: form.passportId || "-",
+        city: form.city || "null",
+        country: form.country || "-",
+        price_offer: form.priceOffer || String(plot.askingPrice),
+        payment_installments: form.paymentInstallments || plot.paymentPlan || "-",
+        properties: [{ id: plot.id, Location: plot.area, Price: plot.askingPrice, Type: plot.landUse, Area_sqft: plot.plotArea, Ownership: "Free hold" }],
+      },
+      commission: "2%",
+    };
+
+    try {
+      const res = await fetch("/api/offer/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(body.error || `Request failed (${res.status})`);
+      }
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : "Submission failed");
+      setSubmitting(false);
+      return;
+    }
+    setSubmitting(false);
+    onSubmitted(form.priceOffer || formatNumber(plot.askingPrice), form.paymentInstallments || plot.paymentPlan || "");
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-mint-light/30 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+        <button onClick={onClose} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-mint-bg hover:bg-mint-light/60 flex items-center justify-center transition-colors z-10">
+          <svg className="w-3.5 h-3.5 text-deep-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M18 6L6 18M6 6l12 12" /></svg>
+        </button>
+        <form onSubmit={handleSubmit} className="flex flex-col p-5 gap-3">
+          <div className="bg-forest rounded-xl px-5 py-3 flex items-center justify-between">
+            <p className="text-sm font-bold text-white">Submit Your Offer Form</p>
+            <p className="text-sm font-bold text-white/80" dir="rtl">نموذج تقديم العرض</p>
+          </div>
+
+          <div className="bg-mint-bg/50 border border-mint-light/60 rounded-xl px-4 py-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div><p className="text-[11px] text-muted">Plot</p><p className="text-xs font-semibold text-deep-forest">{plot.name}</p></div>
+              <div><p className="text-[11px] text-muted">Asking Price</p><p className="text-xs font-semibold text-deep-forest">AED {formatNumber(plot.askingPrice)}</p></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Full Name" required error={errors.fullName}>
+              <input type="text" value={form.fullName} onChange={e => setF("fullName", e.target.value)} maxLength={100} className={inputCls(errors.fullName)} placeholder="John Doe" />
+            </Field>
+            <Field label="Mobile Number" required error={errors.mobile}>
+              <input type="tel" value={form.mobile} onChange={e => setF("mobile", e.target.value)} maxLength={20} className={inputCls(errors.mobile)} placeholder="+971 50 000 0000" />
+            </Field>
+            <Field label="Email" required error={errors.email}>
+              <input type="email" value={form.email} onChange={e => setF("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="investor@email.com" />
+            </Field>
+            <Field label="Passport No / ID">
+              <input type="text" value={form.passportId} onChange={e => setF("passportId", e.target.value)} maxLength={30} className={inputCls(false)} placeholder="A12345678" />
+            </Field>
+            <Field label="City" required error={errors.city}>
+              <input type="text" value={form.city} onChange={e => setF("city", e.target.value)} maxLength={80} className={inputCls(errors.city)} placeholder="Dubai" />
+            </Field>
+            <Field label="Country" required error={errors.country}>
+              <input type="text" value={form.country} onChange={e => setF("country", e.target.value)} maxLength={80} className={inputCls(errors.country)} placeholder="UAE" />
+            </Field>
+          </div>
+
+          <div className="border-t border-mint-light/40 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Price Offer (AED)">
+              <input type="text" value={form.priceOffer} onChange={e => setF("priceOffer", e.target.value)} className={inputCls()} placeholder={`AED ${formatNumber(plot.askingPrice)}`} />
+            </Field>
+            <Field label="Payment Installments">
+              <input type="text" value={form.paymentInstallments} onChange={e => setF("paymentInstallments", e.target.value)} className={inputCls()} placeholder={plot.paymentPlan || "e.g. 10% Booking / 90% SPA"} />
+            </Field>
+          </div>
+
+          {submitError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-600">{submitError}</div>
+          )}
+
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[11px] text-muted mb-1">Date</p>
+              <p className="text-xs font-medium text-deep-forest bg-mint-bg/40 border border-mint-light/40 rounded-lg px-3 py-1.5">
+                {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}
+              </p>
+            </div>
+            <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-forest text-white rounded-lg text-xs font-semibold hover:bg-deep-forest transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {submitting ? "Submitting…" : "Submit"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function FinalOfferPage() {
-  const [roiData] = useState<ROIData | null>(() => {
-    if (typeof window === "undefined") return null;
-    try { const s = sessionStorage.getItem("roi_results"); return s ? JSON.parse(s) : null; } catch { return null; }
-  });
-  const [sourcePlot] = useState<Plot | null>(() => {
-    if (typeof window === "undefined") return null;
-    try { const s = sessionStorage.getItem("selected_plot"); return s ? JSON.parse(s) : null; } catch { return null; }
-  });
-  const [selectedPlotId, setSelectedPlotId] = useState(() => {
-    if (typeof window === "undefined") return plots[0].id;
-    try { const s = sessionStorage.getItem("selected_plot"); if (s) { const p: Plot = JSON.parse(s); return p.id; } } catch { /* ignore */ }
-    return plots[0].id;
-  });
-  const [comparePlots] = useState<Plot[]>(() => {
-    if (typeof window === "undefined") return [];
-    try { const s = sessionStorage.getItem("compare_plots"); if (s) { const cp: Plot[] = JSON.parse(s); if (cp.length === 2) return cp; } } catch { /* ignore */ }
-    return [];
-  });
+  const [roiData, setRoiData] = useState<ROIData | null>(null);
+  const [sourcePlot, setSourcePlot] = useState<Plot | null>(null);
+  const [selectedPlotId, setSelectedPlotId] = useState(plots[0]?.id ?? "");
+  const [comparePlots, setComparePlots] = useState<Plot[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [dealRef, setDealRef] = useState<string | null>(null);
+  const [submittedPrice, setSubmittedPrice] = useState<string | null>(null);
   const [showNextSteps, setShowNextSteps] = useState(false);
+  const [showOfferForm, setShowOfferForm] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try { const s = sessionStorage.getItem("roi_results"); if (s) setRoiData(JSON.parse(s)); } catch {}
+    try { const s = sessionStorage.getItem("selected_plot"); if (s) { const p: Plot = JSON.parse(s); setSourcePlot(p); setSelectedPlotId(p.id); } } catch {}
+    try { const s = sessionStorage.getItem("compare_plots"); if (s) { const cp: Plot[] = JSON.parse(s); if (cp.length === 2) setComparePlots(cp); } } catch {}
+    setHydrated(true);
+  }, []);
 
   const selectedPlot = plots.find((p) => p.id === selectedPlotId) || plots[0];
   const selectedPlots = comparePlots.length === 2 ? comparePlots : [selectedPlot];
@@ -453,6 +617,8 @@ export default function FinalOfferPage() {
     return parsePaymentStages(selectedPlot.paymentPlan, offerSummary.landCost);
   }, [selectedPlot, offerSummary.landCost]);
 
+  if (!hydrated) return null;
+
   return (
     <div className="flex flex-col flex-1 gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
       <div className="shrink-0">
@@ -504,82 +670,110 @@ export default function FinalOfferPage() {
 
       {/* Payment plan summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        <ContentCard className="bg-mint-bg border-mint-light">
+        <ContentCard className="bg-mint-bg border-mint-light text-center">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Land Price</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.landCost)}</p>
-          <p className="text-xs text-muted mt-1">{formatNumber(selectedPlot.plotArea)} sqft</p>
+          <p className="text-xs text-muted font-heading mt-1">{formatNumber(selectedPlot.plotArea)} sqft</p>
         </ContentCard>
-        <ContentCard className="bg-mint-bg border-mint-light">
+        <ContentCard className="bg-mint-bg border-mint-light text-center">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Total Dev. Cost</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{fmtAED(offerSummary.totalCost)}</p>
           <p className="text-xs text-muted mt-1">Land + Construction</p>
         </ContentCard>
-        <ContentCard className="bg-forest/10 border-forest/20">
+        <ContentCard className="bg-forest/10 border-forest/20 text-center">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Payment Stages</p>
           <p className="text-2xl font-bold font-heading text-deep-forest">{paymentStages.length}</p>
           <p className="text-xs text-muted mt-1">{selectedPlot.paymentPlan ? "Structured plan" : "No plan"}</p>
         </ContentCard>
-        <ContentCard className="bg-forest/10 border-forest/20">
+        <ContentCard className="bg-forest/10 border-forest/20 text-center">
           <p className="text-xs text-muted uppercase tracking-wider mb-1">Projected Profit</p>
           <p className={`text-2xl font-bold font-heading ${offerSummary.profit > 0 ? "text-forest" : "text-red-600"}`}>{fmtAED(offerSummary.profit)}</p>
-          <p className="text-xs text-muted mt-1">{offerSummary.profitMargin.toFixed(1)}% margin</p>
+          <p className="text-xs text-muted font-heading mt-1">{offerSummary.profitMargin.toFixed(1)}% margin</p>
         </ContentCard>
       </div>
 
       {/* Cost breakdown + offer details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0">
         <ContentCard className="flex flex-col">
-          <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1">Payment Schedule</p>
-          {paymentStages.length > 0 ? (
-            <div className="flex flex-col flex-1 divide-y divide-mint-light/60">
-              {paymentStages.map((stage, i) => (
-                <div key={i} className="flex items-center justify-between flex-1">
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                    <div>
-                      <p className="text-lg font-bold text-deep-forest">{stage.pct}% <span className="text-base font-bold text-muted">– {stage.label}</span></p>
-                      {stage.sub && <p className="text-xs text-muted">{stage.sub}</p>}
+          <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-1 text-center shrink-0">Payment Installments</p>
+          <div className="flex-1 flex flex-col justify-center">
+          {(() => {
+            // Build fee rows (excluding annual service charge)
+            const feeRows = [
+              { label: "Land Registration Fee", pct: selectedPlot.landRegFeePct, amount: selectedPlot.landRegFee },
+              { label: "Commission Fee", pct: selectedPlot.commissionFeePct, amount: selectedPlot.commissionFee },
+              { label: "Admin Fee", pct: selectedPlot.adminFeePct, amount: selectedPlot.adminFee },
+            ].filter(f => f.amount && parseFloat(f.amount.replace(/[^0-9.]/g, "")) > 0);
+
+            // Annual service charge (separate display)
+            const asc = selectedPlot.annualServiceCharge;
+            const ascNum = asc ? parseFloat(asc.replace(/[^0-9.]/g, "")) : 0;
+
+            // Compute total = land cost + fees + annual charge
+            const feeTotal = feeRows.reduce((sum, f) => sum + parseFloat((f.amount ?? "0").replace(/[^0-9.]/g, "")), 0);
+            const grandTotal = offerSummary.landCost + feeTotal + ascNum;
+
+            const allRows = paymentStages.length > 0 || feeRows.length > 0;
+
+            return allRows ? (
+              <>
+                <div className="flex-1 flex flex-col divide-y divide-mint-light/60">
+                  {/* Payment stages */}
+                  {paymentStages.map((stage, i) => (
+                    <div key={i} className="flex-1 grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 min-h-[44px]">
+                      <span className="w-7 h-7 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                      <p className="text-sm font-bold text-deep-forest"><span className="text-base">{stage.pct}%</span> <span className="text-muted font-semibold">– {stage.label}</span></p>
+                      <p className="text-sm font-bold text-deep-forest text-right whitespace-nowrap">{fmtAED(stage.amount)}</p>
                     </div>
-                  </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <p className="text-base font-bold text-deep-forest">{fmtAED(stage.amount)}</p>
-                  </div>
+                  ))}
+
+                  {/* Fee rows */}
+                  {feeRows.map((f, i) => (
+                    <div key={f.label} className="flex-1 grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 min-h-[44px]">
+                      <span className="w-7 h-7 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center">{paymentStages.length + i + 1}</span>
+                      <p className="text-sm font-bold text-deep-forest"><span className="text-base">{f.pct?.trim() || "—"}</span> <span className="text-muted font-semibold">– {f.label}</span></p>
+                      <p className="text-sm font-bold text-deep-forest text-right whitespace-nowrap">AED {f.amount}</p>
+                    </div>
+                  ))}
+
+                  {/* Annual Service Charge — different style */}
+                  {ascNum > 0 && (
+                    <div className="flex-1 grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 min-h-[44px] bg-mint-bg/30">
+                      <span className="w-7 h-7 rounded-full bg-mint-light/60 text-muted text-xs font-bold flex items-center justify-center">{paymentStages.length + feeRows.length + 1}</span>
+                      <p className="text-sm font-semibold text-muted">Annual Service Charge</p>
+                      <p className="text-sm font-bold text-deep-forest text-right whitespace-nowrap">AED {asc}</p>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted italic flex-1 flex items-center">No payment plan available for this plot.</p>
-          )}
-          <div className="mt-auto pt-3 border-t border-mint-light/60 flex justify-between text-sm">
-            <span className="text-muted">Total</span>
-            <span className="font-bold text-deep-forest">{fmtAED(offerSummary.landCost)}</span>
+
+                <div className="pt-3 border-t-2 border-forest/20 flex justify-between text-sm shrink-0">
+                  <span className="font-semibold text-deep-forest">Total</span>
+                  <span className="font-bold text-forest text-base">{fmtAED(grandTotal)}</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted italic flex-1 flex items-center">No payment plan available for this plot.</p>
+            );
+          })()}
           </div>
         </ContentCard>
 
-        {/* Submit offer */}
+        {/* Next steps */}
         {!submitted ? (
           <ContentCard className="flex flex-col">
-            <p className="text-xs uppercase tracking-widest text-muted mb-2 font-semibold">Submit Your Offer</p>
-            <p className="text-sm text-muted mb-2 leading-relaxed">
-              Confirm your offer to generate a secure deal link. Your specialist will review and
-              prepare the documentation for signing.
-            </p>
-
-            {/* What happens next */}
-            <div className="flex-1 bg-mint-bg/40 rounded-xl border border-mint-light/40 p-3 mb-3">
-              <p className="text-xs uppercase tracking-wider text-muted font-semibold mb-2">What Happens Next</p>
-              <div className="space-y-2">
+            <p className="text-xs uppercase tracking-widest text-muted mb-2 font-semibold text-center">What Happens Next</p>
+            <div className="flex-1 bg-mint-bg/40 rounded-xl border border-mint-light/40 p-5 mb-3 flex flex-col min-h-0">
+              <div className="flex-1 flex flex-col justify-around gap-3">
                 {[
-                  { step: "1", text: "Offer reviewed within 3-5 business days" },
-                  { step: "2", text: "Dedicated Offer Manager assigned" },
-                  { step: "3", text: "Deal documentation prepared for e-signing" },
-                  { step: "4", text: "Secure payment link generated" },
+                  { step: "1", text: "Agreement form delivered for client e-signature" },
+                  { step: "2", text: "Deal documentation, ROI calculations, and brochure shared" },
+                  { step: "3", text: "Deal reviewed within 5-7 business days" },
                 ].map((item) => (
-                  <div key={item.step} className="flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-full bg-forest/10 text-forest text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  <div key={item.step} className="flex items-center gap-4">
+                    <span className="w-9 h-9 rounded-full bg-forest/10 text-forest text-base font-bold flex items-center justify-center shrink-0">
                       {item.step}
                     </span>
-                    <p className="text-sm text-deep-forest">{item.text}</p>
+                    <p className="text-base lg:text-lg text-deep-forest leading-relaxed">{item.text}</p>
                   </div>
                 ))}
               </div>
@@ -587,14 +781,8 @@ export default function FinalOfferPage() {
 
             <div className="flex flex-col sm:flex-row gap-2 shrink-0">
               <button
-                onClick={() => { setDealRef(`NAMOU-${selectedPlot.name}-${Date.now().toString(36).toUpperCase()}`); setSubmitted(true); }}
-                className="px-8 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
-              >
-                Submit Offer
-              </button>
-              <button
                 onClick={() => setShowNextSteps(true)}
-                className="px-6 py-3 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-white transition-colors"
+                className="px-6 py-3 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
               >
                 Next Steps
               </button>
@@ -611,7 +799,7 @@ export default function FinalOfferPage() {
               <div>
                 <h2 className="text-base font-semibold text-forest">Offer Submitted</h2>
                 <p className="text-sm text-muted mt-1">
-                  Your offer of <strong className="text-forest">{fmtAED(offerSummary.landCost)}</strong> for
+                  Your offer of <strong className="text-forest">AED {submittedPrice ?? formatNumber(offerSummary.landCost)}</strong> for
                   plot <strong>{selectedPlot.name}</strong> has been recorded.
                 </p>
                 <p className="text-sm text-muted mt-2">
@@ -631,6 +819,21 @@ export default function FinalOfferPage() {
       {showNextSteps && (
         <NextStepsModal onClose={() => setShowNextSteps(false)} plotName={selectedPlot.name} selectedPlots={selectedPlots} enableOfferWebhook />
       )}
+
+      {/* Submit Offer Form modal */}
+      {showOfferForm && (
+        <SubmitOfferModal
+          plot={selectedPlot}
+          onClose={() => setShowOfferForm(false)}
+          onSubmitted={(priceOffer) => {
+            setShowOfferForm(false);
+            setSubmittedPrice(priceOffer);
+            setDealRef(`NAMOU-${selectedPlot.name}-${Date.now().toString(36).toUpperCase()}`);
+            setSubmitted(true);
+          }}
+        />
+      )}
     </div>
   );
 }
+

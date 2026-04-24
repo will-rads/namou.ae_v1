@@ -6,18 +6,50 @@ import {
   SPREADSHEET_COLUMNS,
   ORIGINAL_SPREADSHEET_ROWS,
   newSpreadsheetRow,
+  saveSpreadsheetRows,
+  loadSpreadsheetRows,
+  clearSpreadsheetRows,
+  spreadsheetRowsToPlots,
+  coordsFromUrl,
   type SpreadsheetRow,
 } from "@/data/spreadsheetData";
+import { savePlots, clearPlots } from "@/data/plotsStore";
+import { reloadPlotsFromStorage } from "@/data/mock";
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BackendPage() {
   const [rows, setRows] = useState<SpreadsheetRow[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  /** Fill blank/missing jv fields with "Sale Only". */
+  function normalizeJv(src: SpreadsheetRow[]): SpreadsheetRow[] {
+    return src.map(r => (r.jv ? r : { ...r, jv: "Sale Only" }));
+  }
+
   useEffect(() => {
-    setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
+    // Always fetch from server API — persistent storage is the source of truth
+    fetch("/api/spreadsheet")
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setRows(normalizeJv(data));
+          // Update localStorage cache from server truth
+          saveSpreadsheetRows(data);
+        }
+      })
+      .catch(() => {
+        // Network/server error — fall back to stale localStorage cache
+        const stored = loadSpreadsheetRows();
+        if (stored) setRows(normalizeJv(stored));
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
@@ -42,7 +74,13 @@ export default function BackendPage() {
     setIsDirty(true);
     setTimeout(() => {
       const el = document.getElementById("backend-table-end");
-      el?.scrollIntoView({ behavior: "smooth" });
+      if (el) {
+        // Scroll only the table's own overflow container, not ancestor elements
+        const scrollParent = el.closest(".overflow-auto");
+        if (scrollParent) {
+          scrollParent.scrollTo({ top: scrollParent.scrollHeight, behavior: "smooth" });
+        }
+      }
     }, 50);
   }
 
@@ -54,22 +92,130 @@ export default function BackendPage() {
     setIsDirty(true);
   }
 
-  // ── Apply changes (disabled — CSV is the source of truth) ──
+  // ── Apply changes ──
 
-  function applyChanges() {
-    showToast("Backend editing is disabled. Update plots.csv to change data.", "error");
+  async function applyChanges() {
+    setSaving(true);
+    try {
+      // Resolve any shortened Google Maps URLs that coordsFromUrl can't parse locally
+      const resolved = normalizeJv(await resolveLocationPins(rows));
+      // Save to server (persistent storage — source of truth)
+      let serverOk = false;
+      let serverDetail = "";
+      try {
+        const res = await fetch("/api/spreadsheet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(resolved),
+        });
+        serverOk = res.ok;
+        if (!serverOk) {
+          try { const body = await res.json(); serverDetail = body.details || body.error || ""; } catch { /* ignore */ }
+        }
+      } catch { serverDetail = "Network error — is the server running?"; }
+      if (!serverOk) {
+        showToast(`Save failed: ${serverDetail || "unknown error"}`, "error");
+        return;
+      }
+      // Server save succeeded — now update local cache
+      saveSpreadsheetRows(resolved);
+      savePlots(spreadsheetRowsToPlots(resolved));
+      reloadPlotsFromStorage();
+      setRows(resolved);
+      setIsDirty(false);
+      showToast("Changes saved and published to website.", "success");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function resetToDefault() {
-    setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
-    setIsDirty(false);
-    showToast("Data reset to CSV defaults.", "success");
+  /** For each row whose locationPin is a shortened maps URL that coordsFromUrl
+   *  cannot resolve locally, call the server-side resolver to follow the
+   *  redirect and replace the shortened URL with the full coordinate URL. */
+  async function resolveLocationPins(src: SpreadsheetRow[]): Promise<SpreadsheetRow[]> {
+    const out = [...src];
+    for (let i = 0; i < out.length; i++) {
+      const pin = out[i].locationPin;
+      if (!pin || !pin.includes("maps.app.goo.gl")) continue;
+      if (coordsFromUrl(pin)) continue; // already resolvable locally
+      try {
+        const res = await fetch("/api/resolve-maps-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: pin }),
+        });
+        if (res.ok) {
+          const { fullUrl } = await res.json();
+          if (fullUrl && typeof fullUrl === "string") {
+            out[i] = { ...out[i], locationPin: fullUrl };
+          }
+        }
+      } catch { /* keep original URL on failure */ }
+    }
+    return out;
+  }
+
+  // ── Reset to default ──
+
+  async function resetToDefault() {
+    if (!window.confirm("Reset all data to defaults? This will discard all your edits.")) return;
+    setSaving(true);
+    try {
+      // Clear server-side override
+      let deleteOk = false;
+      let deleteDetail = "";
+      try {
+        const res = await fetch("/api/spreadsheet", { method: "DELETE" });
+        deleteOk = res.ok;
+        if (!deleteOk) {
+          try { const body = await res.json(); deleteDetail = body.details || body.error || ""; } catch { /* ignore */ }
+        }
+      } catch { deleteDetail = "Network error — is the server running?"; }
+      if (!deleteOk) {
+        showToast(`Reset failed: ${deleteDetail || "unknown error"}`, "error");
+        return;
+      }
+      // Server reset succeeded — clear local cache
+      clearSpreadsheetRows();
+      clearPlots();
+      // Fetch the re-seeded initial data from server
+      try {
+        const res = await fetch("/api/spreadsheet");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            saveSpreadsheetRows(data);
+            savePlots(spreadsheetRowsToPlots(data));
+            reloadPlotsFromStorage();
+            setRows(normalizeJv(data));
+            setIsDirty(false);
+            showToast("Data reset to defaults.", "success");
+            return;
+          }
+        }
+      } catch { /* fetch error */ }
+      // Safety fallback
+      reloadPlotsFromStorage();
+      setRows(JSON.parse(JSON.stringify(ORIGINAL_SPREADSHEET_ROWS)));
+      setIsDirty(false);
+      showToast("Data reset to defaults.", "success");
+    } finally {
+      setSaving(false);
+    }
   }
 
   // ── Cell renderer ──
 
   const inputCls =
     "w-full px-2 py-1.5 rounded-lg border border-mint-light/60 bg-white text-sm text-deep-forest focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none transition-colors";
+
+  if (loading) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center animate-fade-in">
+        <p className="text-sm text-muted">Loading backend data&hellip;</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-y-hidden">
@@ -80,7 +226,7 @@ export default function BackendPage() {
             Backend Admin
           </h1>
           <p className="text-sm text-muted mt-0.5">
-            Full spreadsheet data. Edits are saved to browser storage.
+            Manage land data. Changes are published to all devices on save.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted">
@@ -110,6 +256,9 @@ export default function BackendPage() {
                     className={`px-2 py-2 text-left text-[10px] uppercase tracking-widest text-muted font-semibold ${col.width}`}
                   >
                     {col.label}
+                    {col.key === "locationPin" && (
+                      <span className="block normal-case tracking-normal font-normal text-muted/60 mt-0.5">coords or URL</span>
+                    )}
                   </th>
                 ))}
                 <th className="px-2 py-2 text-center text-[10px] uppercase tracking-widest text-muted font-semibold min-w-[44px]" />
@@ -136,8 +285,8 @@ export default function BackendPage() {
                           title={row[col.key] ?? ""}
                         >
                           <option value="">—</option>
-                          <option value="Sale Only">Sale Only</option>
                           <option value="Joint-venture Only">Joint-venture Only</option>
+                          <option value="Sale Only">Sale Only</option>
                           <option value="Sale + Joint-venture">Sale + Joint-venture</option>
                         </select>
                       ) : (
@@ -147,6 +296,18 @@ export default function BackendPage() {
                           onChange={(e) => updateField(i, col.key, e.target.value)}
                           className={inputCls}
                           title={row[col.key] ?? ""}
+                          placeholder={col.key === "locationPin" ? "25.665, 55.760 or Google Maps URL" : col.key.startsWith("galleryImage") ? "Image/video URL or drag & drop" : undefined}
+                          onDragOver={col.key.startsWith("galleryImage") ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
+                          onDrop={col.key.startsWith("galleryImage") ? (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const file = e.dataTransfer.files?.[0];
+                            if (file && (file.type.startsWith("image/") || file.type.startsWith("video/"))) {
+                              const reader = new FileReader();
+                              reader.onload = () => { if (typeof reader.result === "string") updateField(i, col.key, reader.result); };
+                              reader.readAsDataURL(file);
+                            }
+                          } : undefined}
                         />
                       )}
                     </td>
@@ -174,7 +335,8 @@ export default function BackendPage() {
         <div className="border-t border-mint-light/40 px-4 py-2 shrink-0 flex items-center justify-between">
           <button
             onClick={addRow}
-            className="flex items-center gap-2 px-4 py-2 border border-dashed border-forest/30 text-forest rounded-xl text-sm font-medium hover:bg-mint-bg/50 transition-colors"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 border border-dashed border-forest/30 text-forest rounded-xl text-sm font-medium hover:bg-mint-bg/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -185,16 +347,17 @@ export default function BackendPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={resetToDefault}
-              className="px-5 py-2 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors"
+              disabled={saving}
+              className="px-5 py-2 bg-white border border-mint-light text-deep-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Reset to Default
             </button>
             <button
               onClick={applyChanges}
-              disabled={!isDirty}
+              disabled={!isDirty || saving}
               className="px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Apply Changes
+              {saving ? "Saving\u2026" : "Apply Changes"}
             </button>
           </div>
         </div>
@@ -224,9 +387,9 @@ function Toast({
   onClose: () => void;
 }) {
   useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
+    const timer = setTimeout(onClose, type === "error" ? 6000 : 3000);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [onClose, type]);
 
   return (
     <div

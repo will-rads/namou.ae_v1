@@ -2,9 +2,11 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import ContentCard from "@/components/ContentCard";
 import type { Plot } from "@/data/mock";
-import { ORIGINAL_SPREADSHEET_ROWS, loadSpreadsheetRows } from "@/data/spreadsheetData";
+
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,35 +37,50 @@ interface Inputs {
   landOwnerSplit: number;
 }
 
-const DEFAULTS: Inputs = {
+type DisplayInputs = {
+  plotSize: number;
+  landValue: number;
+  farRatio: number;
+  efficiency: number | "";
+  constructionPerGFA: number | "";
+  softCostPct: number | "";
+  rentalPerNSA: number | "";
+  occupancy: number | "";
+  operatingCostPct: number | "";
+  maintenancePct: number | "";
+  propertyMgmtFeePct: number | "";
+  holdYears: number | "";
+  capRate: number | "";
+  landOwnerSplit: number | "";
+};
+
+const DEFAULTS: DisplayInputs = {
   plotSize: 50_000,
   landValue: 25_000_000,
   farRatio: 3.0,
-  efficiency: 80,
-  constructionPerGFA: 900,
-  softCostPct: 20,
-  rentalPerNSA: 120,
-  occupancy: 85,
-  operatingCostPct: 10,
-  maintenancePct: 5,
-  propertyMgmtFeePct: 8,
-  holdYears: 5,
-  capRate: 7,
-  landOwnerSplit: 40,
+  efficiency: "",
+  constructionPerGFA: "",
+  softCostPct: "",
+  rentalPerNSA: "",
+  occupancy: "",
+  operatingCostPct: "",
+  maintenancePct: "",
+  propertyMgmtFeePct: "",
+  holdYears: "",
+  capRate: "",
+  landOwnerSplit: "",
 };
 
 // ── Session + backend helpers ────────────────────────────────────────────────
 
-function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inputs> } {
+function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<DisplayInputs> } {
   if (typeof window === "undefined") return { plotInfo: null, inputs: {} };
   try {
     const stored = sessionStorage.getItem("selected_plot");
     if (!stored) return { plotInfo: null, inputs: {} };
     const plot: Plot = JSON.parse(stored);
 
-    const rows = loadSpreadsheetRows() ?? ORIGINAL_SPREADSHEET_ROWS;
-    const matchRow = rows.find(r => r.plotName?.trim() === plot.name);
-    const dealType = matchRow?.jv || "—";
+    const dealType = plot.jv || "—";
 
     const far = plot.far ?? (plot.gfa && plot.plotArea ? plot.gfa / plot.plotArea : DEFAULTS.farRatio);
 
@@ -77,7 +94,7 @@ function loadPlotFromSession(): { plotInfo: PlotInfo | null; inputs: Partial<Inp
       far,
     };
 
-    const inputs: Partial<Inputs> = {
+    const inputs: Partial<DisplayInputs> = {
       plotSize: plot.plotArea,
       landValue: plot.askingPrice,
       farRatio: parseFloat(far.toFixed(2)),
@@ -133,10 +150,29 @@ function compute(inp: Inputs) {
   };
 }
 
+function resolveInputs(d: DisplayInputs): Inputs {
+  return {
+    plotSize: d.plotSize,
+    landValue: d.landValue,
+    farRatio: d.farRatio,
+    efficiency: typeof d.efficiency === "number" ? d.efficiency : 0,
+    constructionPerGFA: typeof d.constructionPerGFA === "number" ? d.constructionPerGFA : 0,
+    softCostPct: typeof d.softCostPct === "number" ? d.softCostPct : 0,
+    rentalPerNSA: typeof d.rentalPerNSA === "number" ? d.rentalPerNSA : 0,
+    occupancy: typeof d.occupancy === "number" ? d.occupancy : 0,
+    operatingCostPct: typeof d.operatingCostPct === "number" ? d.operatingCostPct : 0,
+    maintenancePct: typeof d.maintenancePct === "number" ? d.maintenancePct : 0,
+    propertyMgmtFeePct: typeof d.propertyMgmtFeePct === "number" ? d.propertyMgmtFeePct : 0,
+    holdYears: typeof d.holdYears === "number" ? d.holdYears : 0,
+    capRate: typeof d.capRate === "number" ? d.capRate : 0,
+    landOwnerSplit: typeof d.landOwnerSplit === "number" ? d.landOwnerSplit : 0,
+  };
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmt(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(n) >= 1_000_000) return Math.round(n).toLocaleString("en-US");
   if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
   return n.toFixed(0);
 }
@@ -145,16 +181,26 @@ function fmtAED(n: number) { return `AED ${fmt(n)}`; }
 
 function formatNumber(n: number) { return n.toLocaleString("en-US"); }
 
-function InputRow({ label, value, unit, onChange }: { label: string; value: number; unit: string; onChange: (v: number) => void }) {
+function InputRow({ label, value, unit, onChange, placeholder }: { label: string; value: number | ""; unit: string; onChange: (v: number | "") => void; placeholder?: string }) {
+  const [focused, setFocused] = useState(false);
+  const display = value === "" ? "" : focused ? String(value) : value.toLocaleString("en-US");
   return (
     <div className="flex items-center justify-between py-1.5 lg:py-1">
       <span className="text-sm text-muted">{label}</span>
       <div className="flex items-center gap-1">
         <span className="text-xs text-muted w-8 text-right">{unit === "x" ? "×" : unit}</span>
         <input
-          type="number"
-          value={value}
-          onChange={e => onChange(Number(e.target.value))}
+          type="text"
+          inputMode="decimal"
+          value={display}
+          placeholder={placeholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onChange={e => {
+            const raw = e.target.value.replace(/,/g, "");
+            if (raw === "") { onChange(""); return; }
+            const v = Number(raw); if (!isNaN(v)) onChange(v);
+          }}
           className="w-36 text-right text-sm font-semibold text-deep-forest bg-mint-white/60 border border-mint-light/60 rounded-lg px-2 py-1 focus:border-forest/40 focus:ring-1 focus:ring-forest/10 outline-none"
         />
       </div>
@@ -171,47 +217,134 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function KPI({ label, value, sub, primary }: { label: string; value: string; sub?: string; primary?: boolean }) {
+function KPI({ label, value, sub, primary, ready = true }: { label: string; value: string; sub?: string; primary?: boolean; ready?: boolean }) {
   return (
-    <div className={`rounded-xl p-2 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"}`}>
+    <div className={`rounded-xl p-2 flex flex-col ${primary ? "bg-forest/5 border border-forest/15" : "bg-mint-white/80 border border-mint-light/40"} transition-opacity ${ready ? "opacity-100" : "opacity-50"}`}>
       <span className="text-[11px] text-muted uppercase tracking-wider">{label}</span>
-      <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
-      {sub && <span className="text-[11px] text-muted mt-0.5">{sub}</span>}
+      {ready ? (
+        <>
+          <span className={`text-lg font-bold mt-0.5 ${primary ? "text-forest" : "text-deep-forest"}`}>{value}</span>
+          {sub && <span className="text-[11px] text-muted font-heading mt-0.5">{sub}</span>}
+        </>
+      ) : (
+        <span className="text-lg font-bold mt-0.5 text-muted/30">—</span>
+      )}
     </div>
   );
 }
 
-function Section({ title, defaultOpen = true, className, children }: { title: string; defaultOpen?: boolean; className?: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen);
+function Section({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
   return (
     <ContentCard className={className}>
-      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left md:pointer-events-none">
-        <h2 className="text-xs uppercase tracking-widest text-muted font-semibold">{title}</h2>
-        <svg className={`w-3.5 h-3.5 text-muted transition-transform md:hidden ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
-      </button>
-      <div className={`mt-1 flex-1 ${!open ? "max-md:hidden" : ""}`}>{children}</div>
+      <h2 className="text-xs uppercase tracking-widest text-muted font-semibold text-center">{title}</h2>
+      <div className="mt-1 flex-1">{children}</div>
     </ContentCard>
   );
 }
 
+// ── Session & Nav ────────────────────────────────────────────────────────────
+
+const SESSION_KEY = "jv_build_lease_state";
+const SHARED_SESSION_KEY = "jv_shared_inputs";
+const SHARED_KEYS = ["efficiency", "constructionPerGFA", "softCostPct", "occupancy", "operatingCostPct", "landOwnerSplit"] as const;
+const JV_MODELS = [
+  { label: "Build & Sell", href: "/JV/build-sell" },
+  { label: "Build & Lease", href: "/JV/build-lease" },
+  { label: "Build & Hotel", href: "/JV/build-hotel" },
+];
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BuildLeasePage() {
+  const pathname = usePathname();
   const [plotInfo, setPlotInfo] = useState<PlotInfo | null>(null);
-  const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
-  const r = useMemo(() => compute(inputs), [inputs]);
+  const [inputs, setInputs] = useState<DisplayInputs>(DEFAULTS);
+  const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
+  const r = useMemo(() => compute(resolved), [resolved]);
+
+  const [splitOverridden, setSplitOverridden] = useState(false);
+  const contributionSplit = useMemo(() => {
+    if (typeof inputs.constructionPerGFA !== "number" || inputs.constructionPerGFA <= 0) return null;
+    if (typeof inputs.efficiency !== "number" || inputs.efficiency <= 0) return null;
+    if (typeof inputs.softCostPct !== "number") return null;
+    const gfa = inputs.plotSize * inputs.farRatio;
+    const constructionCost = gfa * inputs.constructionPerGFA * (1 + inputs.softCostPct / 100);
+    const total = inputs.landValue + constructionCost;
+    return total > 0 ? Math.round((inputs.landValue / total) * 100) : null;
+  }, [inputs.plotSize, inputs.farRatio, inputs.landValue, inputs.constructionPerGFA, inputs.softCostPct, inputs.efficiency]);
 
   useEffect(() => {
+    let base: DisplayInputs = { ...DEFAULTS };
+    let overridden = false;
+    // 1. Apply shared fields from other simulators
+    try {
+      const shared = JSON.parse(sessionStorage.getItem(SHARED_SESSION_KEY) || "{}");
+      for (const key of SHARED_KEYS) {
+        if (key in base && key in shared && shared[key] !== "" && shared[key] !== undefined) {
+          (base as Record<string, unknown>)[key] = shared[key];
+        }
+      }
+    } catch {}
+    // 2. Apply own session state (higher priority)
+    try {
+      const stored = sessionStorage.getItem(SESSION_KEY);
+      if (stored) {
+        const { inputs: restored, splitOverridden: so } = JSON.parse(stored);
+        if (restored) base = { ...base, ...restored };
+        if (so) overridden = true;
+      }
+    } catch {}
+    // 3. Apply plot data (highest for plot-derived fields)
     const { plotInfo: info, inputs: plotInputs } = loadPlotFromSession();
     if (info) {
       setPlotInfo(info);
-      setInputs(prev => ({ ...prev, ...plotInputs }));
+      base = { ...base, ...plotInputs };
     }
+    setInputs(base);
+    if (overridden) setSplitOverridden(true);
   }, []);
 
-  function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
+  // Persist inputs to own session + shared fields for cross-simulator carry-over
+  useEffect(() => {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ inputs, splitOverridden })); } catch {}
+    try {
+      const shared = JSON.parse(sessionStorage.getItem(SHARED_SESSION_KEY) || "{}");
+      for (const key of SHARED_KEYS) {
+        if (key in inputs) {
+          shared[key] = (inputs as Record<string, unknown>)[key];
+        }
+      }
+      sessionStorage.setItem(SHARED_SESSION_KEY, JSON.stringify(shared));
+    } catch {}
+  }, [inputs, splitOverridden]);
+
+  // Auto-fill split from contribution ratio (unless user overrode)
+  useEffect(() => {
+    if (splitOverridden || contributionSplit === null) return;
+    setInputs(prev => prev.landOwnerSplit === contributionSplit ? prev : { ...prev, landOwnerSplit: contributionSplit });
+  }, [contributionSplit, splitOverridden]);
+
+  function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }));
   }
+
+  // Readiness flags
+  const hasConstruction = typeof inputs.efficiency === "number" && inputs.efficiency > 0
+    && typeof inputs.constructionPerGFA === "number" && inputs.constructionPerGFA > 0
+    && typeof inputs.softCostPct === "number";
+  const hasRental = typeof inputs.rentalPerNSA === "number" && inputs.rentalPerNSA > 0
+    && typeof inputs.occupancy === "number" && inputs.occupancy > 0;
+  const hasExpenses = typeof inputs.operatingCostPct === "number"
+    && typeof inputs.maintenancePct === "number"
+    && typeof inputs.propertyMgmtFeePct === "number";
+  const hasHoldYears = typeof inputs.holdYears === "number" && inputs.holdYears > 0;
+  const hasCapRate = typeof inputs.capRate === "number" && inputs.capRate > 0;
+  const hasJVSplit = typeof inputs.landOwnerSplit === "number";
+
+  const isIncomeReady = hasConstruction && hasRental && hasExpenses;
+  const isReturnsReady = isIncomeReady;
+  const isProfitSplitReady = isIncomeReady && hasHoldYears && hasJVSplit;
+  const isExitReady = isIncomeReady && hasCapRate;
 
   return (
     <div className="flex flex-col flex-1 gap-2 animate-fade-in min-h-0 overflow-y-auto md:overflow-hidden">
@@ -222,7 +355,16 @@ export default function BuildLeasePage() {
           <span>/</span>
           <span className="text-deep-forest font-medium">Build &amp; Lease</span>
         </div>
-        <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Lease Model</h1>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h1 className="text-xl lg:text-2xl font-bold text-forest font-heading">Build &amp; Lease Model</h1>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {JV_MODELS.map(m => (
+              <Link key={m.href} href={m.href} className={`px-3 sm:px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${pathname === m.href ? "bg-forest text-white shadow-sm" : "bg-white border border-mint-light text-muted hover:border-forest/30 hover:text-forest"}`}>
+                {m.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Mobile key results snapshot */}
@@ -230,21 +372,21 @@ export default function BuildLeasePage() {
         <div className="grid grid-cols-3 gap-1.5">
           <div className="rounded-lg p-2 bg-forest/5 border border-forest/15">
             <p className="text-[10px] text-muted uppercase tracking-wider">NOI</p>
-            <p className="text-sm font-bold text-forest">{fmtAED(r.noi)}</p>
+            <p className="text-sm font-bold text-forest">{isIncomeReady ? fmtAED(r.noi) : "—"}</p>
           </div>
           <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
             <p className="text-[10px] text-muted uppercase tracking-wider">Yield</p>
-            <p className="text-sm font-bold text-deep-forest">{r.yieldPct.toFixed(1)}%</p>
+            <p className="text-sm font-bold text-deep-forest">{isReturnsReady ? `${r.yieldPct.toFixed(1)}%` : "—"}</p>
           </div>
           <div className="rounded-lg p-2 bg-mint-white/80 border border-mint-light/40">
-            <p className="text-[10px] text-muted uppercase tracking-wider">ROI ({inputs.holdYears}yr)</p>
-            <p className="text-sm font-bold text-deep-forest">{r.totalROI.toFixed(1)}%</p>
+            <p className="text-[10px] text-muted uppercase tracking-wider">ROI{hasHoldYears ? ` (${resolved.holdYears}yr)` : ""}</p>
+            <p className="text-sm font-bold text-deep-forest">{isReturnsReady && hasHoldYears ? `${r.totalROI.toFixed(1)}%` : "—"}</p>
           </div>
         </div>
       </div>
 
-      {/* 2×2 Quadrant Grid */}
-      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-2 gap-2 flex-1 min-h-0">
+      {/* 2×3 Grid — rows shared across columns for alignment */}
+      <div className="flex flex-col md:grid md:grid-cols-2 md:grid-rows-[auto_1.4fr_0.6fr] gap-2 flex-1 min-h-0">
         {/* TOP-LEFT: Plot Info (green card) */}
         <div className="bg-forest/[0.04] backdrop-blur-sm rounded-2xl shadow-sm border border-forest/15 p-4 md:p-6 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-4">
@@ -264,7 +406,7 @@ export default function BuildLeasePage() {
 
         {/* TOP-RIGHT: Simulation Inputs */}
         <ContentCard className="flex flex-col">
-          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">
+          <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2 text-center">
             Simulation Inputs
           </h2>
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-6">
@@ -272,28 +414,28 @@ export default function BuildLeasePage() {
             <div className="flex flex-col">
               <div>
                 <p className="text-xs font-semibold text-deep-forest pb-1">Construction</p>
-                <InputRow label="Efficiency" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} />
-                <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} />
-                <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} />
+                <InputRow label="Efficiency" value={inputs.efficiency} unit="%" onChange={v => update("efficiency", v)} placeholder="e.g. 80" />
+                <InputRow label="Cost / GFA sqft" value={inputs.constructionPerGFA} unit="AED" onChange={v => update("constructionPerGFA", v)} placeholder="e.g. 900" />
+                <InputRow label="Soft Cost" value={inputs.softCostPct} unit="%" onChange={v => update("softCostPct", v)} placeholder="e.g. 20" />
               </div>
               <div>
                 <p className="text-xs font-semibold text-deep-forest pt-1 pb-1">Rental</p>
-                <InputRow label="Rent / NSA sqft / yr" value={inputs.rentalPerNSA} unit="AED" onChange={v => update("rentalPerNSA", v)} />
-                <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} />
+                <InputRow label="Rent / NSA sqft / yr" value={inputs.rentalPerNSA} unit="AED" onChange={v => update("rentalPerNSA", v)} placeholder="e.g. 120" />
+                <InputRow label="Occupancy" value={inputs.occupancy} unit="%" onChange={v => update("occupancy", v)} placeholder="e.g. 85" />
               </div>
             </div>
             {/* Inner right: Expenses + Hold & Exit + JV Split */}
             <div className="flex flex-col justify-between border-t border-mint-light/40 lg:border-t-0">
               <div>
                 <p className="text-xs font-semibold text-deep-forest pb-1">Expenses (% of Gross Rent)</p>
-                <InputRow label="Operating Costs" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} />
-                <InputRow label="Maintenance" value={inputs.maintenancePct} unit="%" onChange={v => update("maintenancePct", v)} />
-                <InputRow label="Property Mgmt Fee" value={inputs.propertyMgmtFeePct} unit="%" onChange={v => update("propertyMgmtFeePct", v)} />
+                <InputRow label="Operating Costs" value={inputs.operatingCostPct} unit="%" onChange={v => update("operatingCostPct", v)} placeholder="e.g. 10" />
+                <InputRow label="Maintenance" value={inputs.maintenancePct} unit="%" onChange={v => update("maintenancePct", v)} placeholder="e.g. 5" />
+                <InputRow label="Property Mgmt Fee" value={inputs.propertyMgmtFeePct} unit="%" onChange={v => update("propertyMgmtFeePct", v)} placeholder="e.g. 8" />
               </div>
               <div>
                 <p className="text-xs font-semibold text-deep-forest pt-2 pb-1">Hold &amp; Exit</p>
-                <InputRow label="Hold Period" value={inputs.holdYears} unit="yrs" onChange={v => update("holdYears", v)} />
-                <InputRow label="Exit Cap Rate" value={inputs.capRate} unit="%" onChange={v => update("capRate", v)} />
+                <InputRow label="Hold Period" value={inputs.holdYears} unit="yrs" onChange={v => update("holdYears", v)} placeholder="e.g. 5" />
+                <InputRow label="Exit Cap Rate" value={inputs.capRate} unit="%" onChange={v => update("capRate", v)} placeholder="e.g. 7" />
               </div>
             </div>
           </div>
@@ -301,61 +443,77 @@ export default function BuildLeasePage() {
           <div className="border-t border-mint-light/40 pt-2 mt-1">
             <p className="text-xs font-semibold text-deep-forest text-center pb-1">Joint-Venture Split</p>
             <div className="grid grid-cols-2 gap-x-4">
-              <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => update("landOwnerSplit", v)} />
+              <InputRow label="Landowner Share" value={inputs.landOwnerSplit} unit="%" onChange={v => { setSplitOverridden(true); update("landOwnerSplit", v); }} placeholder="auto" />
               <div className="flex items-center justify-between py-1.5 lg:py-1">
                 <span className="text-sm text-muted">Investor Share</span>
-                <span className="text-sm font-semibold text-deep-forest">{100 - inputs.landOwnerSplit}%</span>
+                <span className="text-sm font-semibold text-deep-forest">{typeof inputs.landOwnerSplit === "number" ? `${100 - inputs.landOwnerSplit}%` : "—"}</span>
               </div>
             </div>
           </div>
         </ContentCard>
 
-        {/* BOTTOM-LEFT: Annual Income + Returns */}
-        <div className="flex flex-col gap-2">
-          <Section title="Annual Income" className="flex-1 flex flex-col">
+        {/* ROW 2 LEFT: Annual Income */}
+        <Section title="Annual Income" className="flex flex-col">
+          {isIncomeReady ? (
             <div className="grid grid-cols-2 gap-1.5">
-              <KPI label="Gross Rental Income" value={fmtAED(r.grossRentalIncome)} sub={`${formatNumber(Math.round(r.nsa))} NSA × AED ${inputs.rentalPerNSA} × ${inputs.occupancy}%`} />
+              <KPI label="Gross Rental Income" value={fmtAED(r.grossRentalIncome)} sub={`${formatNumber(Math.round(r.nsa))} NSA × AED ${resolved.rentalPerNSA} × ${resolved.occupancy}%`} />
               <KPI label="Total Expenses" value={fmtAED(r.totalExpenses)} sub={`Ops ${fmtAED(r.operatingCosts)} + Maint ${fmtAED(r.maintenance)} + Mgmt ${fmtAED(r.propertyMgmtFee)}`} />
               <KPI label="NOI (Net Operating Income)" value={fmtAED(r.noi)} primary sub="Gross Rent − Expenses" />
-              <KPI label={`Cash Flow (${inputs.holdYears} yrs)`} value={fmtAED(r.totalNOI)} primary sub={`NOI × ${inputs.holdYears} years`} />
+              <KPI label={`Cash Flow${hasHoldYears ? ` (${resolved.holdYears} yrs)` : ""}`} value={hasHoldYears ? fmtAED(r.totalNOI) : "—"} primary={hasHoldYears} sub={hasHoldYears ? `NOI × ${resolved.holdYears} years` : "Enter hold period"} ready={hasHoldYears} />
             </div>
-          </Section>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter construction, rental, and expense inputs to see annual income</p>
+          )}
+        </Section>
 
-          <Section title="Returns" className="flex-1 flex flex-col">
+        {/* ROW 2 RIGHT: Profit Split */}
+        <Section title={`Profit Split${hasHoldYears ? ` (${resolved.holdYears}-Year Income)` : ""}`} className="flex flex-col">
+          {isProfitSplitReady ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
+                <span className="text-xs text-muted uppercase tracking-wider font-medium">Landowner ({resolved.landOwnerSplit}%)</span>
+                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
+                <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
+                <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.landOwnerROI / resolved.holdYears).toFixed(1)}%</p>
+                <p className="text-[11px] text-muted font-heading">Total ROI: {r.landOwnerROI.toFixed(1)}%</p>
+              </div>
+              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
+                <span className="text-xs text-muted uppercase tracking-wider font-medium">Investor ({100 - resolved.landOwnerSplit}%)</span>
+                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
+                <p className="text-[11px] text-muted font-heading mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
+                <p className="text-[11px] text-muted font-heading">Annual ROI: {(r.investorROI / resolved.holdYears).toFixed(1)}%</p>
+                <p className="text-[11px] text-muted font-heading">Total ROI: {r.investorROI.toFixed(1)}%</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter all inputs including hold period and JV split to see profit breakdown</p>
+          )}
+        </Section>
+
+        {/* ROW 3 LEFT: Returns */}
+        <Section title="Returns" className="flex flex-col">
+          {isReturnsReady ? (
             <div className="grid grid-cols-3 gap-1.5">
               <KPI label="Yield" value={`${r.yieldPct.toFixed(1)}%`} sub="NOI ÷ Dev. Cost" primary />
-              <KPI label={`ROI (${inputs.holdYears} yrs)`} value={`${r.totalROI.toFixed(1)}%`} sub="Total NOI ÷ Dev. Cost" />
+              <KPI label={`ROI${hasHoldYears ? ` (${resolved.holdYears} yrs)` : ""}`} value={hasHoldYears ? `${r.totalROI.toFixed(1)}%` : "—"} sub="Total NOI ÷ Dev. Cost" ready={hasHoldYears} />
               <KPI label="Payback Period" value={r.paybackYears === Infinity ? "N/A" : `${r.paybackYears.toFixed(1)} yrs`} sub="Dev. Cost ÷ NOI" />
             </div>
-          </Section>
-        </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter construction, rental, and expense inputs to see returns</p>
+          )}
+        </Section>
 
-        {/* BOTTOM-RIGHT: Profit Split + Exit Valuation */}
-        <div className="flex flex-col gap-2">
-          <Section title={`Profit Split (${inputs.holdYears}-Year Income)`} className="flex-1 flex flex-col">
+        {/* ROW 3 RIGHT: Exit Valuation */}
+        <Section title="Exit Valuation" className="flex flex-col">
+          {isExitReady ? (
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Landowner ({inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.landOwnerIncome)}</p>
-                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.landOwnerContribution)} (land)</p>
-                <p className="text-[11px] text-muted">ROI: {r.landOwnerROI.toFixed(1)}%</p>
-              </div>
-              <div className="rounded-xl p-2 bg-forest/5 border border-forest/15">
-                <span className="text-[11px] text-muted uppercase tracking-wider">Investor ({100 - inputs.landOwnerSplit}%)</span>
-                <p className="text-lg font-bold text-forest mt-0.5">{fmtAED(r.investorIncome)}</p>
-                <p className="text-[11px] text-muted mt-0.5">Contributes: {fmtAED(r.investorContribution)} (cash)</p>
-                <p className="text-[11px] text-muted">ROI: {r.investorROI.toFixed(1)}%</p>
-              </div>
-            </div>
-          </Section>
-
-          <Section title="Exit Valuation (Optional)" className="flex-1 flex flex-col">
-            <div className="grid grid-cols-2 gap-1.5">
-              <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${inputs.capRate}% cap rate`} primary />
+              <KPI label="Asset Value at Exit" value={fmtAED(r.exitValuation)} sub={`NOI ÷ ${resolved.capRate}% cap rate`} primary />
               <KPI label="Exit Profit" value={fmtAED(r.exitProfit)} sub="Exit Value − Dev. Cost" primary={r.exitProfit >= 0} />
             </div>
-          </Section>
-        </div>
+          ) : (
+            <p className="text-sm text-muted/40 text-center py-4">Enter income inputs and exit cap rate to see exit valuation</p>
+          )}
+        </Section>
       </div>
     </div>
   );

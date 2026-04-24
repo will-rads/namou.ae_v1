@@ -1,8 +1,8 @@
 /** Backend authentication – server-only (imported by middleware + API route). */
 
 const USERS: Record<string, string> = {
-  william: "NamOUwEb123",
-  jad: "NamOUwEb123",
+  william: "namou.ae1",
+  jad: "namou.ae1",
 };
 
 const DISPLAY_NAMES: Record<string, string> = {

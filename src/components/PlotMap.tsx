@@ -11,28 +11,58 @@ interface Props {
   comparePlots: Plot[];
   compareMode: boolean;
   onSelectPlot: (plot: Plot) => void;
+  onSelectUnavailable?: (plot: Plot) => void;
+  unavailablePlot?: Plot | null;
 }
 
 const MAP_CENTER: [number, number] = [25.745, 55.855];
 const OVERVIEW_ZOOM = 11;
 const DETAIL_ZOOM = 18;
 
-function buildIcon(name: string, active: boolean): L.DivIcon {
-  const bg     = active ? "#003D2E"             : "rgba(245,158,11,0.95)";
-  const bdr    = active ? "#002A1F"             : "#D97706";
-  const color  = active ? "#ffffff"             : "#78350F";
+// Google Material-style icon paths by land category (case-insensitive lookup)
+const PIN_ICONS: Record<string, string> = {
+  residential: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
+  commercial: "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z",
+  hospitality: "M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z",
+  industrial: "M22 10V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2v-4l-4 2V10l4 2zm-9 1H6V9h7v2zm2-4H6V5h9v2z",
+  "mixed-use": "M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z",
+  "mixed use": "M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z",
+};
+// Fallback: map pin icon
+const DEFAULT_ICON = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z";
+
+function getIconPath(category: string): string {
+  return PIN_ICONS[category.toLowerCase()] ?? DEFAULT_ICON;
+}
+
+import { getCategoryColors } from "@/data/categoryColors";
+
+function buildIcon(category: string, active: boolean, available: boolean = true): L.DivIcon {
+  const colors = getCategoryColors(category);
   const shadow = active
-    ? "0 3px 12px rgba(0,61,46,0.55)"
-    : "0 2px 10px rgba(0,0,0,0.40)";
+    ? `drop-shadow(0 3px 8px ${colors.activeStroke}80)`
+    : "drop-shadow(0 2px 5px rgba(0,0,0,0.4))";
+  const size = active ? 38 : 30;
+  const iconPath = getIconPath(category);
+
+  // Available: colored pin bg, white circle, colored icon
+  // Unavailable (inverted): white pin bg, colored circle, white icon
+  const pinBg = available ? (active ? colors.activeBg : colors.bg) : "#ffffff";
+  const pinStroke = active ? colors.activeStroke : colors.stroke;
+  const circleFill = available ? "#ffffff" : (active ? colors.activeBg : colors.bg);
+  const iconFill = available ? colors.icon : "#ffffff";
 
   return L.divIcon({
-    html: `<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
-      <div style="background:${bg};border:2px solid ${bdr};border-radius:7px;padding:4px 11px;font-size:10px;font-weight:700;color:${color};white-space:nowrap;box-shadow:${shadow};font-family:system-ui,-apple-system,sans-serif;line-height:1.4;letter-spacing:0.03em;">${name}</div>
-      <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid ${bdr};"></div>
-    </div>`,
+    html: `<svg width="${size}" height="${size + 12}" viewBox="0 0 30 42" fill="none" style="filter:${shadow};">
+      <path d="M15 0C6.716 0 0 6.716 0 15c0 10.5 15 27 15 27s15-16.5 15-27C30 6.716 23.284 0 15 0z" fill="${pinBg}" stroke="${pinStroke}" stroke-width="1.5"/>
+      <circle cx="15" cy="14" r="9" fill="${circleFill}"/>
+      <svg x="6" y="5" width="18" height="18" viewBox="0 0 24 24">
+        <path d="${iconPath}" fill="${iconFill}"/>
+      </svg>
+    </svg>`,
     className: "",
-    iconSize: [96, 34],
-    iconAnchor: [48, 34],
+    iconSize: [size, size + 12],
+    iconAnchor: [size / 2, size + 12],
   });
 }
 
@@ -42,6 +72,8 @@ export default function PlotMap({
   comparePlots,
   compareMode,
   onSelectPlot,
+  onSelectUnavailable,
+  unavailablePlot,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<L.Map | null>(null);
@@ -50,6 +82,8 @@ export default function PlotMap({
 
   const onSelectRef = useRef(onSelectPlot);
   useEffect(() => { onSelectRef.current = onSelectPlot; }, [onSelectPlot]);
+  const onSelectUnavailableRef = useRef(onSelectUnavailable);
+  useEffect(() => { onSelectUnavailableRef.current = onSelectUnavailable; }, [onSelectUnavailable]);
 
   // ── Map initialisation (once on mount) ──────────────────────────────────
   useEffect(() => {
@@ -110,12 +144,21 @@ export default function PlotMap({
         selectedPlot?.id === plot.id ||
         comparePlots.some((p) => p.id === plot.id);
 
+      const available = plot.available !== false;
+
       const marker = L.marker([plot.lat, plot.lng], {
-        icon: buildIcon(plot.name, isActive),
+        icon: buildIcon(plot.category, isActive, available),
         riseOnHover: true,
       });
 
-      marker.on("click", () => onSelectRef.current(plot));
+      marker.on("click", () => {
+        if (available) {
+          onSelectRef.current(plot);
+        } else {
+          // Unavailable: notify parent — the unavailablePlot effect handles zoom
+          onSelectUnavailableRef.current?.(plot);
+        }
+      });
       marker.addTo(map);
       markersRef.current.set(plot.id, marker);
     });
@@ -125,9 +168,11 @@ export default function PlotMap({
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
 
-    if (!compareMode && selectedPlot?.lat != null && selectedPlot?.lng != null) {
-      const lat = selectedPlot.lat!;
-      const lng = selectedPlot.lng!;
+    const focusPlot = selectedPlot ?? unavailablePlot ?? null;
+
+    if (!compareMode && focusPlot?.lat != null && focusPlot?.lng != null) {
+      const lat = focusPlot.lat!;
+      const lng = focusPlot.lng!;
       const id = requestAnimationFrame(() => {
         if (!mapRef.current) return;
         mapRef.current.invalidateSize();
@@ -137,7 +182,7 @@ export default function PlotMap({
         });
       });
       return () => cancelAnimationFrame(id);
-    } else if (!compareMode && !selectedPlot) {
+    } else if (!compareMode && !focusPlot) {
       const id = requestAnimationFrame(() => {
         if (!mapRef.current) return;
         mapRef.current.invalidateSize();
@@ -148,7 +193,7 @@ export default function PlotMap({
       });
       return () => cancelAnimationFrame(id);
     }
-  }, [mapReady, selectedPlot, compareMode]);
+  }, [mapReady, selectedPlot, unavailablePlot, compareMode]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
 }

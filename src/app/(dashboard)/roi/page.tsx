@@ -1,11 +1,52 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import React from "react";
 import ContentCard from "@/components/ContentCard";
 import { formatNumber, plots, type Plot } from "@/data/mock";
+
+// ── Subtype construction assumptions ────────────────────────────────────────
+
+interface SubtypeRow {
+  area: string;
+  landType: string;
+  subtype: string;
+  costLow: number;
+  costHigh: number;
+  priceLow: number;
+  priceHigh: number;
+  hasPrice: boolean;
+}
+
+const SUBTYPE_SHEET_GID = "1946286274";
+const SUBTYPE_SHEET_ID = "1KAsPi-FB6WH7GESe5ZmvGziXSPWj2vjZgwxrwI1bXpk";
+
+/**
+ * Parse a benchmark cell. Returns {low, high}.
+ * - Range "600 - 800" → {low: 600, high: 800}
+ * - Single value "220" → {low: 198, high: 242}  (±10% normalized to a range)
+ * - Null/empty → null
+ */
+function parseBenchmark(raw: string): { low: number; high: number } | null {
+  if (!raw) return null;
+  const cleaned = raw.replace(/,/g, "").replace(/–/g, "-").replace(/—/g, "-");
+  const m = cleaned.match(/(\d+)\s*-\s*(\d+)/);
+  if (m) return { low: parseInt(m[1]), high: parseInt(m[2]) };
+  const singleMatch = cleaned.match(/(\d+(?:\.\d+)?)/);
+  if (singleMatch) {
+    const v = parseFloat(singleMatch[1]);
+    if (v > 0) {
+      return { low: Math.round(v * 0.9), high: Math.round(v * 1.1) };
+    }
+  }
+  return null;
+}
+
+function normalizeArea(area: string): string {
+  return area.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,12 +79,14 @@ interface OfferSim {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SENSITIVITY_PRICES = [2500, 2800, 3200, 3600, 4000];
+/** Build 5 price points centred on the current selling price with a readable step. */
+function buildSensitivityPrices(center: number): number[] {
+  const raw = Math.max(center * 0.1, 25);
+  // Round step to a "nice" number: nearest 25 up to 200, nearest 50 up to 500, nearest 100 above
+  const step = raw <= 200 ? Math.round(raw / 25) * 25 : raw <= 500 ? Math.round(raw / 50) * 50 : Math.round(raw / 100) * 100;
+  return [-2, -1, 0, 1, 2].map(i => Math.round(center + i * step));
+}
 const RLV_TARGET_MARGIN = 20;
-
-const DEFAULT_SELLING_PRICE = 3200;
-const DEFAULT_CONSTRUCTION_COST = 900;
-const DEFAULT_EFFICIENCY = 80;
 
 const BASE_INPUTS: DisplayInputs = {
   plotSize: 50000,
@@ -57,16 +100,44 @@ const BASE_INPUTS: DisplayInputs = {
   sellingPricePerNSA: "",
 };
 
-const SCENARIO_OVERRIDES: Record<Scenario, Partial<Inputs>> = {
-  conservative: { sellingPricePerNSA: Math.round(DEFAULT_SELLING_PRICE * 0.9), constructionCostPerGFA: Math.round(DEFAULT_CONSTRUCTION_COST * 1.1), efficiency: 75, softCostPct: 20 },
-  base:         { sellingPricePerNSA: DEFAULT_SELLING_PRICE, constructionCostPerGFA: DEFAULT_CONSTRUCTION_COST, efficiency: DEFAULT_EFFICIENCY, softCostPct: 20 },
-  optimistic:   { sellingPricePerNSA: Math.round(DEFAULT_SELLING_PRICE * 1.1), constructionCostPerGFA: Math.round(DEFAULT_CONSTRUCTION_COST * 0.9), efficiency: 85, softCostPct: 20 },
-};
+function scaleScenarioField(value: number | "", multiplier: number): number | "" {
+  return typeof value === "number" ? Math.round(value * multiplier) : "";
+}
+
+function deriveScenarioInputs(base: DisplayInputs, scenario: Scenario): DisplayInputs {
+  if (scenario === "base") return base;
+
+  return {
+    ...base,
+    constructionCostPerGFA: scaleScenarioField(base.constructionCostPerGFA, scenario === "conservative" ? 1.1 : 0.9),
+    sellingPricePerNSA: scaleScenarioField(base.sellingPricePerNSA, scenario === "conservative" ? 0.9 : 1.1),
+  };
+}
+
+function toBaseScenarioValue<K extends keyof DisplayInputs>(
+  scenario: Scenario,
+  key: K,
+  value: DisplayInputs[K],
+): DisplayInputs[K] {
+  if (typeof value !== "number") return value;
+
+  if (key === "constructionCostPerGFA") {
+    if (scenario === "conservative") return Math.round(value / 1.1) as DisplayInputs[K];
+    if (scenario === "optimistic") return Math.round(value / 0.9) as DisplayInputs[K];
+  }
+
+  if (key === "sellingPricePerNSA") {
+    if (scenario === "conservative") return Math.round(value / 0.9) as DisplayInputs[K];
+    if (scenario === "optimistic") return Math.round(value / 1.1) as DisplayInputs[K];
+  }
+
+  return value;
+}
 
 const SCENARIO_META: Record<Scenario, { label: string; description: string; riskLevel: string; riskColor: string; suitedFor: string; marketOutlook: string }> = {
   conservative: {
     label: "Conservative",
-    description: "Lower exit price, higher construction cost, tighter efficiency",
+    description: "Lower exit price, higher construction cost",
     riskLevel: "Low Risk",
     riskColor: "text-forest bg-forest/10",
     suitedFor: "Risk-averse investors seeking capital preservation with steady returns",
@@ -82,7 +153,7 @@ const SCENARIO_META: Record<Scenario, { label: string; description: string; risk
   },
   optimistic: {
     label: "Optimistic",
-    description: "Premium exit price, lean construction, higher efficiency",
+    description: "Higher exit price, lower construction cost",
     riskLevel: "Higher Risk",
     riskColor: "text-blue-700 bg-blue-50",
     suitedFor: "Growth-focused investors comfortable with higher exposure for outsized returns",
@@ -123,9 +194,7 @@ function resolveInputs(d: DisplayInputs): Inputs {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmtM(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return n.toFixed(0);
+  return Math.round(n).toLocaleString("en-US");
 }
 
 function fmtAED(n: number): string {
@@ -144,6 +213,7 @@ function getDealLabel(margin: number): { label: string; bg: string; text: string
 
 function deriveInputsFromPlot(plot: Plot, base: DisplayInputs): DisplayInputs {
   const derivedFAR = plot.far ?? (plot.gfa ? plot.gfa / plot.plotArea : base.gfaRatio);
+  const derivedPricePerPlotSqft = plot.askingPrice / plot.plotArea;
   const derivedPricePerGFA = plot.gfa
     ? plot.askingPrice / plot.gfa
     : plot.askingPrice / (plot.plotArea * derivedFAR);
@@ -151,7 +221,7 @@ function deriveInputsFromPlot(plot: Plot, base: DisplayInputs): DisplayInputs {
     ...base,
     plotSize: plot.plotArea,
     pricingMethod: "per-plot",
-    pricePerPlotSqft: plot.pricePerSqFt,
+    pricePerPlotSqft: Math.round(derivedPricePerPlotSqft),
     pricePerGFA: Math.round(derivedPricePerGFA),
     gfaRatio: parseFloat(derivedFAR.toFixed(2)),
   };
@@ -170,13 +240,16 @@ function loadInitialROIState() {
   try {
     const stored = sessionStorage.getItem("selected_plot");
     if (stored) {
-      const plot: Plot = JSON.parse(stored);
+      const snapshot: Plot = JSON.parse(stored);
+      // Prefer live data from plots array (fresh from spreadsheet)
+      const plot = plots.find(p => p.id === snapshot.id) ?? snapshot;
       sourcePlot = plot;
       inputs = deriveInputsFromPlot(plot, inputs);
+      const derivedPricePerPlotSqft = plot.askingPrice / plot.plotArea;
       const derivedPricePerGFA = plot.gfa
         ? plot.askingPrice / plot.gfa
         : plot.askingPrice / (plot.plotArea * (plot.far ?? BASE_INPUTS.gfaRatio));
-      offer = { method: "per-gfa", pricePerGFA: Math.round(derivedPricePerGFA * 0.8), pricePerPlotSqft: Math.round(plot.pricePerSqFt * 0.8) };
+      offer = { method: "per-gfa", pricePerGFA: Math.round(derivedPricePerGFA * 0.8), pricePerPlotSqft: Math.round(derivedPricePerPlotSqft * 0.8) };
     }
   } catch { /* ignore */ }
   return { inputs, offer, sourcePlot, comparePlots };
@@ -184,27 +257,135 @@ function loadInitialROIState() {
 
 export default function ROIPage() {
   const router = useRouter();
-  const [inputs, setInputs] = useState<DisplayInputs>(() => loadInitialROIState().inputs);
+  const [baseInputs, setBaseInputs] = useState<DisplayInputs>(() => loadInitialROIState().inputs);
   const [activeScenario, setActiveScenario] = useState<Scenario>("base");
   const _offer = loadInitialROIState().offer; // kept for sessionStorage seeding
   const [sourcePlot, setSourcePlot] = useState<Plot | null>(() => loadInitialROIState().sourcePlot);
   const [comparePlots, setComparePlots] = useState<Plot[]>(() => loadInitialROIState().comparePlots);
-  const [showPlotPicker, setShowPlotPicker] = useState(false);
-  const [pickerPos, setPickerPos] = useState<{ left: number; bottom: number } | null>(null);
-  const compareBtnRef = useRef<HTMLButtonElement>(null);
-
-  const openPlotPicker = useCallback(() => {
-    setShowPlotPicker(v => {
-      if (!v && compareBtnRef.current) {
-        const rect = compareBtnRef.current.getBoundingClientRect();
-        setPickerPos({ left: Math.min(rect.left, window.innerWidth - 280), bottom: window.innerHeight - rect.top + 8 });
-      }
-      return !v;
-    });
-  }, []);
 
   const isCompareMode = comparePlots.length === 2;
 
+  // ── Subtype construction assumptions ──
+  const [subtypeRows, setSubtypeRows] = useState<SubtypeRow[]>([]);
+  const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
+  const [subtypeOpen, setSubtypeOpen] = useState(false);
+  const subtypeRef = useRef<HTMLDivElement>(null);
+  const costManuallyEdited = useRef(false);
+  const priceManuallyEdited = useRef(false);
+
+  // Fetch subtype data once
+  useEffect(() => {
+    const url = `https://docs.google.com/spreadsheets/d/${SUBTYPE_SHEET_ID}/export?format=csv&gid=${SUBTYPE_SHEET_GID}`;
+    fetch(url).then(r => r.text()).then(text => {
+      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+      const rows: SubtypeRow[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        // Simple CSV parse (handles quoted fields)
+        const parts: string[] = [];
+        let cur = "", inQ = false;
+        for (const ch of lines[i]) {
+          if (ch === '"') { inQ = !inQ; continue; }
+          if (ch === ',' && !inQ) { parts.push(cur.trim()); cur = ""; continue; }
+          cur += ch;
+        }
+        parts.push(cur.trim());
+        const [area, landType, subtype, costStr, priceStr] = parts;
+        if (!area || !landType) continue;
+        const costBench = parseBenchmark(costStr || "");
+        if (!costBench) continue;
+        const priceBench = parseBenchmark(priceStr || "");
+        rows.push({
+          area: area.trim(),
+          landType: landType.trim(),
+          subtype: subtype?.trim() || "",
+          costLow: costBench.low,
+          costHigh: costBench.high,
+          priceLow: priceBench?.low ?? 0,
+          priceHigh: priceBench?.high ?? 0,
+          hasPrice: !!priceBench,
+        });
+      }
+      setSubtypeRows(rows);
+    }).catch(() => {});
+  }, []);
+
+  // Close subtype dropdown on outside click
+  useEffect(() => {
+    if (!subtypeOpen) return;
+    function handle(e: MouseEvent) { if (subtypeRef.current && !subtypeRef.current.contains(e.target as Node)) setSubtypeOpen(false); }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [subtypeOpen]);
+
+  // Derive matching subtypes for the selected plot
+  const matchingSubtypes = useMemo(() => {
+    if (!sourcePlot || subtypeRows.length === 0) return [];
+    const plotArea = normalizeArea(sourcePlot.area);
+    const plotCategory = sourcePlot.category?.toLowerCase() ?? "";
+    return subtypeRows.filter(r => {
+      const rArea = normalizeArea(r.area);
+      const rType = r.landType.toLowerCase();
+      return rArea === plotArea && rType === plotCategory;
+    });
+  }, [sourcePlot, subtypeRows]);
+
+  const hasMultipleSubtypes = matchingSubtypes.length > 1;
+
+  // Auto-select first subtype
+  const autoSelectSubtype = useCallback(() => {
+    if (matchingSubtypes.length > 0 && !selectedSubtype) {
+      setSelectedSubtype(matchingSubtypes[0].subtype);
+    }
+  }, [matchingSubtypes, selectedSubtype]);
+  useEffect(() => { autoSelectSubtype(); }, [autoSelectSubtype]);
+
+  // Apply subtype construction cost and selling price to base inputs (only when subtype changes, not on manual edits)
+  useEffect(() => {
+    costManuallyEdited.current = false; // reset on subtype change
+    priceManuallyEdited.current = false;
+    if (matchingSubtypes.length === 0 || !selectedSubtype) return;
+    const match = matchingSubtypes.find(r => r.subtype === selectedSubtype);
+    if (!match) return;
+    // Base case = average of range
+    const costAvg = Math.round((match.costLow + match.costHigh) / 2);
+    const priceAvg = match.hasPrice ? Math.round((match.priceLow + match.priceHigh) / 2) : null;
+    setBaseInputs(prev => {
+      const next = { ...prev };
+      let changed = false;
+      if (next.constructionCostPerGFA !== costAvg) { next.constructionCostPerGFA = costAvg; changed = true; }
+      if (priceAvg !== null && next.sellingPricePerNSA !== priceAvg) { next.sellingPricePerNSA = priceAvg; changed = true; }
+      return changed ? next : prev;
+    });
+  }, [selectedSubtype, matchingSubtypes]);
+
+  // Override deriveScenarioInputs to use subtype range for scenarios
+  const activeSubtypeMatch = useMemo(() => {
+    if (!selectedSubtype) return null;
+    return matchingSubtypes.find(r => r.subtype === selectedSubtype) ?? null;
+  }, [selectedSubtype, matchingSubtypes]);
+
+  const inputs = useMemo(() => {
+    const base = deriveScenarioInputs(baseInputs, activeScenario);
+    if (!activeSubtypeMatch) return base;
+    const next = { ...base };
+    // Override construction cost based on scenario + subtype range (conservative=high, optimistic=low)
+    if (!costManuallyEdited.current) {
+      next.constructionCostPerGFA = activeScenario === "conservative"
+        ? activeSubtypeMatch.costHigh
+        : activeScenario === "optimistic"
+          ? activeSubtypeMatch.costLow
+          : Math.round((activeSubtypeMatch.costLow + activeSubtypeMatch.costHigh) / 2);
+    }
+    // Override selling price when benchmark is available (conservative=low, optimistic=high — reverse of cost)
+    if (activeSubtypeMatch.hasPrice && !priceManuallyEdited.current) {
+      next.sellingPricePerNSA = activeScenario === "conservative"
+        ? activeSubtypeMatch.priceLow
+        : activeScenario === "optimistic"
+          ? activeSubtypeMatch.priceHigh
+          : Math.round((activeSubtypeMatch.priceLow + activeSubtypeMatch.priceHigh) / 2);
+    }
+    return next;
+  }, [baseInputs, activeScenario, activeSubtypeMatch]);
   const resolved = useMemo(() => resolveInputs(inputs), [inputs]);
   const results = useMemo(() => compute(resolved), [resolved]);
   void _offer; // used only for initial load
@@ -220,18 +401,17 @@ export default function ROIPage() {
   const results2 = useMemo(() => inputs2 ? compute(resolveInputs(inputs2)) : null, [inputs2]);
   const dealLabel2 = results2 ? getDealLabel(results2.profitMargin) : null;
 
+  const sensPrices = useMemo(() => buildSensitivityPrices(resolved.sellingPricePerNSA), [resolved.sellingPricePerNSA]);
   const sensitivityData = useMemo(() =>
-    SENSITIVITY_PRICES.map(price => ({ price, ...compute({ ...resolved, sellingPricePerNSA: price }) })),
-    [resolved]
-  );
-  const closestSensPrice = SENSITIVITY_PRICES.reduce((c, p) =>
-    Math.abs(p - resolved.sellingPricePerNSA) < Math.abs(c - resolved.sellingPricePerNSA) ? p : c,
-    SENSITIVITY_PRICES[0]
+    sensPrices.map(price => ({ price, ...compute({ ...resolved, sellingPricePerNSA: price }) })),
+    [sensPrices, resolved]
   );
   const maxAbsProfit = Math.max(...sensitivityData.map(d => Math.abs(d.profit)), 1);
 
   function update<K extends keyof DisplayInputs>(key: K, value: DisplayInputs[K]) {
-    setInputs(prev => ({ ...prev, [key]: value }));
+    if (key === "constructionCostPerGFA") costManuallyEdited.current = true;
+    if (key === "sellingPricePerNSA") priceManuallyEdited.current = true;
+    setBaseInputs(prev => ({ ...prev, [key]: toBaseScenarioValue(activeScenario, key, value) }));
   }
 
   const hasConstructionInputs = typeof inputs.constructionCostPerGFA === "number" && inputs.constructionCostPerGFA > 0
@@ -242,10 +422,10 @@ export default function ROIPage() {
   const isTotalProfitReady = isTotalCostReady && isTotalRevenueReady;
   const isProfitMarginReady = isTotalCostReady && isTotalRevenueReady;
   const allKPIsReady = isTotalCostReady && isTotalRevenueReady;
+  const isEquivPriceReady = hasSalesInput && typeof inputs.efficiency === "number" && inputs.efficiency > 0;
 
   function applyScenario(s: Scenario) {
     setActiveScenario(s);
-    setInputs(prev => ({ ...prev, ...SCENARIO_OVERRIDES[s] }));
   }
 
   return (
@@ -281,23 +461,23 @@ export default function ROIPage() {
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
                   </svg>
-                  {sourcePlot.name}
+                  {sourcePlot.name} | {sourcePlot.landUse || "—"} | {(sourcePlot.plotArea / 1000).toFixed(2)}K sqft | AED {sourcePlot.askingPrice >= 1_000_000 ? `${(sourcePlot.askingPrice / 1_000_000).toFixed(2)}M` : `${(sourcePlot.askingPrice / 1000).toFixed(2)}K`}
                 </button>
                 <button
-                  onClick={() => { setSourcePlot(null); setInputs(BASE_INPUTS); sessionStorage.removeItem("selected_plot"); }}
+                  onClick={() => { setSourcePlot(null); setBaseInputs(BASE_INPUTS); sessionStorage.removeItem("selected_plot"); }}
                   className="ml-0.5 text-forest/60 hover:text-forest"
                   aria-label="Clear plot"
                 >×</button>
               </span>
             )}
           </div>
-          <p className="text-sm text-muted mt-1">
-            {isCompareMode
-              ? `Comparing ${comparePlots[0].name} vs ${comparePlots[1].name} — same scenario, side-by-side results.`
-              : sourcePlot
+          {!isCompareMode && (
+            <p className="text-sm text-muted mt-1">
+              {sourcePlot
                 ? `Modelling ${sourcePlot.area} — choose a scenario, then fine-tune if needed.`
                 : "Choose a scenario to start, adjust variables if needed, then review your returns."}
-          </p>
+            </p>
+          )}
         </div>
 
         {/* Scenario buttons */}
@@ -326,7 +506,7 @@ export default function ROIPage() {
       <div className={`flex-1 min-h-0 flex flex-col ${isCompareMode ? "gap-0.5" : "gap-0.5 lg:gap-1"} overflow-visible`}>
 
         {/* ═══════════ TOP: Variables ═══════════ */}
-        <div className={`flex flex-col ${isCompareMode ? "gap-0.5 min-h-0" : "gap-1 shrink-0"}`}>
+        <div className={`flex flex-col ${isCompareMode ? "gap-0.5 min-h-0 flex-1" : "gap-1 shrink-0"}`}>
 
           {/* Active scenario info */}
           <div className="bg-mint-bg/50 rounded-lg px-3 sm:px-4 py-1 sm:py-0.5 border border-mint-light/40 shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -355,52 +535,83 @@ export default function ROIPage() {
 
           {/* Input variables */}
           {isCompareMode && inputs2 && results2 ? (
-          <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-1 min-h-0">
-            {/* Left: Variables — own frame */}
-            <ContentCard className="flex flex-col py-1 px-3">
-              <div className="flex flex-col justify-between flex-1">
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0.5">Land</p>
-                  <div className="divide-y divide-mint-light/60 flex flex-col">
-                    <div className="flex items-center justify-between py-1.5">
-                      <span className="text-sm text-muted">Pricing Method</span>
-                      <TogglePair
-                        optA={{ key: "per-plot", label: "/ Plot sqft" }}
-                        optB={{ key: "per-gfa",  label: "/ GFA" }}
-                        value={inputs.pricingMethod}
-                        onChange={v => update("pricingMethod", v as PricingMethod)}
-                      />
+          <div className="flex flex-col flex-1 min-h-0 gap-1">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-1 flex-1 min-h-0 md:overflow-hidden">
+            {/* Left column: Variables + Metrics stacked */}
+            <div className="flex flex-col gap-2 min-h-0 overflow-y-auto">
+              {/* Variables */}
+              <ContentCard className="flex flex-col py-1 px-3">
+                <div className="flex flex-col justify-between flex-1">
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0.5">Land</p>
+                    <div className="divide-y divide-mint-light/60 flex flex-col">
+                      <div className="flex items-center justify-between py-1.5">
+                        <span className="text-sm text-muted">Pricing Method</span>
+                        <TogglePair
+                          optA={{ key: "per-plot", label: "/ Plot sqft" }}
+                          optB={{ key: "per-gfa",  label: "/ GFA" }}
+                          value={inputs.pricingMethod}
+                          onChange={v => update("pricingMethod", v as PricingMethod)}
+                        />
+                      </div>
+                      {inputs.pricingMethod === "per-plot"
+                        ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v as number)} />
+                        : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v as number)} />
+                      }
+                      <DualComputedRow label="Total Land Cost" v1={fmtAED(results.landCost)} v2={fmtAED(results2.landCost)} />
                     </div>
-                    {inputs.pricingMethod === "per-plot"
-                      ? <NumInput label="Price / Plot sqft" value={inputs.pricePerPlotSqft} unit="AED" prefix onChange={v => update("pricePerPlotSqft", v as number)} />
-                      : <NumInput label="Price / GFA sqft"  value={inputs.pricePerGFA}       unit="AED" prefix onChange={v => update("pricePerGFA", v as number)} />
-                    }
-                    <DualComputedRow label="Total Land Cost" v1={fmtAED(results.landCost)} v2={fmtAED(results2.landCost)} />
+                  </div>
+
+                  <div className="pt-0.5 border-t border-mint-light/40">
+                    <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
+                    <div className="divide-y divide-mint-light/60 flex flex-col">
+                      <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix placeholder="e.g. 900" onChange={v => update("constructionCostPerGFA", v)} />
+                      <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix placeholder="e.g. 80" onChange={v => update("efficiency", v)} />
+                      <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} ready={isTotalCostReady} />
+                    </div>
+                  </div>
+
+                  <div className="pt-0.5 border-t border-mint-light/40">
+                    <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Sales</p>
+                    <div className="divide-y divide-mint-light/60 flex flex-col">
+                      <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix placeholder="e.g. 3200" onChange={v => update("sellingPricePerNSA", v)} />
+                      <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} ready={isEquivPriceReady} />
+                    </div>
                   </div>
                 </div>
+              </ContentCard>
 
-                <div className="pt-0.5 border-t border-mint-light/40">
-                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Construction <span className="normal-case tracking-normal font-normal">(incl Hard &amp; Soft costs of 20%)</span></p>
-                  <div className="divide-y divide-mint-light/60 flex flex-col">
-                    <NumInput label="Cost / GFA sqft" value={inputs.constructionCostPerGFA} unit="AED" prefix placeholder="e.g. 900" onChange={v => update("constructionCostPerGFA", v)} />
-                    <NumInput label="Efficiency (NSA/GFA)" value={inputs.efficiency} unit="%" suffix placeholder="e.g. 80" onChange={v => update("efficiency", v)} />
-                    <DualComputedRow label="Total Construction" v1={fmtAED(results.constructionCost)} v2={fmtAED(results2.constructionCost)} />
-                  </div>
+              {/* Metrics table */}
+              <ContentCard className="py-2 px-3 flex-1 flex flex-col">
+                <div className="grid gap-x-2 gap-y-1 flex-1 content-evenly" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+                  <div className="py-0.5 text-xs font-semibold text-muted">Metric</div>
+                  <div className="py-0.5 text-xs font-semibold text-center text-muted flex items-center justify-center gap-1"><span className="w-2 h-2 rounded-full bg-forest" /> Land 1</div>
+                  <div className="py-0.5 text-xs font-semibold text-center text-muted flex items-center justify-center gap-1"><span className="w-2 h-2 rounded-full bg-compare-b" /> Land 2</div>
+
+                  {[
+                    { label: "Plot Size", v1: `${formatNumber(inputs.plotSize)} sqft`, v2: `${formatNumber(inputs2.plotSize)} sqft`, section: "Fixed (Per Plot)" },
+                    { label: "FAR", v1: `${inputs.gfaRatio}×`, v2: `${inputs2.gfaRatio}×` },
+                    { label: "GFA", v1: `${formatNumber(Math.round(results.gfa))} sqft`, v2: `${formatNumber(Math.round(results2.gfa))} sqft` },
+                    { label: "NSA", v1: `${formatNumber(Math.round(results.nsa))} sqft`, v2: `${formatNumber(Math.round(results2.nsa))} sqft`, section: "Development" },
+                  ].map((row, ri) => (
+                    <React.Fragment key={row.label}>
+                      {row.section && (
+                        <div className={`col-span-3 text-[10px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-0.5 pt-0.5 border-t border-mint-light/40" : ""} pb-0`}>
+                          {row.section}
+                        </div>
+                      )}
+                      <div className="py-0.5 text-xs text-muted">{row.label}</div>
+                      <div className="py-0.5 text-xs text-center font-semibold text-deep-forest">{row.v1}</div>
+                      <div className="py-0.5 text-xs text-center font-semibold text-deep-forest">{row.v2}</div>
+                    </React.Fragment>
+                  ))}
                 </div>
+              </ContentCard>
+            </div>
 
-                <div className="pt-0.5 border-t border-mint-light/40">
-                  <p className="text-xs uppercase tracking-widest text-muted font-semibold mb-0">Sales</p>
-                  <div className="divide-y divide-mint-light/60 flex flex-col">
-                    <NumInput label="Selling Price / NSA" value={inputs.sellingPricePerNSA} unit="AED" prefix placeholder="e.g. 3200" onChange={v => update("sellingPricePerNSA", v)} />
-                    <ComputedRow label="Equiv. Price / GFA" value={`AED ${formatNumber(Math.round(results.equivPricePerGFA))}`} />
-                  </div>
-                </div>
-              </div>
-            </ContentCard>
-
-            {/* Right: KPI results — own frame */}
-            <ContentCard className="py-0.5 px-1">
-              <div className="grid grid-cols-2 gap-0.5 auto-rows-fr">
+            {/* Right column: KPI cards only */}
+            <ContentCard className="py-0.5 px-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="grid grid-cols-1 gap-1 auto-rows-fr flex-1 min-h-0">
                 <KPICard label="Revenue (GDV)" value="" ready={isTotalRevenueReady}
                   compareValues={{ v1: fmtAED(results.revenue), v2: fmtAED(results2.revenue), label1: comparePlots[0].name, label2: comparePlots[1].name }}
                   tooltipFormula="Revenue = NSA × Selling Price/sqft"
@@ -456,13 +667,56 @@ export default function ROIPage() {
               </div>
             </ContentCard>
           </div>
+          {/* Full-width Payment Plan button */}
+          <ContentCard className="py-1.5 px-4 shrink-0">
+            <div className="flex justify-end items-center">
+              <button
+                onClick={() => {
+                  sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
+                  router.push("/offer");
+                }}
+                className="flex items-center gap-2 px-5 py-1.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
+              >
+                Payment Plan
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
+              </button>
+            </div>
+          </ContentCard>
+          </div>
           ) : (
           <div className="flex flex-col md:flex-row gap-2 lg:gap-3">
             {/* Left: Variables — own frame */}
             <ContentCard className="flex-1 p-3 flex flex-col">
               <div className="flex-1 flex flex-col justify-evenly">
                 <div>
-                  <p className="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2">Land Acquisition</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[11px] uppercase tracking-widest text-muted font-semibold">Land Acquisition</p>
+                    {hasMultipleSubtypes && (
+                      <div className="relative" ref={subtypeRef}>
+                        <button
+                          onClick={() => setSubtypeOpen(!subtypeOpen)}
+                          className="text-[10px] font-medium px-2 py-1 rounded-full bg-forest/10 text-forest border border-forest/20 hover:bg-forest/20 transition-colors"
+                        >
+                          {selectedSubtype || "Subtype"}
+                          <svg className="w-3 h-3 inline ml-0.5 -mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                        {subtypeOpen && (
+                          <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-mint-light rounded-xl p-2 shadow-lg z-50">
+                            {matchingSubtypes.map(r => (
+                              <button
+                                key={r.subtype}
+                                onClick={() => { setSelectedSubtype(r.subtype); setSubtypeOpen(false); }}
+                                className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${selectedSubtype === r.subtype ? "bg-forest/10 text-forest font-semibold" : "text-deep-forest hover:bg-mint-bg"}`}
+                              >
+                                {r.subtype}
+                                <span className="text-muted ml-1">({r.costLow}–{r.costHigh} AED)</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted">Pricing Method</span>
                     <TogglePair
@@ -565,97 +819,64 @@ export default function ROIPage() {
         </div>
 
         {/* ═══════════ BOTTOM: Results ═══════════ */}
-        <div className={`flex-1 flex flex-col min-h-0 ${isCompareMode ? "gap-0.5" : "overflow-y-auto gap-1 lg:gap-1.5"}`}>
+        <div className={`flex flex-col min-h-0 ${isCompareMode ? "hidden" : "flex-1 overflow-y-auto gap-1 lg:gap-1.5"}`}>
 
           {/* ── Single-plot results ── */}
           {!isCompareMode && (
             <div className="flex flex-col gap-1 lg:gap-1.5 h-full">
-              {/* Investor Metrics + Sensitivity — side by side (shown when all KPIs ready) */}
-              {allKPIsReady && (
-              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0 animate-fade-in">
+              {/* Investor Metrics + Sensitivity — side by side */}
+              <div className="flex flex-col md:flex-row gap-2 lg:gap-3 flex-1 min-h-0">
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
-                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Investor Metrics</p>
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold text-center">Investor Metrics</p>
                 <div className="divide-y divide-mint-light/60 flex-1 flex flex-col justify-evenly">
-                  <MetricRow label="Return on Cost"      value={`${results.returnOnCost.toFixed(1)}%`} />
-                  <MetricRow label="GDV Multiple"         value={`${results.gdvMultiple.toFixed(2)}×`} />
-                  <MetricRow label="Profit / Land sqft"   value={`AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`} />
+                  <MetricRow label="Return on Cost"      value={`${results.returnOnCost.toFixed(1)}%`} ready={allKPIsReady} />
+                  <MetricRow label="GDV Multiple"         value={`${results.gdvMultiple.toFixed(2)}×`} ready={allKPIsReady} />
+                  <MetricRow label="Profit / Land sqft"   value={`AED ${formatNumber(Math.round(results.profitPerPlotSqft))}`} ready={allKPIsReady} />
                   <MetricRow label="Land Cost"            value={fmtAED(results.landCost)} />
-                  <MetricRow label="Construction Cost"    value={fmtAED(results.constructionCost)} />
-                  <MetricRow label="Residual Land Value"  value={fmtAED(results.rlv)} sub="at 20% margin target" highlight={results.rlv > 0} />
+                  <MetricRow label="Construction Cost"    value={fmtAED(results.constructionCost)} ready={isTotalCostReady} />
+                  <MetricRow label="Residual Land Value"  value={fmtAED(results.rlv)} sub="at 20% margin target" highlight={results.rlv > 0} ready={allKPIsReady} />
                 </div>
               </ContentCard>
 
               <ContentCard className="py-2 px-4 flex-1 flex flex-col">
-                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold">Profit vs. Exit Price</p>
-                <div className="flex items-end gap-3 flex-1 min-h-[48px]">
-                  {sensitivityData.map(d => {
-                    const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
-                    const isCurrent = d.price === closestSensPrice;
-                    return (
-                      <div key={d.price} className="flex flex-col items-center flex-1 h-full">
-                        <div className="flex-1 flex items-end w-full">
-                          <div
-                            className={`w-full rounded-t transition-all ${isCurrent ? "bg-forest" : "bg-forest/25"}`}
-                            style={{ height: `${Math.max(ratio * 100, 3)}%` }}
-                          />
-                        </div>
-                        <p className={`text-xs mt-1.5 font-medium ${isCurrent ? "text-forest" : "text-muted"}`}>
-                          {(d.price / 1000).toFixed(1)}K
-                        </p>
-                        <p className={`text-xs ${isCurrent ? "text-forest font-semibold" : "text-muted"}`}>
-                          {fmtAED(d.profit)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted mt-2 text-center">AED per sqft NSA</p>
+                <p className="text-xs uppercase tracking-widest text-muted mb-1.5 font-semibold text-center">Profit vs. Exit Price</p>
+                {allKPIsReady ? (
+                  <>
+                    <div className="flex items-end gap-3 flex-1 min-h-[48px]">
+                      {sensitivityData.map(d => {
+                        const ratio = d.profit >= 0 ? d.profit / maxAbsProfit : 0;
+                        const isCurrent = d.price === resolved.sellingPricePerNSA;
+                        return (
+                          <div key={d.price} className="flex flex-col items-center flex-1 h-full">
+                            <div className="flex-1 flex items-end w-full">
+                              <div
+                                className={`w-full rounded-t transition-all ${isCurrent ? "bg-forest" : "bg-forest/25"}`}
+                                style={{ height: `${Math.max(ratio * 100, 3)}%` }}
+                              />
+                            </div>
+                            <p className={`text-xs mt-1.5 font-medium font-heading ${isCurrent ? "text-forest" : "text-muted"}`}>
+                              {d.price >= 1000 ? `${formatNumber(d.price)}` : d.price}
+                            </p>
+                            <p className={`text-xs font-heading ${isCurrent ? "text-forest font-semibold" : "text-muted"}`}>
+                              {fmtAED(d.profit)}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted mt-2 text-center">AED per sqft NSA</p>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-2xl font-bold text-muted/40">—</p>
+                  </div>
+                )}
               </ContentCard>
               </div>
-              )}
 
               {/* Actions — always visible */}
               <ContentCard className="py-2 px-4 shrink-0">
-                <div className="flex justify-between relative">
-                  <div>
-                    <button
-                      ref={compareBtnRef}
-                      onClick={openPlotPicker}
-                      className="flex items-center gap-2 px-4 py-2.5 border border-forest/30 text-forest rounded-xl font-medium text-sm hover:bg-mint-bg transition-colors"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
-                      Compare Plots
-                    </button>
-                    {showPlotPicker && pickerPos && createPortal(
-                      <div
-                        className="fixed z-50 bg-white border border-mint-light rounded-2xl shadow-lg p-4 min-w-[260px]"
-                        style={{ left: pickerPos.left, bottom: pickerPos.bottom }}
-                      >
-                        <p className="text-xs uppercase tracking-wider text-muted font-semibold mb-3">Select a plot to compare</p>
-                        <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                          {plots.filter(p => p.id !== sourcePlot?.id).map(p => (
-                            <button
-                              key={p.id}
-                              onClick={() => {
-                                const plotA = sourcePlot ?? plots[0];
-                                const both = [plotA, p];
-                                setComparePlots(both);
-                                const farA = plotA.far ?? (plotA.gfa ? plotA.gfa / plotA.plotArea : inputs.gfaRatio);
-                                setInputs(prev => ({ ...prev, plotSize: plotA.plotArea, gfaRatio: parseFloat(farA.toFixed(2)) }));
-                                sessionStorage.setItem("compare_plots", JSON.stringify(both));
-                                setShowPlotPicker(false);
-                              }}
-                              className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-mint-bg transition-colors border border-transparent hover:border-mint-light/60"
-                            >
-                              <p className="text-sm font-semibold text-forest">{p.name}</p>
-                              <p className="text-xs text-muted mt-0.5">{p.area} · AED {formatNumber(p.askingPrice)}</p>
-                            </button>
-                          ))}
-                        </div>
-                      </div>,
-                      document.body
-                    )}
-                  </div>
+                <div className="flex justify-end">
                   <button
                     onClick={() => {
                       sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
@@ -671,51 +892,7 @@ export default function ROIPage() {
             </div>
           )}
 
-          {/* ── Comparison results ── */}
-          {isCompareMode && results2 && inputs2 && (
-            <>
-              {/* Detailed comparison table */}
-              <ContentCard className="py-0.5 px-3">
-                <div className="grid gap-0" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-                  <div className="py-0.5 text-xs font-semibold text-muted">Metric</div>
-                  <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-forest" /></div>
-                  <div className="py-0.5 flex items-center justify-end"><span className="w-2 h-2 rounded-full bg-compare-b" /></div>
-
-                  {[
-                    { label: "Plot Size", v1: `${formatNumber(inputs.plotSize)} sqft`, v2: `${formatNumber(inputs2.plotSize)} sqft`, section: "Fixed (Per Plot)" },
-                    { label: "FAR", v1: `${inputs.gfaRatio}×`, v2: `${inputs2.gfaRatio}×` },
-                    { label: "GFA", v1: `${formatNumber(Math.round(results.gfa))} sqft`, v2: `${formatNumber(Math.round(results2.gfa))} sqft` },
-                    { label: "NSA", v1: `${formatNumber(Math.round(results.nsa))} sqft`, v2: `${formatNumber(Math.round(results2.nsa))} sqft`, section: "Development" },
-                  ].map((row, ri) => (
-                    <React.Fragment key={row.label}>
-                      {row.section && (
-                        <div className={`col-span-3 text-[10px] uppercase tracking-widest text-muted font-semibold ${ri > 0 ? "mt-1 pt-1 border-t border-mint-light/40" : ""} pb-0.5`}>
-                          {row.section}
-                        </div>
-                      )}
-                      <div className="py-0.5 text-xs text-muted">{row.label}</div>
-                      <div className="py-0.5 text-xs text-right font-semibold text-deep-forest">{row.v1}</div>
-                      <div className="py-0.5 text-xs text-right font-semibold text-deep-forest">{row.v2}</div>
-                    </React.Fragment>
-                  ))}
-                </div>
-
-                {/* Payment Plan button */}
-                <div className="flex justify-end mt-1 pt-1 border-t border-mint-light/40">
-                  <button
-                    onClick={() => {
-                      sessionStorage.setItem("roi_results", JSON.stringify({ inputs, results, activeScenario }));
-                      router.push("/offer");
-                    }}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-forest text-white rounded-xl font-semibold text-sm hover:bg-deep-forest transition-colors"
-                  >
-                    Payment Plan
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>
-                  </button>
-                </div>
-              </ContentCard>
-            </>
-          )}
+          {/* Compare mode metrics + payment plan are now in the main grid above */}
         </div>
       </div>
     </div>
@@ -740,9 +917,11 @@ function KPICard({
   const [tipStyle, setTipStyle] = useState<React.CSSProperties>({});
   const [above, setAbove] = useState(false);
 
-  function handleEnter() {
-    if (!ready) return;
-    if (!(tooltipLines || tooltipFormula) || !ref.current) return;
+  const hasTooltip = !!(tooltipLines || tooltipFormula);
+
+  function toggleInfo() {
+    if (!ready || !hasTooltip || !ref.current) return;
+    if (show) { setShow(false); return; }
     const rect = ref.current.getBoundingClientRect();
     const goAbove = rect.bottom + 220 > window.innerHeight;
     setAbove(goAbove);
@@ -766,46 +945,63 @@ function KPICard({
     <div
       ref={ref}
       className={`relative h-full transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-50"}`}
-      onMouseEnter={handleEnter}
-      onMouseLeave={() => setShow(false)}
     >
-      <ContentCard className={`${cardBg} ${compareValues ? "py-0.5 px-1.5" : "py-2 px-3"} h-full flex flex-col justify-center`}>
-        <p className={`uppercase tracking-widest text-muted font-semibold text-center ${compareValues ? "text-[10px] mb-0" : "text-xs mb-1"}`}>{label}</p>
+      <ContentCard className={`${cardBg} ${compareValues ? "py-1 px-2" : "py-2 px-3"} h-full flex flex-col justify-center relative`}>
+        {ready && hasTooltip && (
+          <button
+            onClick={toggleInfo}
+            className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${show ? "bg-forest text-white" : "bg-mint-light/60 text-muted hover:bg-forest/20 hover:text-forest"}`}
+            aria-label="Info"
+          >
+            i
+          </button>
+        )}
         {compareValues ? (
-          <div className="flex items-stretch gap-1.5">
-            <div className="flex-1 text-center min-w-0">
-              <p className="text-[10px] font-medium text-forest leading-normal mb-0">{compareValues.label1}</p>
-              {ready ? (
-                <>
-                  <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
-                  {compareValues.badge1 && (
-                    <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
-                      {compareValues.badge1.label}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-muted/40`}>—</p>
-              )}
+          <div className="flex h-full gap-3">
+            {/* Title — left, vertically centered */}
+            <p className="uppercase tracking-widest text-muted font-semibold text-[10px] shrink-0 w-[120px] whitespace-nowrap leading-tight flex items-center">{label}</p>
+            <div className="w-px self-stretch bg-mint-light/60 shrink-0" />
+            {/* Plot 1 */}
+            <div className="flex-1 min-w-0 text-center flex flex-col h-full">
+              <p className="text-[10px] font-medium text-forest leading-normal truncate pt-0.5">{compareValues.label1}</p>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                {ready ? (
+                  <>
+                    <p className={`${primary ? "text-2xl" : "text-xl"} font-bold font-heading leading-snug text-forest`}>{compareValues.v1}</p>
+                    {compareValues.badge1 && (
+                      <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge1.bg} ${compareValues.badge1.text}`}>
+                        {compareValues.badge1.label}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <p className={`${primary ? "text-2xl" : "text-xl"} font-bold font-heading leading-snug text-muted/40`}>—</p>
+                )}
+              </div>
             </div>
-            <div className="w-px shrink-0 bg-mint-light/60" />
-            <div className="flex-1 text-center min-w-0">
-              <p className="text-[10px] font-medium text-compare-b leading-normal mb-0">{compareValues.label2}</p>
-              {ready ? (
-                <>
-                  <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
-                  {compareValues.badge2 && (
-                    <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
-                      {compareValues.badge2.label}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <p className={`${primary ? "text-base" : "text-sm"} font-bold font-heading leading-snug text-muted/40`}>—</p>
-              )}
+            <div className="w-px self-stretch bg-mint-light/60 shrink-0" />
+            {/* Plot 2 */}
+            <div className="flex-1 min-w-0 text-center flex flex-col h-full">
+              <p className="text-[10px] font-medium text-compare-b leading-normal truncate pt-0.5">{compareValues.label2}</p>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                {ready ? (
+                  <>
+                    <p className={`${primary ? "text-2xl" : "text-xl"} font-bold font-heading leading-snug text-compare-b`}>{compareValues.v2}</p>
+                    {compareValues.badge2 && (
+                      <span className={`inline-block text-[10px] font-semibold px-1.5 py-0 rounded-full truncate max-w-full ${compareValues.badge2.bg} ${compareValues.badge2.text}`}>
+                        {compareValues.badge2.label}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <p className={`${primary ? "text-2xl" : "text-xl"} font-bold font-heading leading-snug text-muted/40`}>—</p>
+                )}
+              </div>
             </div>
           </div>
         ) : (
+          <>
+          <p className="uppercase tracking-widest text-muted font-semibold text-center text-xs mb-1">{label}</p>
           <div className="text-center">
             {ready ? (
               <>
@@ -821,10 +1017,11 @@ function KPICard({
               <p className={`${valueSz} font-bold font-heading leading-tight text-muted/40`}>—</p>
             )}
           </div>
+          </>
         )}
       </ContentCard>
       {ready && (tooltipLines || tooltipFormula) && show && createPortal(
-        <div className="bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[300px] pointer-events-none" style={tipStyle}>
+        <div className="bg-deep-forest text-white rounded-xl shadow-lg px-5 py-4 min-w-[260px] max-w-[calc(100vw-16px)] pointer-events-none" style={tipStyle}>
           <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-deep-forest rotate-45 rounded-sm ${above ? "-bottom-1.5" : "-top-1.5"}`} />
           {tooltipFormula && (
             <p className="text-sm font-bold text-mint mb-2 tracking-wide font-mono">{tooltipFormula}</p>
@@ -880,18 +1077,24 @@ function NumInput({
   onChange: (v: number | "") => void;
   placeholder?: string;
 }) {
+  const [focused, setFocused] = useState(false);
+  const display = value === "" ? "" : focused ? String(value) : value.toLocaleString("en-US");
   return (
     <div className="flex items-center justify-between py-0.5">
       <label className="text-sm text-muted">{label}</label>
       <div className="flex items-center border border-mint-light rounded-lg overflow-hidden focus-within:border-forest transition-colors">
         {(prefix || suffix) && <span className="px-2 py-1 text-sm text-muted bg-mint-bg border-r border-mint-light">{unit}</span>}
         <input
-          type="number"
-          value={value}
+          type="text"
+          inputMode="decimal"
+          value={display}
           placeholder={placeholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           onChange={e => {
-            if (e.target.value === "") { onChange(placeholder ? "" : 0); return; }
-            const v = Number(e.target.value); if (!isNaN(v)) onChange(v);
+            const raw = e.target.value.replace(/,/g, "");
+            if (raw === "") { onChange(placeholder ? "" : 0); return; }
+            const v = Number(raw); if (!isNaN(v)) onChange(v);
           }}
           className="w-28 px-2 py-1 text-sm font-semibold text-forest bg-white text-right outline-none"
         />
@@ -900,41 +1103,56 @@ function NumInput({
   );
 }
 
-function ComputedRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function ComputedRow({ label, value, highlight, ready = true }: { label: string; value: string; highlight?: boolean; ready?: boolean }) {
   return (
     <div className={`flex items-center justify-between py-1 -mx-3 px-3 rounded-lg ${highlight ? "bg-forest/5" : "bg-mint-bg/40"}`}>
       <p className="text-sm text-muted flex items-center gap-1">
         <span className="text-xs text-forest/50">=</span>
         {label}
       </p>
-      <p className={`text-sm font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      {ready ? (
+        <p className={`text-sm font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      ) : (
+        <p className="text-sm font-bold text-muted/40">—</p>
+      )}
     </div>
   );
 }
 
-function MetricRow({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
+function MetricRow({ label, value, sub, highlight, ready = true }: { label: string; value: string; sub?: string; highlight?: boolean; ready?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1.5">
+    <div className={`flex items-center justify-between py-1.5 transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-50"}`}>
       <div>
         <p className="text-sm text-muted">{label}</p>
         {sub && <p className="text-xs text-muted/60">{sub}</p>}
       </div>
-      <p className={`text-base font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      {ready ? (
+        <p className={`text-base font-bold ${highlight ? "text-forest" : "text-deep-forest"}`}>{value}</p>
+      ) : (
+        <p className="text-base font-bold text-muted/40">—</p>
+      )}
     </div>
   );
 }
 
-function DualComputedRow({ label, v1, v2 }: { label: string; v1: string; v2: string }) {
+function DualComputedRow({ label, v1, v2, ready = true }: { label: string; v1: string; v2: string; ready?: boolean }) {
   return (
     <div className="flex items-center justify-between py-1 -mx-3 px-3 rounded-lg bg-mint-bg/40">
       <p className="text-xs text-muted flex items-center gap-1">
         <span className="text-[11px] text-forest/50">=</span>
         {label}
       </p>
-      <div className="flex items-center gap-4">
-        <p className="text-xs font-bold text-forest">{v1}</p>
-        <p className="text-xs font-bold text-compare-b">{v2}</p>
-      </div>
+      {ready ? (
+        <div className="flex items-center gap-4">
+          <p className="text-xs font-bold text-forest">{v1}</p>
+          <p className="text-xs font-bold text-compare-b">{v2}</p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-4">
+          <p className="text-xs font-bold text-muted/40">—</p>
+          <p className="text-xs font-bold text-muted/40">—</p>
+        </div>
+      )}
     </div>
   );
 }

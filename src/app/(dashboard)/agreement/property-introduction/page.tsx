@@ -55,7 +55,6 @@ export default function PropertyIntroductionPage() {
     if (!form.fullName.trim()) errs.fullName = true;
     if (!form.mobile.trim()) errs.mobile = true;
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) errs.email = true;
-    if (!form.passportId.trim()) errs.passportId = true;
     if (!form.city.trim()) errs.city = true;
     if (!form.country.trim()) errs.country = true;
     setErrors(errs);
@@ -135,8 +134,8 @@ export default function PropertyIntroductionPage() {
             <Field label="Email" required error={errors.email}>
               <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} maxLength={254} className={inputCls(errors.email)} placeholder="investor@email.com" />
             </Field>
-            <Field label="Passport No / ID" required error={errors.passportId}>
-              <input type="text" value={form.passportId} onChange={(e) => set("passportId", e.target.value)} maxLength={30} className={inputCls(errors.passportId)} placeholder="A12345678" />
+            <Field label="Passport No / ID">
+              <input type="text" value={form.passportId} onChange={(e) => set("passportId", e.target.value)} maxLength={30} className={inputCls(false)} placeholder="A12345678" />
             </Field>
             <Field label="City" required error={errors.city}>
               <input type="text" value={form.city} onChange={(e) => set("city", e.target.value)} maxLength={80} className={inputCls(errors.city)} placeholder="Dubai" />

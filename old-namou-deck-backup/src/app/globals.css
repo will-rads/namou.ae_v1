@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme inline {
+  --color-forest: #003D2E;
+  --color-deep-forest: #273D37;
+  --color-mint: #87c6ae;
+  --color-mint-light: #b8ddd0;
+  --color-mint-white: #f7fbf8;
+  --color-mint-bg: #e8f4ee;
+  --color-white: #ffffff;
+  --color-foreground: #1a1a1a;
+  --color-muted: #6b7b75;
+  --color-compare-b: #0f766e;
+
+  --font-heading: var(--font-dm-sans), "Segoe UI", system-ui, sans-serif;
+  --font-body: var(--font-roboto-mono), "SF Mono", ui-monospace, monospace;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: var(--color-mint-white);
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+}
+
+/* Hide all scrollbars globally */
+*,
+*::before,
+*::after {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* Sidebar tooltips: show only when sidebar is collapsed (not hovered) */
+aside:not(:hover) .nav-link:hover .nav-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Responsive base font scaling */
+html {
+  font-size: 16px;
+}
+@media (min-width: 768px) {
+  html { font-size: clamp(15px, 1.4vw, 19px); }
+}
+@media (min-width: 1440px) {
+  html { font-size: 19px; }
+}
+
+/* Page fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}

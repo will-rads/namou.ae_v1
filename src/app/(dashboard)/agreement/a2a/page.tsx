@@ -114,11 +114,11 @@ export default function A2APage() {
             </div>
             <div>
               <p className="text-xs text-muted">Trade License</p>
-              <p className="text-sm font-semibold text-deep-forest">RAK-XXXX-XXXX</p>
+              <p className="text-sm font-semibold text-deep-forest">61781</p>
             </div>
             <div>
               <p className="text-xs text-muted">Contact</p>
-              <p className="text-sm font-semibold text-deep-forest">info@namou.ae</p>
+              <p className="text-sm font-semibold text-deep-forest">reachus@namou.ae</p>
             </div>
           </div>
         </div>

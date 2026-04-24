@@ -15,14 +15,18 @@
 
   --font-heading: var(--font-dm-sans), "Segoe UI", system-ui, sans-serif;
   --font-body: var(--font-roboto-mono), "SF Mono", ui-monospace, monospace;
+
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
 }
 
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 body {
@@ -31,18 +35,36 @@ body {
   font-family: var(--font-body);
 }
 
-/* Hide all scrollbars globally */
-*,
-*::before,
-*::after {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+/* Mint green scrollbar */
+* {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #6EE7B7 transparent; /* Firefox: thumb track */
 }
 *::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #6EE7B7;
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #34D399;
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* Emphasised values (numbers, KPIs, stats) and controls share the heading font */
+.font-bold, .font-semibold, .font-medium {
+  font-family: var(--font-heading);
+}
+
+select {
   font-family: var(--font-heading);
 }
 
@@ -52,12 +74,15 @@ aside:not(:hover) .nav-link:hover .nav-tooltip {
   pointer-events: auto;
 }
 
-/* Responsive base font scaling */
+/* Responsive base font scaling — use rem-friendly breakpoints, not vw (which fights browser zoom) */
 html {
   font-size: 16px;
 }
 @media (min-width: 768px) {
-  html { font-size: clamp(15px, 1.4vw, 19px); }
+  html { font-size: 17px; }
+}
+@media (min-width: 1280px) {
+  html { font-size: 18px; }
 }
 @media (min-width: 1440px) {
   html { font-size: 19px; }

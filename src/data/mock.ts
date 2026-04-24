@@ -1,8 +1,8 @@
-/* ── Mock data for the baseline UI (v1, no backend) ── */
+/* ── Data layer — /backend is the source of truth ── */
 
-import { ORIGINAL_SPREADSHEET_ROWS, spreadsheetRowsToPlots } from "./spreadsheetData";
+import { ORIGINAL_SPREADSHEET_ROWS, spreadsheetRowsToPlots, loadSpreadsheetRows, saveSpreadsheetRows } from "./spreadsheetData";
 
-export type LandCategory = "residential" | "commercial" | "industrial" | "mixed-use";
+export type LandCategory = string;
 
 export interface Plot {
   id: string;
@@ -28,7 +28,21 @@ export interface Plot {
   lat?: number; // WGS84 latitude (decimal degrees)
   lng?: number; // WGS84 longitude (decimal degrees)
   googleMapsUrl?: string;
-  images?: string[]; // up to 4 gallery image URLs
+  jv?: string; // Joint-venture eligibility from backend
+  galleryImage1?: string;
+  galleryImage2?: string;
+  galleryImage3?: string;
+  galleryImage4?: string;
+  galleryVideo1?: string;
+  galleryVideo2?: string;
+  landRegFee?: string;
+  landRegFeePct?: string;
+  commissionFee?: string;
+  commissionFeePct?: string;
+  adminFee?: string;
+  adminFeePct?: string;
+  annualServiceCharge?: string;
+  available?: boolean;
 }
 
 export interface Landmark {
@@ -74,11 +88,13 @@ export interface ROIOutputs {
   gfaPrice: number;
 }
 
-/* ── Plots (derived from CSV — single source of truth) ── */
-export const plots: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
+/* ── Bootstrap fallback (used only when backend data is unavailable — SSR or first load) ── */
+const _BOOTSTRAP_PLOTS: Plot[] = spreadsheetRowsToPlots(ORIGINAL_SPREADSHEET_ROWS);
+const _BOOTSTRAP_AREAS: string[] = [...new Set(_BOOTSTRAP_PLOTS.map(p => p.area).filter(Boolean))];
 
-/* ── Areas (derived from plots) ── */
-export const areas: string[] = [...new Set(plots.map(p => p.area).filter(Boolean))];
+/* ── Live data arrays — populated from backend-managed data on every page load ── */
+export const plots: Plot[] = [];
+export const areas: string[] = [];
 
 /* ── Filter categories for Master Plan ── */
 export const masterPlanFilters = [
@@ -176,32 +192,23 @@ export function formatAED(n: number): string {
 }
 
 /* ── Land categories (Jad: bundle by TYPE not area) ── */
-export const landCategories: LandCategoryInfo[] = [
-  {
-    slug: "residential",
-    label: "Residential",
-    description: "High-density and villa residential plots across RAK's prime districts.",
-    plotCount: plots.filter((p) => p.category === "residential").length,
-  },
-  {
-    slug: "commercial",
-    label: "Commercial",
-    description: "Hospitality, convention, and retail-zoned plots with strong ROI potential.",
-    plotCount: plots.filter((p) => p.category === "commercial").length,
-  },
-  {
-    slug: "industrial",
-    label: "Industrial",
-    description: "Logistically connected industrial plots near ports and free zones.",
-    plotCount: plots.filter((p) => p.category === "industrial").length,
-  },
-  {
-    slug: "mixed-use",
-    label: "Mixed-use",
-    description: "Combined residential, retail, and hospitality zoning for versatile development.",
-    plotCount: plots.filter((p) => p.category === "mixed-use").length,
-  },
+const _ALL_CATEGORIES: LandCategoryInfo[] = [
+  { slug: "residential", label: "Residential", description: "High-density and villa residential plots across RAK's prime districts.", plotCount: 0 },
+  { slug: "commercial", label: "Commercial", description: "Hospitality, convention, and retail-zoned plots with strong ROI potential.", plotCount: 0 },
+  { slug: "industrial", label: "Industrial", description: "Logistically connected industrial plots near ports and free zones.", plotCount: 0 },
+  { slug: "mixed-use", label: "Mixed-use", description: "Combined residential, retail, and hospitality zoning for versatile development.", plotCount: 0 },
 ];
+
+/** Live categories — rebuilt on every data load to include only types with ≥1 plot. */
+export const landCategories: LandCategoryInfo[] = [];
+
+function rebuildCategories(): void {
+  landCategories.length = 0;
+  for (const cat of _ALL_CATEGORIES) {
+    cat.plotCount = plots.filter((p) => p.category === cat.slug).length;
+    if (cat.plotCount > 0) landCategories.push(cat);
+  }
+}
 
 /* ── ROI calculation helper ── */
 export function calculateROI(inputs: ROIInputs, gfa: number): ROIOutputs {
@@ -232,3 +239,128 @@ export const exampleDealDefaults: ROIInputs = {
 
 export const exampleDealGFA = 2_000_000; // sq ft — RAK Central tower
 
+// ── Apply a Plot[] override to the in-memory data (plots, areas, category counts) ──
+function applyPlotsOverride(parsed: Plot[]): void {
+  plots.length = 0;
+  plots.push(...parsed);
+  // Rebuild areas from actual plot data
+  const plotAreas = [...new Set(parsed.map((p) => p.area).filter(Boolean))];
+  areas.length = 0;
+  areas.push(...plotAreas);
+  rebuildCategories();
+}
+
+function restoreDefaults(): void {
+  plots.length = 0;
+  plots.push(...JSON.parse(JSON.stringify(_BOOTSTRAP_PLOTS)));
+  areas.length = 0;
+  areas.push(..._BOOTSTRAP_AREAS);
+  rebuildCategories();
+}
+
+/** Load backend-managed plot data.  Priority:
+ *  1. Server-injected data (cross-device shared source of truth)
+ *  2. localStorage cache (same-browser fast path)
+ *  3. Legacy pre-computed Plot[] cache (backward compat) */
+function loadOverride(): Plot[] | null {
+  if (typeof window === "undefined") return null;
+  // Server-injected data (shared across all devices/browsers)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const serverRows = (window as any).__NAMOU_SERVER_DATA__;
+    if (serverRows) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).__NAMOU_SERVER_DATA__;
+      if (Array.isArray(serverRows) && serverRows.length > 0) {
+        saveSpreadsheetRows(serverRows);
+        return spreadsheetRowsToPlots(serverRows);
+      }
+    }
+  } catch { /* ignore */ }
+  // localStorage cache (synced from server on page load)
+  try {
+    const rows = loadSpreadsheetRows();
+    if (rows && rows.length > 0) return spreadsheetRowsToPlots(rows);
+  } catch { /* ignore */ }
+  // Legacy fallback: pre-computed Plot[] cache
+  try {
+    const stored = localStorage.getItem("namou_plots_override");
+    if (stored) {
+      const parsed: Plot[] = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+/** Re-read backend data from localStorage and update the in-memory
+ *  plots/areas/categories.  Called after /backend saves or resets. */
+export function reloadPlotsFromStorage(): void {
+  const override = loadOverride();
+  if (override) { applyPlotsOverride(override); return; }
+  restoreDefaults();
+}
+
+/* ── Area-level deal-type availability (shared by Sidebar + Master Plan) ── */
+
+const _DEAL_TYPE_TO_LAND_USE: Record<string, string[]> = {
+  residential: ["Residential"],
+  commercial:  ["Commercial", "Hospitality"],
+  "mixed-use": ["Mixed", "Residential / Commercial", "Commercial / Residential"],
+  industrial:  ["Industrial"],
+};
+
+function _areaSlug(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+/** Determine which sections (ROI / JV) should be visible for the given
+ *  type + area context, based on the deal types present in that area.
+ *
+ *  Precedence when multiple deal types coexist:
+ *    Sale + Joint-venture  → both shown
+ *    Joint-venture Only    → JV only
+ *    Sale Only             → ROI only
+ *    (default)             → ROI only */
+export function areaDealAvailability(
+  ctxType: string | null,
+  ctxArea: string | null,
+): { showRoi: boolean; showJv: boolean } {
+  const areaName = ctxArea ? (areas.find(a => _areaSlug(a) === ctxArea) ?? null) : null;
+  const contextPlots = plots.filter(p => {
+    const matchesType = !ctxType || !_DEAL_TYPE_TO_LAND_USE[ctxType]?.length
+      || _DEAL_TYPE_TO_LAND_USE[ctxType].some(f => p.landUse.includes(f));
+    const matchesArea = !areaName || p.area === areaName;
+    return matchesType && matchesArea;
+  });
+
+  const hasSaleJv = contextPlots.some(p => (p.jv ?? "").trim() === "Sale + Joint-venture");
+  const hasJvOnly = contextPlots.some(p => (p.jv ?? "").trim() === "Joint-venture Only");
+  const hasSaleOnly = contextPlots.some(p => (p.jv ?? "").trim() === "Sale Only");
+
+  if (hasSaleJv) return { showRoi: true, showJv: true };
+  if (hasJvOnly) return { showRoi: false, showJv: true };
+  if (hasSaleOnly) return { showRoi: true, showJv: false };
+  return { showRoi: true, showJv: false };
+}
+
+/** Determine ROI/JV visibility based on a single plot's Deal Type field. */
+export function plotDealAvailability(
+  plot: Plot | null,
+): { showRoi: boolean; showJv: boolean } {
+  const jv = (plot?.jv ?? "").trim();
+  if (jv === "Sale + Joint-venture") return { showRoi: true, showJv: true };
+  if (jv === "Joint-venture Only") return { showRoi: false, showJv: true };
+  return { showRoi: true, showJv: false };
+}
+
+// ── Populate from backend-managed data (server-injected → localStorage → bootstrap fallback) ──
+{
+  const backendData = loadOverride();
+  if (backendData) {
+    applyPlotsOverride(backendData);
+  } else {
+    // Bootstrap fallback: no backend data reachable (SSR or first-ever load)
+    applyPlotsOverride(JSON.parse(JSON.stringify(_BOOTSTRAP_PLOTS)));
+  }
+}

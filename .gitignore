@@ -5,3 +5,7 @@ out/
 next-env.d.ts
 .env*.local
 .env
+/data/
+
+.vercel
+.env*.local
